@@ -19,6 +19,7 @@ struct KeyboardRoot: View {
 		)
 		KeyboardView(
 			layout: layout,
+			width: state.keyboardWidth,
 			onKey: dispatch,
 			onKeyTapHaptic: onKeyTapHaptic,
 			onPopoverEntry: onPopoverEntry,

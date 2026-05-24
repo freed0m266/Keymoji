@@ -22,6 +22,11 @@ public struct KeyboardState: Sendable, Equatable {
 	/// Lets us cleanly revert the auto-promotion if the context changes (e.g., user deletes the period).
 	public var autoCapitalized: Bool
 
+	/// Width of the visible keyboard area in points. The hosting controller updates this from
+	/// `view.bounds.width` in `viewDidLayoutSubviews`, which is the only authoritative source —
+	/// `GeometryReader` inside the keyboard view turned out to under-report on some hosts.
+	public var keyboardWidth: CGFloat
+
 	public init(
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
@@ -29,7 +34,8 @@ public struct KeyboardState: Sendable, Equatable {
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
 		lastShiftTapAt: Date? = nil,
-		autoCapitalized: Bool = false
+		autoCapitalized: Bool = false,
+		keyboardWidth: CGFloat = 0
 	) {
 		self.page = page
 		self.returnKeyType = returnKeyType
@@ -38,5 +44,6 @@ public struct KeyboardState: Sendable, Equatable {
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt
 		self.lastShiftTapAt = lastShiftTapAt
 		self.autoCapitalized = autoCapitalized
+		self.keyboardWidth = keyboardWidth
 	}
 }

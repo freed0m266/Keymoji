@@ -5,11 +5,13 @@ import KeyboardCore
 
 final class KeyboardViewSnapshots: XCTestCase {
 
+	private static let iPhoneWidth: CGFloat = 393
+
 	// MARK: - Letters lower
 
 	func testLettersLower_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
@@ -19,7 +21,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testLettersUpper_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.upper), showNumberRow: true, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
@@ -27,7 +29,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testLettersCapsLock_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.capsLock), showNumberRow: true, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
@@ -37,7 +39,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testSymbolsPrimary_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
@@ -45,7 +47,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testSymbolsAlternate_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
@@ -53,7 +55,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testSymbolsPrimary_withoutNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: false, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		let size = CGSize(width: 393, height: 216)
 		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
@@ -63,7 +65,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testLettersLower_withoutNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
-		let view = KeyboardView(layout: layout, onKey: { _ in })
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		let size = CGSize(width: 393, height: 216)
 		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
@@ -74,21 +76,21 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	func testReturnLabel_search() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .search)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
 	}
 
 	func testReturnLabel_go() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .go)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
 	}
 
 	func testReturnLabel_done() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .done)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
 	}
 
 	func testReturnLabel_send() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .send)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
 	}
 }

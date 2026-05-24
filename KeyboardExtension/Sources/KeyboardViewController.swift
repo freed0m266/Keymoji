@@ -30,6 +30,18 @@ final class KeyboardViewController: UIInputViewController {
 		refreshReturnKeyType()
 	}
 
+	override func viewDidLayoutSubviews() {
+		super.viewDidLayoutSubviews()
+		// `view.bounds.width` is the authoritative visible width of the keyboard host. We propagate
+		// it into state so SwiftUI's `KeyboardView` can size itself exactly, avoiding the right-edge
+		// clipping caused by `GeometryReader` under-reporting inside `UIInputView` on real devices.
+		let width = view.bounds.width
+		if state.keyboardWidth != width, width > 0 {
+			state.keyboardWidth = width
+			rebuild()
+		}
+	}
+
 	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
 	/// v1.0 has no live observation — settings changes from the host take effect next time the keyboard appears.
 	private func refreshFromStore() {
@@ -60,6 +72,14 @@ final class KeyboardViewController: UIInputViewController {
 		let host = UIHostingController(rootView: root)
 		host.view.translatesAutoresizingMaskIntoConstraints = false
 		host.view.backgroundColor = .clear
+
+		// `UIInputViewController` exposes its content via `inputView`. Letting SwiftUI's hosting
+		// controller respect safe areas inside the keyboard view causes a right-shift on devices
+		// with horizontal safe areas (notch/island in some orientations) — we want edge-to-edge.
+		host.additionalSafeAreaInsets = .zero
+		host.view.insetsLayoutMarginsFromSafeArea = false
+		host.view.preservesSuperviewLayoutMargins = false
+		host.view.layoutMargins = .zero
 
 		addChild(host)
 		view.addSubview(host.view)

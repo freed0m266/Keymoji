@@ -2,10 +2,14 @@ import SwiftUI
 import KeyboardCore
 
 /// Public entry point — renders a complete keyboard given a `KeyboardLayout`.
-/// Callers (the keyboard extension's `KeyboardViewController`) pass `onKey` to receive tap dispatches
-/// and the three haptic hooks (`onKeyTapHaptic` on press, `onPopoverEntry`, `onHighlightChanged`).
+///
+/// Width is passed explicitly by the caller — `GeometryReader` was unreliable inside the
+/// hosting controller's input view (it occasionally under-reports by a few points, which
+/// shifts the keyboard a fraction to the right and clips the rightmost keys). The
+/// `KeyboardViewController` reads `view.bounds.width` in `viewDidLayoutSubviews` and feeds it here.
 public struct KeyboardView: View {
 	public let layout: KeyboardLayout
+	public let width: CGFloat
 	public let onKey: (Key) -> Void
 	public let onKeyTapHaptic: () -> Void
 	public let onPopoverEntry: () -> Void
@@ -13,12 +17,14 @@ public struct KeyboardView: View {
 
 	public init(
 		layout: KeyboardLayout,
+		width: CGFloat,
 		onKey: @escaping (Key) -> Void,
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {}
 	) {
 		self.layout = layout
+		self.width = width
 		self.onKey = onKey
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onPopoverEntry = onPopoverEntry
@@ -30,27 +36,24 @@ public struct KeyboardView: View {
 	private let rowSpacing: CGFloat = 6
 
 	public var body: some View {
-		GeometryReader { proxy in
-			VStack(spacing: rowSpacing) {
-				ForEach(layout.rows) { row in
-					KeyRowView(
-						row: row,
-						page: layout.page,
-						returnKeyType: layout.returnKeyType,
-						totalWidth: max(0, proxy.size.width - horizontalPadding * 2),
-						onKey: onKey,
-						onKeyTapHaptic: onKeyTapHaptic,
-						onPopoverEntry: onPopoverEntry,
-						onHighlightChanged: onHighlightChanged
-					)
-				}
+		VStack(spacing: rowSpacing) {
+			ForEach(layout.rows) { row in
+				KeyRowView(
+					row: row,
+					page: layout.page,
+					returnKeyType: layout.returnKeyType,
+					totalWidth: max(0, width - horizontalPadding * 2),
+					onKey: onKey,
+					onKeyTapHaptic: onKeyTapHaptic,
+					onPopoverEntry: onPopoverEntry,
+					onHighlightChanged: onHighlightChanged
+				)
 			}
-			.padding(.horizontal, horizontalPadding)
-			.padding(.vertical, verticalPadding)
-			.frame(maxWidth: .infinity, maxHeight: .infinity)
-			.background(Color(.systemBackground))
 		}
-		.frame(height: keyboardHeight)
+		.padding(.horizontal, horizontalPadding)
+		.padding(.vertical, verticalPadding)
+		.frame(width: width, height: keyboardHeight)
+		.background(Color(.systemBackground))
 	}
 
 	/// Hardcoded heights for iPhone portrait, v1.0. Adjust after on-device testing.
@@ -63,6 +66,7 @@ public struct KeyboardView: View {
 #Preview("Letters Lower / Dark") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)
@@ -71,6 +75,7 @@ public struct KeyboardView: View {
 #Preview("Letters Upper / Light") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .letters(.upper), showNumberRow: true, returnKeyType: .default),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.light)
@@ -79,6 +84,7 @@ public struct KeyboardView: View {
 #Preview("Caps Lock / Dark") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .letters(.capsLock), showNumberRow: true, returnKeyType: .default),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)
@@ -87,6 +93,7 @@ public struct KeyboardView: View {
 #Preview("Symbols Primary / Dark") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)
@@ -95,6 +102,7 @@ public struct KeyboardView: View {
 #Preview("Symbols Alternate / Dark") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)
@@ -103,6 +111,7 @@ public struct KeyboardView: View {
 #Preview("No Number Row / Dark") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)
@@ -111,6 +120,7 @@ public struct KeyboardView: View {
 #Preview("Return = Search / Dark") {
 	KeyboardView(
 		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .search),
+		width: 393,
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)
