@@ -34,6 +34,8 @@ public let app: Target = .target(
 		.target(design),
 		.target(example),
 		.target(onboarding),
+		.target(about),
+		.target(settings),
 		.target(resources),
 		.target(name: keyboardExtension.name)
 	],

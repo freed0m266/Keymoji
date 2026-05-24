@@ -23,3 +23,21 @@
 "onboarding.step3.description" = "In any text field, tap the globe icon on the keyboard and choose Keybo.";
 "onboarding.step3.done" = "Done";
 "onboarding.step3.footer" = "You can re-open this guide later from Settings.";
+
+"settings.title" = "Keybo";
+"settings.setupInstructions" = "Setup instructions";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.keyboard.header" = "Keyboard";
+"settings.keyboard.showNumberRow" = "Always show number row";
+"settings.keyboard.hapticFeedback" = "Haptic feedback";
+"settings.keyboard.hapticFooter" = "Haptic feedback requires Allow Full Access in Settings → General → Keyboard → Keybo.";
+
+"about.title" = "About Keybo";
+"about.versionLabel" = "Version %@";
+"about.privacy.header" = "Privacy";
+"about.privacy.statement" = "Keybo does not collect, transmit, or store any of your typing data. The keyboard runs entirely on-device with no network access, no analytics, and no third-party SDKs. Allow Full Access is required only for haptic feedback.";
+"about.legal.header" = "Legal";
+"about.legal.privacyPolicyLink" = "Full privacy policy";
+"about.legal.sourceCodeLink" = "Source code on GitHub";
+"about.legal.copyright" = "© %@ Freedom Martin, s.r.o.";
