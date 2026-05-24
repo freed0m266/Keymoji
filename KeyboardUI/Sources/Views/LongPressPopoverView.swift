@@ -27,6 +27,7 @@ struct LongPressPopoverView: View {
 		ZStack {
 			RoundedRectangle(cornerRadius: 5)
 				.fill(isHighlighted ? Color.accentColor : Color.clear)
+
 			contentView(for: content)
 				.font(.system(size: 22, weight: .regular))
 				.foregroundStyle(isHighlighted ? Color.white : Color(.label))

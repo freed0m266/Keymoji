@@ -305,3 +305,93 @@ struct KeyView: View {
 		}
 	}
 }
+
+#if DEBUG
+private struct KeyViewPreview: View {
+	let key: Key
+	let page: KeyboardPage
+	let returnKeyType: ReturnKeyType
+	let keyWidth: CGFloat
+
+	var body: some View {
+		KeyView(
+			key: key,
+			style: KeyStyle.style(for: key, page: page),
+			returnKeyType: returnKeyType,
+			keyWidth: keyWidth,
+			onTap: { _ in }
+		)
+		.frame(width: keyWidth, height: 44)
+		.padding(40)
+		.background(Color(.systemBackground))
+	}
+}
+
+#Preview("Letter with alternates / Dark") {
+	KeyViewPreview(
+		key: Key(
+			id: "preview.e",
+			primary: .text("e"),
+			alternates: [.text("é"), .text("ě"), .text("è"), .text("ê"), .text("ë"), .text("ē"), .text("ė"), .text("ę")],
+			action: .insertText("e"),
+			visualWeight: .standard,
+			role: .character
+		),
+		page: .letters(.lower),
+		returnKeyType: .default,
+		keyWidth: 36
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Shift (active) / Dark") {
+	KeyViewPreview(
+		key: Key(
+			id: "shift",
+			primary: .symbol(.shiftFill),
+			alternates: [],
+			action: .shift,
+			visualWeight: .wide,
+			role: .system
+		),
+		page: .letters(.upper),
+		returnKeyType: .default,
+		keyWidth: 54
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Delete / Dark") {
+	KeyViewPreview(
+		key: Key(
+			id: "delete",
+			primary: .symbol(.delete),
+			alternates: [],
+			action: .backspace,
+			visualWeight: .wide,
+			role: .system
+		),
+		page: .letters(.lower),
+		returnKeyType: .default,
+		keyWidth: 54
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Return = Search / Light") {
+	KeyViewPreview(
+		key: Key(
+			id: "return",
+			primary: .symbol(.return),
+			alternates: [],
+			action: .return,
+			visualWeight: .returnKey,
+			role: .system
+		),
+		page: .letters(.lower),
+		returnKeyType: .search,
+		keyWidth: 84
+	)
+	.preferredColorScheme(.light)
+}
+#endif

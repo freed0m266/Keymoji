@@ -82,3 +82,59 @@ struct KeyRowView: View {
 		return available * CGFloat(key.visualWeight.value / actualTotalWeight)
 	}
 }
+
+#if DEBUG
+private struct KeyRowPreview: View {
+	let row: KeyboardRow
+	let page: KeyboardPage
+	let returnKeyType: ReturnKeyType
+	private let totalWidth: CGFloat = 387
+
+	var body: some View {
+		KeyRowView(
+			row: row,
+			page: page,
+			returnKeyType: returnKeyType,
+			totalWidth: totalWidth,
+			onKey: { _ in },
+			onKeyTapHaptic: {},
+			onPopoverEntry: {},
+			onHighlightChanged: {}
+		)
+		.padding(.horizontal, 3)
+		.padding(.vertical, 8)
+		.frame(width: 393)
+		.background(Color(.systemBackground))
+	}
+}
+
+#Preview("Letters row 1 (qwertyuiop) / Dark") {
+	let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
+	KeyRowPreview(row: layout.rows[0], page: layout.page, returnKeyType: layout.returnKeyType)
+		.preferredColorScheme(.dark)
+}
+
+#Preview("Letters row 2 (asdfghjkl) / Dark") {
+	let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
+	KeyRowPreview(row: layout.rows[1], page: layout.page, returnKeyType: layout.returnKeyType)
+		.preferredColorScheme(.dark)
+}
+
+#Preview("Shift + letters + delete (upper) / Dark") {
+	let layout = KeyboardCore.makeLayout(page: .letters(.upper), showNumberRow: false, returnKeyType: .default)
+	KeyRowPreview(row: layout.rows[2], page: layout.page, returnKeyType: layout.returnKeyType)
+		.preferredColorScheme(.dark)
+}
+
+#Preview("Bottom row (Return = Go) / Dark") {
+	let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .go)
+	KeyRowPreview(row: layout.rows[3], page: layout.page, returnKeyType: layout.returnKeyType)
+		.preferredColorScheme(.dark)
+}
+
+#Preview("Symbols row A / Light") {
+	let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: false, returnKeyType: .default)
+	KeyRowPreview(row: layout.rows[0], page: layout.page, returnKeyType: layout.returnKeyType)
+		.preferredColorScheme(.light)
+}
+#endif

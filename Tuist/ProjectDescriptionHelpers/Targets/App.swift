@@ -37,7 +37,8 @@ public let app: Target = .target(
 		.target(about),
 		.target(settings),
 		.target(resources),
-		.target(name: keyboardExtension.name)
+		.target(keyboardUI),
+		.target(keyboardExtension)
 	],
 	settings: .settings(
 		base: [
