@@ -2,7 +2,8 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 
 let features: [Feature] = [
-	example
+	example,
+	onboarding
 ]
 let appTargets: [Target] = features.flatMap(\.allTargets)
 

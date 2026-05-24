@@ -33,6 +33,7 @@ public let app: Target = .target(
 		.target(core),
 		.target(design),
 		.target(example),
+		.target(onboarding),
 		.target(resources),
 		.target(name: keyboardExtension.name)
 	],

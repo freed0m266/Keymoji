@@ -16,7 +16,7 @@ struct KeyboApp: App {
 
 	var body: some Scene {
 		WindowGroup {
-			ContentView()
+			RootView()
 		}
 	}
 }

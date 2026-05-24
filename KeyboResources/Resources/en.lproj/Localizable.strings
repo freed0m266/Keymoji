@@ -7,3 +7,19 @@
 "general.title" = "Keybo";
 "error.defaultTitle" = "Error";
 "error.defaultMessage" = "Unexpected error has occurred. Please try again later.";
+
+"onboarding.step1.title" = "Add Keybo to your keyboards";
+"onboarding.step1.description" = "Open Settings → General → Keyboard → Keyboards → Add New Keyboard… → Keybo";
+"onboarding.step1.cta" = "Open Settings";
+"onboarding.step1.detected" = "Keybo added";
+
+"onboarding.step2.title" = "Enable Full Access";
+"onboarding.step2.description" = "In Settings → General → Keyboard → Keyboards → Keybo, turn on Allow Full Access.";
+"onboarding.step2.privacy" = "Required by iOS for haptic feedback. Keybo does not access the internet, doesn't sync, and doesn't collect typing data.";
+"onboarding.step2.cta" = "Open Settings";
+"onboarding.step2.confirm" = "I've done this";
+
+"onboarding.step3.title" = "Switch to Keybo when typing";
+"onboarding.step3.description" = "In any text field, tap the globe icon on the keyboard and choose Keybo.";
+"onboarding.step3.done" = "Done";
+"onboarding.step3.footer" = "You can re-open this guide later from Settings.";
