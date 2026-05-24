@@ -53,6 +53,7 @@ final class KeyboardViewController: UIInputViewController {
 		let root = KeyboardRoot(
 			state: state,
 			dispatch: { [weak self] key in self?.handle(key) },
+			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
 			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
 		)
@@ -76,6 +77,7 @@ final class KeyboardViewController: UIInputViewController {
 		hostingController?.rootView = KeyboardRoot(
 			state: state,
 			dispatch: { [weak self] key in self?.handle(key) },
+			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
 			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
 		)
@@ -84,12 +86,13 @@ final class KeyboardViewController: UIInputViewController {
 	// MARK: - Input
 
 	private func handle(_ key: Key) {
+		// Haptic for the key tap itself is fired by `KeyView` on touch-down (matches Apple/SwiftKey
+		// feel). The dispatcher is concerned with state + text proxy only.
 		InputDispatcher.dispatch(
 			key: key,
 			state: &state,
 			proxy: proxyAdapter,
-			controller: self,
-			haptics: haptics
+			controller: self
 		)
 		// `textDidChange` covers character/space/return/backspace, but page-switches
 		// don't trigger it — re-evaluate here so an auto-cap pending from `? ` on the

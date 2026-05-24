@@ -8,6 +8,7 @@ struct KeyRowView: View {
 	let returnKeyType: ReturnKeyType
 	let totalWidth: CGFloat
 	let onKey: (Key) -> Void
+	let onKeyTapHaptic: () -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 
@@ -25,6 +26,7 @@ struct KeyRowView: View {
 					keyWidth: keyWidth,
 					popoverAlignment: popoverAlignment(forKeyAt: index, keyWidth: keyWidth),
 					onTap: onKey,
+					onKeyTapHaptic: onKeyTapHaptic,
 					onPopoverEntry: onPopoverEntry,
 					onHighlightChanged: onHighlightChanged
 				)

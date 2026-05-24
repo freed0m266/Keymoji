@@ -2,22 +2,25 @@ import SwiftUI
 import KeyboardCore
 
 /// Public entry point — renders a complete keyboard given a `KeyboardLayout`.
-/// Callers (the keyboard extension's `KeyboardViewController`) pass `onKey` to receive tap dispatches.
-/// `onPopoverEntry` and `onHighlightChanged` are haptic hooks wired up in task 08.
+/// Callers (the keyboard extension's `KeyboardViewController`) pass `onKey` to receive tap dispatches
+/// and the three haptic hooks (`onKeyTapHaptic` on press, `onPopoverEntry`, `onHighlightChanged`).
 public struct KeyboardView: View {
 	public let layout: KeyboardLayout
 	public let onKey: (Key) -> Void
+	public let onKeyTapHaptic: () -> Void
 	public let onPopoverEntry: () -> Void
 	public let onHighlightChanged: () -> Void
 
 	public init(
 		layout: KeyboardLayout,
 		onKey: @escaping (Key) -> Void,
+		onKeyTapHaptic: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {}
 	) {
 		self.layout = layout
 		self.onKey = onKey
+		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
 	}
@@ -36,6 +39,7 @@ public struct KeyboardView: View {
 						returnKeyType: layout.returnKeyType,
 						totalWidth: max(0, proxy.size.width - horizontalPadding * 2),
 						onKey: onKey,
+						onKeyTapHaptic: onKeyTapHaptic,
 						onPopoverEntry: onPopoverEntry,
 						onHighlightChanged: onHighlightChanged
 					)
