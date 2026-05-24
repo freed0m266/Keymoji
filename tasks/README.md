@@ -25,6 +25,10 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 12. [12 — Host app Settings screen](12-host-app-settings.md)
 13. [13 — About screen + privacy policy HTML](13-about-and-privacy.md)
 
+## v1.0 — Visual polish
+
+14. [14 — Stejná šířka kláves v ASDF řádku](14-equal-letter-key-widths.md)
+
 ## Future (po v1.0)
 
 Stuby, plně se vypíší až přijde čas.
