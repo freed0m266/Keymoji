@@ -17,10 +17,16 @@ struct KeyView: View {
 	@State private var isShowingPopover = false
 	@State private var highlightedAlternateIndex = 0
 	@State private var didCommitAlternate = false
+	@State private var didRepeatBackspace = false
 	@State private var longPressTask: Task<Void, Never>?
+	@State private var backspaceRepeatTask: Task<Void, Never>?
 
 	/// 450ms — slightly more generous than Apple's ~350ms, kinder to slow thumbs.
 	private static let longPressDelay: Duration = .milliseconds(450)
+	/// Initial delay before delete-on-hold starts firing.
+	private static let backspaceInitialDelay: Duration = .milliseconds(400)
+	/// Repeat interval once delete-on-hold is firing.
+	private static let backspaceRepeatInterval: Duration = .milliseconds(80)
 
 	private static let popoverCellSize = CGSize(width: 40, height: 44)
 	private static let popoverCellSpacing: CGFloat = 2
@@ -97,22 +103,52 @@ struct KeyView: View {
 	private func handleTouchDown() {
 		isPressed = true
 		didCommitAlternate = false
-		guard hasTextAlternates else { return }
-		startLongPressTimer()
+		didRepeatBackspace = false
+
+		if case .backspace = key.action {
+			startBackspaceRepeat()
+		} else if hasTextAlternates {
+			startLongPressTimer()
+		}
 	}
 
 	private func handleTouchUp() {
 		isPressed = false
 		longPressTask?.cancel()
 		longPressTask = nil
+		backspaceRepeatTask?.cancel()
+		backspaceRepeatTask = nil
 
 		if isShowingPopover {
 			commitAlternate(at: highlightedAlternateIndex)
 			isShowingPopover = false
-		} else if !didCommitAlternate {
+		} else if didCommitAlternate || didRepeatBackspace {
+			// First action already fired during the hold — don't double-fire here.
+		} else {
 			onTap(key)
 		}
 		didCommitAlternate = false
+		didRepeatBackspace = false
+	}
+
+	/// Delete-on-hold: after the initial delay, fire the first repeat backspace, then keep
+	/// firing on the repeat interval until touch up. `Task.isCancelled` checks after each sleep
+	/// guarantee we don't fire one extra backspace past the user releasing the key.
+	private func startBackspaceRepeat() {
+		backspaceRepeatTask?.cancel()
+		backspaceRepeatTask = Task { @MainActor in
+			try? await Task.sleep(for: Self.backspaceInitialDelay)
+			guard !Task.isCancelled, isPressed else { return }
+
+			didRepeatBackspace = true
+			onTap(key)
+
+			while !Task.isCancelled, isPressed {
+				try? await Task.sleep(for: Self.backspaceRepeatInterval)
+				guard !Task.isCancelled, isPressed else { return }
+				onTap(key)
+			}
+		}
 	}
 
 	private func startLongPressTimer() {
