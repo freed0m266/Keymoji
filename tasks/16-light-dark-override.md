@@ -1,8 +1,8 @@
-# Future — User override pro light/dark mode
+# 16 — User override pro light/dark mode
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** M · **Dopad:** Medium
+**Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
 ## Souhrn
 

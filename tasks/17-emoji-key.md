@@ -1,8 +1,8 @@
-# Future — Quick emoji key + system emoji picker
+# 17 — Quick emoji key + system emoji picker
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** S · **Dopad:** High
+**Priorita:** v1.1 · **Úsilí:** S · **Dopad:** High
 
 ## Souhrn
 

@@ -1,8 +1,8 @@
-# Future — Top-row long-press popover clipping
+# 21 — Top-row long-press popover clipping
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** M · **Dopad:** Medium (UX edge)
+**Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium (UX edge)
 
 ## Souhrn
 

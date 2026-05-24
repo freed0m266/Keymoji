@@ -1,8 +1,8 @@
-# Future — Delete word-by-word (long hold)
+# 24 — Delete word-by-word (long hold)
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** S · **Dopad:** Medium
+**Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Medium
 
 ## Souhrn
 

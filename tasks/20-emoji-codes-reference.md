@@ -1,8 +1,8 @@
-# Future — Emoji codes reference screen
+# 20 — Emoji codes reference screen
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** S · **Dopad:** Low
+**Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Low
 
 ## Souhrn
 

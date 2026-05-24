@@ -1,6 +1,6 @@
-# Future — Real app icon (před App Store releasem)
+# 27 — Real app icon (před App Store releasem)
 
-**Status:** Stub
+**Status:** Todo
 
 **Priorita:** Pre-App-Store · **Úsilí:** S (designerská práce externí) · **Dopad:** High pro App Store
 

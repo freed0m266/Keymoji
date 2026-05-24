@@ -1,8 +1,8 @@
-# Future — Slack-style emoji typing (`:smile:` → 😄)
+# 19 — Slack-style emoji typing (`:smile:` → 😄)
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** M · **Dopad:** Medium
+**Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
 ## Souhrn
 

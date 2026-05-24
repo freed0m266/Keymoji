@@ -1,8 +1,8 @@
-# Future — Key preview popup (Apple-style bublina nad prstem)
+# 25 — Key preview popup (Apple-style bublina nad prstem)
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** M · **Dopad:** Low (polish)
+**Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Low (polish)
 
 ## Souhrn
 

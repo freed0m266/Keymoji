@@ -1,8 +1,8 @@
-# Future — Trackpad mode (long-press space)
+# 23 — Trackpad mode (long-press space)
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** M · **Dopad:** Medium
+**Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
 ## Souhrn
 

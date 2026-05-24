@@ -1,8 +1,8 @@
-# Future — Sound feedback toggle (`playInputClick()`)
+# 26 — Sound feedback toggle (`playInputClick()`)
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** XS · **Dopad:** Low
+**Priorita:** v1.1 · **Úsilí:** XS · **Dopad:** Low
 
 ## Souhrn
 

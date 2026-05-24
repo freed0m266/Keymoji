@@ -1,8 +1,8 @@
-# Future — Favorite emojis editor
+# 18 — Favorite emojis editor
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** M · **Dopad:** Medium
+**Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
 ## Souhrn
 

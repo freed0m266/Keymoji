@@ -30,22 +30,26 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 14. [14 — Stejná šířka kláves v ASDF řádku](14-equal-letter-key-widths.md)
 15. [15 — Symbol page parity se SwiftKey (dvě stránky, stejná výška)](15-symbol-page-parity.md)
 
-## Future (po v1.0)
+## v1.1 — Uživatelská přání z původního prompt seznamu
 
-Stuby, plně se vypíší až přijde čas.
+16. [16 — User override pro light/dark mode](16-light-dark-override.md)
+17. [17 — Quick emoji key + system emoji picker](17-emoji-key.md)
+18. [18 — Favorite emojis editor](18-favorite-emojis.md)
+19. [19 — Slack-style emoji typing (`:smile:` → 😄)](19-slack-emoji-typing.md)
+20. [20 — Emoji codes reference screen](20-emoji-codes-reference.md)
 
-- [future — User override pro light/dark mode](future-light-dark-override.md)
-- [future — Cross-process settings observation (Darwin notifications)](future-cross-proc-settings-observation.md)
-- [future — Trackpad mode (long-press space)](future-trackpad-on-space.md)
-- [future — Quick emoji key + system emoji picker](future-emoji-key.md)
-- [future — Favorite emojis editor](future-favorite-emojis.md)
-- [future — Slack-style emoji typing (`:smile:` → 😄)](future-slack-emoji-typing.md)
-- [future — Emoji codes reference screen](future-emoji-codes-reference.md)
-- [future — Real app icon (před App Store releasem)](future-app-icon.md)
-- [future — Delete word-by-word (long hold)](future-delete-word-by-word.md)
-- [future — Key preview popup (Apple-style bublina nad prstem)](future-key-preview-popup.md)
-- [future — Sound feedback toggle (`playInputClick()`)](future-sound-feedback.md)
-- [future — Top-row long-press popover clipping](future-popover-top-row-clipping.md)
+## v1.1 — Bugfixes & polish odložené z v1.0
+
+21. [21 — Top-row long-press popover clipping](21-popover-top-row-clipping.md)
+22. [22 — Cross-process settings observation (Darwin notifications)](22-cross-proc-settings-observation.md)
+23. [23 — Trackpad mode (long-press space)](23-trackpad-on-space.md)
+24. [24 — Delete word-by-word (long hold)](24-delete-word-by-word.md)
+25. [25 — Key preview popup (Apple-style bublina nad prstem)](25-key-preview-popup.md)
+26. [26 — Sound feedback toggle (`playInputClick()`)](26-sound-feedback.md)
+
+## Pre-App-Store
+
+27. [27 — Real app icon](27-app-icon.md)
 
 ## Mimo scope úplně
 

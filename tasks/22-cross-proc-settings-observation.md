@@ -1,8 +1,8 @@
-# Future — Cross-process settings observation (Darwin notifications)
+# 22 — Cross-process settings observation (Darwin notifications)
 
-**Status:** Stub
+**Status:** Todo
 
-**Priorita:** v1.1+ · **Úsilí:** S · **Dopad:** Low (UX polish)
+**Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Low (UX polish)
 
 ## Souhrn
 
