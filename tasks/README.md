@@ -44,6 +44,7 @@ Stuby, plně se vypíší až přijde čas.
 - [future — Delete word-by-word (long hold)](future-delete-word-by-word.md)
 - [future — Key preview popup (Apple-style bublina nad prstem)](future-key-preview-popup.md)
 - [future — Sound feedback toggle (`playInputClick()`)](future-sound-feedback.md)
+- [future — Top-row long-press popover clipping](future-popover-top-row-clipping.md)
 
 ## Mimo scope úplně
 
