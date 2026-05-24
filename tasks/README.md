@@ -28,6 +28,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## v1.0 — Visual polish
 
 14. [14 — Stejná šířka kláves v ASDF řádku](14-equal-letter-key-widths.md)
+15. [15 — Symbol page parity se SwiftKey (dvě stránky, stejná výška)](15-symbol-page-parity.md)
 
 ## Future (po v1.0)
 
