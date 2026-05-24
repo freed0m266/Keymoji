@@ -300,7 +300,7 @@ public enum LayoutBuilder {
 private extension String {
 	/// POSIX-locale uppercase to avoid Turkish-style `i → İ` for non-Turkish targets.
 	func posixUppercased() -> String {
-		self.uppercased(with: Locale(identifier: "en_US_POSIX"))
+		uppercased(with: Locale(identifier: "en_US_POSIX"))
 	}
 }
 
