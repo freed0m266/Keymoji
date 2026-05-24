@@ -75,17 +75,17 @@ final class ShiftStateMachineTests: XCTestCase {
 
 	func testPageSwitched_resetsLastShiftTapAt() {
 		let state = ShiftStateMachine.State(page: .letters(.upper), lastShiftTapAt: baseDate)
-		let next = ShiftStateMachine.reduce(state, .pageSwitched(to: .symbols))
-		XCTAssertEqual(next.page, .symbols)
+		let next = ShiftStateMachine.reduce(state, .pageSwitched(to: .symbols(.primary)))
+		XCTAssertEqual(next.page, .symbols(.primary))
 		XCTAssertNil(next.lastShiftTapAt)
 	}
 
 	// MARK: - Symbols page shift is no-op
 
 	func testSymbols_shiftTapped_doesNothing() {
-		let state = ShiftStateMachine.State(page: .symbols, lastShiftTapAt: nil)
+		let state = ShiftStateMachine.State(page: .symbols(.primary), lastShiftTapAt: nil)
 		let next = ShiftStateMachine.reduce(state, .shiftTapped(at: baseDate))
-		XCTAssertEqual(next.page, .symbols)
+		XCTAssertEqual(next.page, .symbols(.primary))
 		XCTAssertNil(next.lastShiftTapAt) // unchanged, since we didn't act
 	}
 
@@ -100,8 +100,8 @@ final class ShiftStateMachineTests: XCTestCase {
 
 	func testApply_pageSwitch_clearsShiftHistory() {
 		var state = KeyboardState(page: .letters(.upper), lastShiftTapAt: baseDate)
-		ShiftStateMachine.apply(.pageSwitched(to: .symbols), to: &state)
-		XCTAssertEqual(state.page, .symbols)
+		ShiftStateMachine.apply(.pageSwitched(to: .symbols(.primary)), to: &state)
+		XCTAssertEqual(state.page, .symbols(.primary))
 		XCTAssertNil(state.lastShiftTapAt)
 	}
 

@@ -82,22 +82,28 @@ final class InputDispatcherTests: XCTestCase {
 	}
 
 	func testShift_onSymbolsPage_isNoOp() {
-		var state = KeyboardState(page: .symbols)
+		var state = KeyboardState(page: .symbols(.primary))
 		dispatch(makeKey(.shift), &state)
-		XCTAssertEqual(state.page, .symbols)
+		XCTAssertEqual(state.page, .symbols(.primary))
 	}
 
 	// MARK: - Page switching
 
-	func testSwitchPage_toSymbols() {
+	func testSwitchPage_toSymbolsPrimary() {
 		var state = KeyboardState(page: .letters(.lower))
-		dispatch(makeKey(.switchPage(.symbols)), &state)
-		XCTAssertEqual(state.page, .symbols)
+		dispatch(makeKey(.switchPage(.symbols(.primary))), &state)
+		XCTAssertEqual(state.page, .symbols(.primary))
+	}
+
+	func testSwitchPage_toSymbolsAlternate() {
+		var state = KeyboardState(page: .symbols(.primary))
+		dispatch(makeKey(.switchPage(.symbols(.alternate))), &state)
+		XCTAssertEqual(state.page, .symbols(.alternate))
 	}
 
 	func testSwitchPage_resetsSpaceTracking() {
 		var state = KeyboardState(lastInsertWasSpace: true, lastSpaceInsertedAt: Date())
-		dispatch(makeKey(.switchPage(.symbols)), &state)
+		dispatch(makeKey(.switchPage(.symbols(.primary))), &state)
 		XCTAssertFalse(state.lastInsertWasSpace)
 		XCTAssertNil(state.lastSpaceInsertedAt)
 	}

@@ -15,14 +15,32 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(layout.rows.count, 4)
 	}
 
-	func testSymbols_withNumberRow_hasFourRows() {
-		let layout = LayoutBuilder.layout(page: .symbols, showNumberRow: true, returnKeyType: .default)
+	func testSymbolsPrimary_withNumberRow_hasFiveRows() {
+		let layout = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
+		XCTAssertEqual(layout.rows.count, 5)
+	}
+
+	func testSymbolsPrimary_withoutNumberRow_hasFourRows() {
+		let layout = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: false, returnKeyType: .default)
 		XCTAssertEqual(layout.rows.count, 4)
 	}
 
-	func testSymbols_withoutNumberRow_hasThreeRows() {
-		let layout = LayoutBuilder.layout(page: .symbols, showNumberRow: false, returnKeyType: .default)
-		XCTAssertEqual(layout.rows.count, 3)
+	func testSymbolsAlternate_withNumberRow_hasFiveRows() {
+		let layout = LayoutBuilder.layout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
+		XCTAssertEqual(layout.rows.count, 5)
+	}
+
+	/// Explicit invariant from task 15 — the visual height of the keyboard must not change when
+	/// the user switches between letters and either symbol page. Any future refactor that
+	/// introduces an asymmetry should fail this test.
+	func testLayoutHeight_lettersAndSymbolsHaveEqualRowCount() {
+		for showNumber in [true, false] {
+			let letters = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: showNumber, returnKeyType: .default).rows.count
+			let primary = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: showNumber, returnKeyType: .default).rows.count
+			let alternate = LayoutBuilder.layout(page: .symbols(.alternate), showNumberRow: showNumber, returnKeyType: .default).rows.count
+			XCTAssertEqual(letters, primary, "letters and primary symbols rows mismatch (numberRow=\(showNumber))")
+			XCTAssertEqual(letters, alternate, "letters and alternate symbols rows mismatch (numberRow=\(showNumber))")
+		}
 	}
 
 	// MARK: - Number row
@@ -150,11 +168,19 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(aKey.alternates.count, 8)
 	}
 
-	// MARK: - Symbols page
+	// MARK: - Symbols page primary
 
-	func testSymbolsRow2_hasExpectedCharacters() {
-		let layout = LayoutBuilder.layout(page: .symbols, showNumberRow: true, returnKeyType: .default)
-		let row = layout.rows.first { $0.id == "symbols.row2" }!
+	func testSymbolsPrimary_rowA_hasBracketsAndMath() {
+		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary))
+		let chars = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="])
+	}
+
+	func testSymbolsPrimary_rowB_hasPunctuation() {
+		let row = symbolRow(at: "symbols.primary.rowB", page: .symbols(.primary))
 		let chars = row.keys.compactMap { key -> String? in
 			if case .text(let t) = key.primary { return t }
 			return nil
@@ -162,16 +188,43 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(chars, ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""])
 	}
 
-	func testSymbolsRow3_hasABCTogglePunctuationDelete() {
-		let layout = LayoutBuilder.layout(page: .symbols, showNumberRow: true, returnKeyType: .default)
-		let row = layout.rows.first { $0.id == "symbols.row3" }!
-		XCTAssertEqual(row.keys.first?.action, .switchPage(.letters(.lower)))
+	func testSymbolsPrimary_rowC_hasAltTogglePunctAndDelete() {
+		let row = symbolRow(at: "symbols.primary.rowC", page: .symbols(.primary))
+		XCTAssertEqual(row.keys.first?.primary, .text("#+="))
+		XCTAssertEqual(row.keys.first?.action, .switchPage(.symbols(.alternate)))
 		XCTAssertEqual(row.keys.last?.action, .backspace)
 		let middle = row.keys.dropFirst().dropLast().compactMap { key -> String? in
 			if case .text(let t) = key.primary { return t }
 			return nil
 		}
 		XCTAssertEqual(middle, [".", ",", "?", "!", "'"])
+	}
+
+	// MARK: - Symbols page alternate
+
+	func testSymbolsAlternate_rowA_hasUnderscoresPipesAndCurrency() {
+		let row = symbolRow(at: "symbols.alternate.rowA", page: .symbols(.alternate))
+		let chars = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "·"])
+	}
+
+	func testSymbolsAlternate_rowB_hasLegalAndTypography() {
+		let row = symbolRow(at: "symbols.alternate.rowB", page: .symbols(.alternate))
+		let chars = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["°", "§", "¶", "©", "®", "™", "–", "—", "•", "…"])
+	}
+
+	func testSymbolsAlternate_rowC_hasPrimaryToggleAndDelete() {
+		let row = symbolRow(at: "symbols.alternate.rowC", page: .symbols(.alternate))
+		XCTAssertEqual(row.keys.first?.primary, .text("123"))
+		XCTAssertEqual(row.keys.first?.action, .switchPage(.symbols(.primary)))
+		XCTAssertEqual(row.keys.last?.action, .backspace)
 	}
 
 	// MARK: - Bottom row
@@ -184,7 +237,7 @@ final class LayoutBuilderTests: XCTestCase {
 
 		let toggle = row.keys[0]
 		XCTAssertEqual(toggle.primary, .text("123"))
-		XCTAssertEqual(toggle.action, .switchPage(.symbols))
+		XCTAssertEqual(toggle.action, .switchPage(.symbols(.primary)))
 
 		XCTAssertEqual(row.keys[1].action, .nextKeyboard)
 		XCTAssertEqual(row.keys[2].action, .space)
@@ -192,8 +245,15 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(row.keys[4].action, .return)
 	}
 
-	func testBottomRow_onSymbolsPage_hasABCToggle() {
-		let layout = LayoutBuilder.layout(page: .symbols, showNumberRow: true, returnKeyType: .default)
+	func testBottomRow_onSymbolsPrimary_hasABCToggle() {
+		let layout = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
+		let row = layout.rows.last!
+		XCTAssertEqual(row.keys[0].primary, .text("ABC"))
+		XCTAssertEqual(row.keys[0].action, .switchPage(.letters(.lower)))
+	}
+
+	func testBottomRow_onSymbolsAlternate_hasABCToggle() {
+		let layout = LayoutBuilder.layout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
 		let row = layout.rows.last!
 		XCTAssertEqual(row.keys[0].primary, .text("ABC"))
 		XCTAssertEqual(row.keys[0].action, .switchPage(.letters(.lower)))
@@ -214,7 +274,13 @@ final class LayoutBuilderTests: XCTestCase {
 
 	func testLayout_differsByPage() {
 		let a = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
-		let b = LayoutBuilder.layout(page: .symbols, showNumberRow: true, returnKeyType: .default)
+		let b = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
+		XCTAssertNotEqual(a, b)
+	}
+
+	func testLayout_primaryAndAlternateSymbolPages_differ() {
+		let a = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
+		let b = LayoutBuilder.layout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
 		XCTAssertNotEqual(a, b)
 	}
 
@@ -235,9 +301,23 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertNil(row.referenceWeight)
 	}
 
+	func testSymbolsRowC_hasReferenceWeight10_onBothPages() {
+		let primaryRow = symbolRow(at: "symbols.primary.rowC", page: .symbols(.primary))
+		let alternateRow = symbolRow(at: "symbols.alternate.rowC", page: .symbols(.alternate))
+		// Row C is 1.5 + 5*1 + 1.5 = 8 weight units. The reference brings per-key width back into
+		// alignment with rows A and B (which both naturally sum to 10).
+		XCTAssertEqual(primaryRow.referenceWeight, 10)
+		XCTAssertEqual(alternateRow.referenceWeight, 10)
+	}
+
 	// MARK: - Helpers
 
 	private func letterRow(at id: String, page: KeyboardPage) -> KeyboardRow {
+		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default)
+		return layout.rows.first { $0.id == id }!
+	}
+
+	private func symbolRow(at id: String, page: KeyboardPage) -> KeyboardRow {
 		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default)
 		return layout.rows.first { $0.id == id }!
 	}

@@ -1,10 +1,10 @@
 import Foundation
 
 /// Top-level keyboard page state. `letters(_:)` carries the current shift state;
-/// `symbols` is the punctuation/symbols page reached via the 123 toggle.
+/// `symbols(_:)` carries which of the two symbol sub-pages is showing.
 public enum KeyboardPage: Sendable, Equatable {
 	case letters(ShiftState)
-	case symbols
+	case symbols(SymbolPage)
 }
 
 public enum ShiftState: Sendable, Equatable {
@@ -13,4 +13,12 @@ public enum ShiftState: Sendable, Equatable {
 	case upper
 	/// Sticky uppercase — stays until explicitly disabled (double-tap shift, or tap shift while in caps).
 	case capsLock
+}
+
+/// Which of the two symbol pages is showing. Mirrors Apple's stock `123` / `#+=` pattern:
+/// the `[#+=]` toggle on the primary page goes to `.alternate`, the `[123]` toggle on the
+/// alternate page goes back to `.primary`.
+public enum SymbolPage: Sendable, Equatable {
+	case primary
+	case alternate
 }

@@ -1,6 +1,6 @@
 # 15 — Symbol page parity se SwiftKey (dvě stránky, stejná výška jako letters)
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** M · **Dopad:** High (UX parita se SwiftKey)
 

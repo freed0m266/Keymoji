@@ -80,9 +80,17 @@ public struct KeyboardView: View {
 	.preferredColorScheme(.dark)
 }
 
-#Preview("Symbols / Dark") {
+#Preview("Symbols Primary / Dark") {
 	KeyboardView(
-		layout: KeyboardCore.makeLayout(page: .symbols, showNumberRow: true, returnKeyType: .default),
+		layout: KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default),
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Symbols Alternate / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default),
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.dark)

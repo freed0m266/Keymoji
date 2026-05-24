@@ -35,12 +35,28 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	// MARK: - Symbols
 
-	func testSymbols_withNumberRow() {
-		let layout = KeyboardCore.makeLayout(page: .symbols, showNumberRow: true, returnKeyType: .default)
+	func testSymbolsPrimary_withNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
+
+	func testSymbolsAlternate_withNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(layout: layout, onKey: { _ in })
+
+		assertKeyboardSnapshot(view, colorScheme: .dark)
+		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
+
+	func testSymbolsPrimary_withoutNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: false, returnKeyType: .default)
+		let view = KeyboardView(layout: layout, onKey: { _ in })
+
+		let size = CGSize(width: 393, height: 216)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
 	}
 
 	// MARK: - Without number row

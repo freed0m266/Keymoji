@@ -54,7 +54,7 @@ final class HapticDispatchTests: XCTestCase {
 
 	func testSwitchPage_doesNotTriggerHaptic() {
 		var state = KeyboardState()
-		dispatch(systemKey(.switchPage(.symbols)), &state)
+		dispatch(systemKey(.switchPage(.symbols(.primary))), &state)
 		XCTAssertEqual(haptics.keyTapCount, 0)
 	}
 

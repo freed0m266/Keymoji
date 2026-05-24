@@ -18,8 +18,8 @@ public enum LayoutBuilder {
 		switch page {
 		case .letters(let shift):
 			rows.append(contentsOf: makeLetterRows(shift: shift))
-		case .symbols:
-			rows.append(contentsOf: makeSymbolRows())
+		case .symbols(let symbolPage):
+			rows.append(contentsOf: makeSymbolRows(symbolPage))
 		}
 
 		rows.append(makeBottomRow(page: page))
@@ -124,28 +124,69 @@ public enum LayoutBuilder {
 
 	// MARK: - Symbols
 
-	private static let symbolRow2: [String] = ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]
-	private static let symbolRow3: [String] = [".", ",", "?", "!", "'"]
+	/// Symbols page primary content (matches SwiftKey/Apple parity):
+	///   Row A: bracket / math operator row — `[ ] { } # % ^ * + =`
+	///   Row B: punctuation / common symbols — `- / : ; ( ) $ & @ "`
+	///   Row C: `[#+=]` toggle + .,?!' + delete (8 visual slots, weight-balanced to 10)
+	private static let symbolsPrimaryRowA: [String] = ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="]
+	private static let symbolsPrimaryRowB: [String] = ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]
 
-	private static func makeSymbolRows() -> [KeyboardRow] {
-		let row2 = KeyboardRow(
-			id: "symbols.row2",
-			keys: symbolRow2.map(makeSymbolKey)
+	/// Symbols page alternate (`#+=`) content:
+	///   Row A: underscore / pipes / comparisons / currency — `_ \ | ~ < > € £ ¥ ·`
+	///   Row B: legal & typographic punctuation — `° § ¶ © ® ™ – — • …`
+	///   Row C: `[123]` toggle + .,?!' + delete
+	private static let symbolsAlternateRowA: [String] = ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "·"]
+	private static let symbolsAlternateRowB: [String] = ["°", "§", "¶", "©", "®", "™", "–", "—", "•", "…"]
+
+	/// Punctuation row C (shared between primary and alternate).
+	private static let symbolsRowCPunctuation: [String] = [".", ",", "?", "!", "'"]
+
+	private static func makeSymbolRows(_ page: SymbolPage) -> [KeyboardRow] {
+		let (rowAContent, rowBContent, rowCToggle) = symbolPageContent(page)
+
+		let rowA = KeyboardRow(
+			id: "symbols.\(page.id).rowA",
+			keys: rowAContent.map(makeSymbolKey)
 		)
-		let abcToggle = Key(
-			id: "symbols.row3.toggleABC",
-			primary: .text("ABC"),
-			alternates: [],
-			action: .switchPage(.letters(.lower)),
-			visualWeight: .wide,
-			role: .system
+		let rowB = KeyboardRow(
+			id: "symbols.\(page.id).rowB",
+			keys: rowBContent.map(makeSymbolKey)
 		)
-		let row3Symbols = symbolRow3.map(makeSymbolKey)
-		let row3 = KeyboardRow(
-			id: "symbols.row3",
-			keys: [abcToggle] + row3Symbols + [makeDeleteKey()]
+		let rowCPunctuation = symbolsRowCPunctuation.map(makeSymbolKey)
+		// Row C totals 1.5 (toggle) + 5×1.0 (punctuation) + 1.5 (delete) = 8 weight units.
+		// `referenceWeight: 10` keeps the per-key width aligned with rows A and B (which both have 10).
+		let rowC = KeyboardRow(
+			id: "symbols.\(page.id).rowC",
+			keys: [rowCToggle] + rowCPunctuation + [makeDeleteKey()],
+			referenceWeight: 10
 		)
-		return [row2, row3]
+		return [rowA, rowB, rowC]
+	}
+
+	private static func symbolPageContent(_ page: SymbolPage) -> (rowA: [String], rowB: [String], rowCToggle: Key) {
+		switch page {
+		case .primary:
+			let toggle = Key(
+				id: "symbols.row3.toggleAlt",
+				primary: .text("#+="),
+				alternates: [],
+				action: .switchPage(.symbols(.alternate)),
+				visualWeight: .wide,
+				role: .system
+			)
+			return (symbolsPrimaryRowA, symbolsPrimaryRowB, toggle)
+
+		case .alternate:
+			let toggle = Key(
+				id: "symbols.row3.togglePrimary",
+				primary: .text("123"),
+				alternates: [],
+				action: .switchPage(.symbols(.primary)),
+				visualWeight: .wide,
+				role: .system
+			)
+			return (symbolsAlternateRowA, symbolsAlternateRowB, toggle)
+		}
 	}
 
 	private static func makeSymbolKey(_ symbol: String) -> Key {
@@ -199,11 +240,13 @@ public enum LayoutBuilder {
 				id: "bottom.pageToggle",
 				primary: .text("123"),
 				alternates: [],
-				action: .switchPage(.symbols),
+				action: .switchPage(.symbols(.primary)),
 				visualWeight: .small,
 				role: .system
 			)
 		case .symbols:
+			// Both symbol pages route back to letters from the bottom row — the in-row `[#+=]` /
+			// `[123]` toggle is what hops between the two symbol pages.
 			toggle = Key(
 				id: "bottom.pageToggle",
 				primary: .text("ABC"),
@@ -258,5 +301,15 @@ private extension String {
 	/// POSIX-locale uppercase to avoid Turkish-style `i → İ` for non-Turkish targets.
 	func posixUppercased() -> String {
 		self.uppercased(with: Locale(identifier: "en_US_POSIX"))
+	}
+}
+
+private extension SymbolPage {
+	/// Slug used inside row IDs so SwiftUI can tell primary and alternate rows apart.
+	var id: String {
+		switch self {
+		case .primary:    return "primary"
+		case .alternate:  return "alternate"
+		}
 	}
 }
