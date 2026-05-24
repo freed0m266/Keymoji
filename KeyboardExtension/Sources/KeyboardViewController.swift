@@ -1,5 +1,6 @@
 import UIKit
 import SwiftUI
+import KeyboCore
 import KeyboardCore
 import KeyboardUI
 
@@ -13,15 +14,10 @@ final class KeyboardViewController: UIInputViewController {
 	private var state = KeyboardState()
 	private var hostingController: UIHostingController<KeyboardRoot>?
 	private lazy var proxyAdapter = TextProxyAdapter(textDocumentProxy)
+	private let store = AppGroupStore.shared
 	private lazy var haptics: any HapticFeedbackProviding = UIKitHaptics(isEnabled: { [weak self] in
-		// Task 10 wires this to AppGroupStore.hapticFeedbackEnabled. For now: always on.
-		self?.isHapticEnabled() ?? true
+		self?.store.hapticFeedbackEnabled ?? true
 	})
-
-	private func isHapticEnabled() -> Bool {
-		// Placeholder — task 10 reads from AppGroupStore.
-		true
-	}
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -30,7 +26,18 @@ final class KeyboardViewController: UIInputViewController {
 
 	override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
+		refreshFromStore()
 		refreshReturnKeyType()
+	}
+
+	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
+	/// v1.0 has no live observation — settings changes from the host take effect next time the keyboard appears.
+	private func refreshFromStore() {
+		let showRow = store.showNumberRow
+		if state.showNumberRow != showRow {
+			state.showNumberRow = showRow
+			rebuild()
+		}
 	}
 
 	override func textWillChange(_ textInput: UITextInput?) {}

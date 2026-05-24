@@ -30,6 +30,7 @@ let project = Project(
 	targets: [
 		app,
 		core,
+		coreTests,
 		design,
 		resources,
 		testing,

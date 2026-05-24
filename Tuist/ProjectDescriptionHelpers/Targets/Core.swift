@@ -15,3 +15,15 @@ public let core: Target = .target(
 		.external(name: "SwiftyBeaver")
 	]
 )
+
+public let coreTests: Target = .target(
+	name: "\(targetName)_Tests",
+	destinations: [.iPhone],
+	product: .unitTests,
+	bundleId: "\(appBundleId).core.tests",
+	sources: "\(targetName)/Tests/**",
+	dependencies: [
+		.target(name: targetName),
+		.target(name: testing.name)
+	]
+)
