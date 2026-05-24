@@ -28,6 +28,7 @@ final class KeyboardViewController: UIInputViewController {
 
 	override func textDidChange(_ textInput: UITextInput?) {
 		refreshReturnKeyType()
+		refreshAutoCapitalization()
 	}
 
 	// MARK: - Hosting
@@ -67,6 +68,10 @@ final class KeyboardViewController: UIInputViewController {
 			proxy: proxyAdapter,
 			controller: self
 		)
+		// `textDidChange` covers character/space/return/backspace, but page-switches
+		// don't trigger it — re-evaluate here so an auto-cap pending from `? ` on the
+		// symbols page promotes the letters page after ABC toggle.
+		refreshAutoCapitalization()
 		rebuild()
 	}
 
@@ -76,6 +81,29 @@ final class KeyboardViewController: UIInputViewController {
 		if state.returnKeyType != newType {
 			state.returnKeyType = newType
 			rebuild()
+		}
+	}
+
+	private func refreshAutoCapitalization() {
+		let rawType = textDocumentProxy.autocapitalizationType ?? .sentences
+		let autoCapType = AutocapitalizationTypeMapping.map(rawType)
+		let shouldCap = AutoCapitalizer.shouldCapitalize(
+			documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
+			autocapitalizationType: autoCapType
+		)
+
+		if shouldCap {
+			if case .letters(.lower) = state.page {
+				state.page = .letters(.upper)
+				state.autoCapitalized = true
+				rebuild()
+			}
+		} else if state.autoCapitalized {
+			state.autoCapitalized = false
+			if case .letters(.upper) = state.page {
+				state.page = .letters(.lower)
+				rebuild()
+			}
 		}
 	}
 }

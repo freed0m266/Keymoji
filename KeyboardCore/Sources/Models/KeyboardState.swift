@@ -18,13 +18,18 @@ public struct KeyboardState: Sendable, Equatable {
 	/// When shift was last tapped. Used by `ShiftStateMachine` to detect double-tap → caps lock.
 	public var lastShiftTapAt: Date?
 
+	/// True when the current `letters(.upper)` page was driven by auto-cap detection (not a manual shift tap).
+	/// Lets us cleanly revert the auto-promotion if the context changes (e.g., user deletes the period).
+	public var autoCapitalized: Bool
+
 	public init(
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
 		showNumberRow: Bool = true,
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
-		lastShiftTapAt: Date? = nil
+		lastShiftTapAt: Date? = nil,
+		autoCapitalized: Bool = false
 	) {
 		self.page = page
 		self.returnKeyType = returnKeyType
@@ -32,5 +37,6 @@ public struct KeyboardState: Sendable, Equatable {
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt
 		self.lastShiftTapAt = lastShiftTapAt
+		self.autoCapitalized = autoCapitalized
 	}
 }
