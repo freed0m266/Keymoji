@@ -15,6 +15,7 @@ struct KeyRowView: View {
 
 	var body: some View {
 		HStack(spacing: spacing) {
+			if insetWidth > 0 { Spacer().frame(width: insetWidth) }
 			ForEach(Array(row.keys.enumerated()), id: \.element.id) { index, key in
 				let keyWidth = width(for: key)
 				KeyView(
@@ -29,7 +30,23 @@ struct KeyRowView: View {
 				)
 				.frame(width: keyWidth)
 			}
+			if insetWidth > 0 { Spacer().frame(width: insetWidth) }
 		}
+	}
+
+	private var actualTotalWeight: Double {
+		row.keys.reduce(0) { $0 + $1.visualWeight.value }
+	}
+
+	/// Symmetric per-side inset for rows that declare a `referenceWeight` higher than their
+	/// summed key weights. Keeps per-key width equal to a fuller row's per-key width.
+	private var insetWidth: CGFloat {
+		guard let ref = row.referenceWeight, ref > actualTotalWeight else { return 0 }
+		let totalSpacing = spacing * CGFloat(max(0, row.keys.count - 1))
+		let effectiveAvailable = max(0, totalWidth - totalSpacing)
+		let unitWidth = effectiveAvailable / CGFloat(ref)
+		let missingWeight = ref - actualTotalWeight
+		return unitWidth * CGFloat(missingWeight) / 2.0
 	}
 
 	/// Anchor the popover so it never spills off-screen. We check whether the popover —
@@ -56,15 +73,10 @@ struct KeyRowView: View {
 		return .center
 	}
 
-	private var totalWeight: Double {
-		row.keys.reduce(0) { $0 + $1.visualWeight.value }
-	}
-
 	private func width(for key: Key) -> CGFloat {
-		let keyCount = Double(row.keys.count)
-		guard keyCount > 0, totalWeight > 0 else { return 0 }
-		let totalSpacing = spacing * CGFloat(max(0, keyCount - 1))
-		let available = max(0, totalWidth - totalSpacing)
-		return available * CGFloat(key.visualWeight.value / totalWeight)
+		guard !row.keys.isEmpty, actualTotalWeight > 0 else { return 0 }
+		let totalSpacing = spacing * CGFloat(max(0, row.keys.count - 1))
+		let available = max(0, totalWidth - totalSpacing - insetWidth * 2)
+		return available * CGFloat(key.visualWeight.value / actualTotalWeight)
 	}
 }

@@ -83,9 +83,12 @@ public enum LayoutBuilder {
 			id: "letters.row1",
 			keys: letterRow1.map { makeLetterKey($0, shift: shift) }
 		)
+		// Row 2 has 9 letters (asdf…l). To keep each key the same width as row 1's 10 keys,
+		// we reserve half-a-key of inset on each side via `referenceWeight: 10`.
 		let row2 = KeyboardRow(
 			id: "letters.row2",
-			keys: letterRow2.map { makeLetterKey($0, shift: shift) }
+			keys: letterRow2.map { makeLetterKey($0, shift: shift) },
+			referenceWeight: 10
 		)
 		let row3Letters = letterRow3Letters.map { makeLetterKey($0, shift: shift) }
 		let row3 = KeyboardRow(

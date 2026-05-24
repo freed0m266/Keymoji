@@ -218,6 +218,23 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertNotEqual(a, b)
 	}
 
+	// MARK: - Reference weight (ASDF row width parity)
+
+	func testLettersRow2_hasReferenceWeight10() {
+		let row = letterRow(at: "letters.row2", page: .letters(.lower))
+		XCTAssertEqual(row.referenceWeight, 10)
+	}
+
+	func testLettersRow1_hasNoReferenceWeight() {
+		let row = letterRow(at: "letters.row1", page: .letters(.lower))
+		XCTAssertNil(row.referenceWeight)
+	}
+
+	func testLettersRow3_hasNoReferenceWeight() {
+		let row = letterRow(at: "letters.row3", page: .letters(.lower))
+		XCTAssertNil(row.referenceWeight)
+	}
+
 	// MARK: - Helpers
 
 	private func letterRow(at id: String, page: KeyboardPage) -> KeyboardRow {
