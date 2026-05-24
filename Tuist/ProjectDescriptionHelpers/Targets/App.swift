@@ -22,6 +22,9 @@ public let app: Target = .target(
 	]),
 	sources: ["\(targetName)/Sources/**"],
 	resources: ["\(targetName)/Resources/**"],
+	entitlements: .dictionary([
+		"com.apple.security.application-groups": .array([.string(appGroupIdentifier)])
+	]),
 	scripts: [
 		.swiftlint,
 		.setVersions
@@ -30,7 +33,8 @@ public let app: Target = .target(
 		.target(core),
 		.target(design),
 		.target(example),
-		.target(resources)
+		.target(resources),
+		.target(name: keyboardExtension.name)
 	],
 	settings: .settings(
 		base: [

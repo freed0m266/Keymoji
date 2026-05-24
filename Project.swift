@@ -32,14 +32,19 @@ let project = Project(
 		core,
 		design,
 		resources,
-		testing
+		testing,
+		keyboardCore,
+		keyboardCoreTests,
+		keyboardUI,
+		keyboardUITests,
+		keyboardExtension
 	]
 	+ appTargets,
 	schemes: [
 		.scheme(
 			name: "Keybo",
 			buildAction: .buildAction(
-				targets: ["Keybo"]
+				targets: ["Keybo", "KeyboardExtension"]
 			),
 			runAction: .runAction(
 				executable: .executable("Keybo"),
