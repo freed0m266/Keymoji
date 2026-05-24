@@ -27,6 +27,7 @@ public let keyboardUITests: Target = .target(
 	sources: "\(targetName)/Tests/**",
 	dependencies: [
 		.target(name: targetName),
+		.target(name: keyboardCore.name),
 		.target(name: testing.name)
 	]
 )
