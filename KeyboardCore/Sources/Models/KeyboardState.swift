@@ -15,17 +15,22 @@ public struct KeyboardState: Sendable, Equatable {
 	/// insertion or after a period-substitution (to prevent triple-tap chaining).
 	public var lastSpaceInsertedAt: Date?
 
+	/// When shift was last tapped. Used by `ShiftStateMachine` to detect double-tap → caps lock.
+	public var lastShiftTapAt: Date?
+
 	public init(
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
 		showNumberRow: Bool = true,
 		lastInsertWasSpace: Bool = false,
-		lastSpaceInsertedAt: Date? = nil
+		lastSpaceInsertedAt: Date? = nil,
+		lastShiftTapAt: Date? = nil
 	) {
 		self.page = page
 		self.returnKeyType = returnKeyType
 		self.showNumberRow = showNumberRow
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt
+		self.lastShiftTapAt = lastShiftTapAt
 	}
 }

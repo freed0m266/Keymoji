@@ -21,13 +21,13 @@ public enum InputDispatcher {
 		case .insertText(let text):
 			let shifted = textWithShiftApplied(text, state: state)
 			proxy.insertText(shifted)
-			downshiftAfterCharacter(state: &state)
+			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: shifted, state: &state)
 
 		case .insertRawText(let text):
 			// Long-press alternates ship already-cased text; skip shift apply.
 			proxy.insertText(text)
-			downshiftAfterCharacter(state: &state)
+			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: text, state: &state)
 
 		case .backspace:
@@ -36,8 +36,7 @@ public enum InputDispatcher {
 			state.lastSpaceInsertedAt = nil
 
 		case .shift:
-			// Simple 1-tap toggle. Task 05 replaces this with the full state machine + caps lock.
-			toggleShiftSimple(state: &state)
+			ShiftStateMachine.apply(.shiftTapped(at: now()), to: &state)
 
 		case .space:
 			handleSpace(state: &state, proxy: proxy, now: now())
@@ -54,7 +53,7 @@ public enum InputDispatcher {
 			controller.dismissKeyboard()
 
 		case .switchPage(let newPage):
-			state.page = newPage
+			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
 		}
@@ -67,23 +66,6 @@ public enum InputDispatcher {
 		switch shift {
 		case .lower:              return text
 		case .upper, .capsLock:   return text.uppercased(with: Locale(identifier: "en_US_POSIX"))
-		}
-	}
-
-	private static func downshiftAfterCharacter(state: inout KeyboardState) {
-		// `.upper` is one-shot — return to `.lower` after a character.
-		// `.capsLock` stays sticky. `.symbols` doesn't carry shift.
-		if case .letters(.upper) = state.page {
-			state.page = .letters(.lower)
-		}
-	}
-
-	private static func toggleShiftSimple(state: inout KeyboardState) {
-		switch state.page {
-		case .letters(.lower):     state.page = .letters(.upper)
-		case .letters(.upper):     state.page = .letters(.lower)
-		case .letters(.capsLock):  state.page = .letters(.lower)
-		case .symbols:             break    // shift has no meaning on symbols page
 		}
 	}
 
