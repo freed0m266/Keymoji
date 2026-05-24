@@ -7,6 +7,8 @@ import KeyboardUI
 struct KeyboardRoot: View {
 	let state: KeyboardState
 	let dispatch: (Key) -> Void
+	let onPopoverEntry: () -> Void
+	let onHighlightChanged: () -> Void
 
 	var body: some View {
 		let layout = KeyboardCore.makeLayout(
@@ -14,6 +16,11 @@ struct KeyboardRoot: View {
 			showNumberRow: state.showNumberRow,
 			returnKeyType: state.returnKeyType
 		)
-		KeyboardView(layout: layout, onKey: dispatch)
+		KeyboardView(
+			layout: layout,
+			onKey: dispatch,
+			onPopoverEntry: onPopoverEntry,
+			onHighlightChanged: onHighlightChanged
+		)
 	}
 }

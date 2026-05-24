@@ -15,6 +15,7 @@ public enum InputDispatcher {
 		state: inout KeyboardState,
 		proxy: any TextDocumentProxying,
 		controller: any KeyboardControlling,
+		haptics: any HapticFeedbackProviding = NoopHaptics(),
 		now: () -> Date = Date.init
 	) {
 		switch key.action {
@@ -23,36 +24,44 @@ public enum InputDispatcher {
 			proxy.insertText(shifted)
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: shifted, state: &state)
+			haptics.keyTap()
 
 		case .insertRawText(let text):
 			// Long-press alternates ship already-cased text; skip shift apply.
 			proxy.insertText(text)
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: text, state: &state)
+			haptics.keyTap()
 
 		case .backspace:
 			proxy.deleteBackward()
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			haptics.keyTap()
 
 		case .shift:
+			// No haptic for shift — matches Apple convention for "system" controls.
 			ShiftStateMachine.apply(.shiftTapped(at: now()), to: &state)
 
 		case .space:
 			handleSpace(state: &state, proxy: proxy, now: now())
+			haptics.keyTap()
 
 		case .return:
 			proxy.insertText("\n")
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			haptics.keyTap()
 
 		case .nextKeyboard:
+			// No haptic — switching keyboards is a system action.
 			controller.advanceToNextInputMode()
 
 		case .dismissKeyboard:
 			controller.dismissKeyboard()
 
 		case .switchPage(let newPage):
+			// No haptic — page toggle is a navigation, not character entry.
 			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil

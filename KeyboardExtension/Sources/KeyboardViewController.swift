@@ -13,6 +13,15 @@ final class KeyboardViewController: UIInputViewController {
 	private var state = KeyboardState()
 	private var hostingController: UIHostingController<KeyboardRoot>?
 	private lazy var proxyAdapter = TextProxyAdapter(textDocumentProxy)
+	private lazy var haptics: any HapticFeedbackProviding = UIKitHaptics(isEnabled: { [weak self] in
+		// Task 10 wires this to AppGroupStore.hapticFeedbackEnabled. For now: always on.
+		self?.isHapticEnabled() ?? true
+	})
+
+	private func isHapticEnabled() -> Bool {
+		// Placeholder — task 10 reads from AppGroupStore.
+		true
+	}
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -34,9 +43,12 @@ final class KeyboardViewController: UIInputViewController {
 	// MARK: - Hosting
 
 	private func installHostingController() {
-		let root = KeyboardRoot(state: state, dispatch: { [weak self] key in
-			self?.handle(key)
-		})
+		let root = KeyboardRoot(
+			state: state,
+			dispatch: { [weak self] key in self?.handle(key) },
+			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
+			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
+		)
 		let host = UIHostingController(rootView: root)
 		host.view.translatesAutoresizingMaskIntoConstraints = false
 		host.view.backgroundColor = .clear
@@ -54,9 +66,12 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func rebuild() {
-		hostingController?.rootView = KeyboardRoot(state: state, dispatch: { [weak self] key in
-			self?.handle(key)
-		})
+		hostingController?.rootView = KeyboardRoot(
+			state: state,
+			dispatch: { [weak self] key in self?.handle(key) },
+			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
+			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
+		)
 	}
 
 	// MARK: - Input
@@ -66,7 +81,8 @@ final class KeyboardViewController: UIInputViewController {
 			key: key,
 			state: &state,
 			proxy: proxyAdapter,
-			controller: self
+			controller: self,
+			haptics: haptics
 		)
 		// `textDidChange` covers character/space/return/backspace, but page-switches
 		// don't trigger it — re-evaluate here so an auto-cap pending from `? ` on the
