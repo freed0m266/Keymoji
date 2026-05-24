@@ -1,6 +1,6 @@
 # 02 — Layout model (KeyboardCore)
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** M · **Dopad:** Blokující
 

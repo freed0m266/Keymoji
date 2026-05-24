@@ -1,6 +1,6 @@
 # 10 — `AppGroupStore` + cross-process settings
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** M · **Dopad:** High
 

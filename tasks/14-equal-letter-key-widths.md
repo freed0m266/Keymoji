@@ -1,6 +1,6 @@
 # 14 — Stejná šířka kláves v ASDF řádku
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** S · **Dopad:** High (vizuální parita se SwiftKey / Apple stock)
 

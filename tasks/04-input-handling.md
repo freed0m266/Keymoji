@@ -1,6 +1,6 @@
 # 04 — Input handling + adaptive return + double-tap space
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** M · **Dopad:** Blokující
 

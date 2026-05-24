@@ -1,6 +1,6 @@
 # 13 — About screen + privacy policy HTML
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** S · **Dopad:** Medium
 

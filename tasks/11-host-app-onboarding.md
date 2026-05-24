@@ -1,6 +1,6 @@
 # 11 — Host app onboarding (3-step flow)
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** L · **Dopad:** High
 

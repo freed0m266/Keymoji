@@ -1,6 +1,6 @@
 # 05 — Shift state machine + caps lock
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** S · **Dopad:** Medium
 

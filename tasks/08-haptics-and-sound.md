@@ -1,6 +1,6 @@
 # 08 — Haptika + key click sound
 
-**Status:** Todo
+**Status:** Done — 2026-05-24
 
 **Priorita:** v1.0 · **Úsilí:** S · **Dopad:** Medium
 
