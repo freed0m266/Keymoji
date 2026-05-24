@@ -114,10 +114,14 @@ final class KeyboardViewController: UIInputViewController {
 			proxy: proxyAdapter,
 			controller: self
 		)
-		// `textDidChange` covers character/space/return/backspace, but page-switches
-		// don't trigger it — re-evaluate here so an auto-cap pending from `? ` on the
-		// symbols page promotes the letters page after ABC toggle.
-		refreshAutoCapitalization()
+		// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
+		// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
+		// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the
+		// re-eval automatically. For `.shift` we must NOT re-evaluate: doing so would immediately
+		// override a manual lowercase override at sentence start (Instagram message field, etc.).
+		if case .switchPage = key.action {
+			refreshAutoCapitalization()
+		}
 		rebuild()
 	}
 
