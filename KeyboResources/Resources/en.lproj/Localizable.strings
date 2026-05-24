@@ -1,0 +1,9 @@
+"general.cancel" = "Cancel";
+"general.error" = "Error";
+"general.yes" = "Yes";
+"general.no" = "No";
+"general.ok" = "OK";
+"general.notAvailable" = "N/A";
+"general.title" = "Keybo";
+"error.defaultTitle" = "Error";
+"error.defaultMessage" = "Unexpected error has occurred. Please try again later.";

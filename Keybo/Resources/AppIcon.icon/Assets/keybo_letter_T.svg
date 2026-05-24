@@ -1,0 +1,6 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Horizontal bar -->
+  <rect x="130" y="155" width="252" height="44" rx="8" fill="#000000"/>
+  <!-- Vertical stem -->
+  <rect x="234" y="155" width="44" height="202" rx="8" fill="#000000"/>
+</svg>

@@ -1,0 +1,18 @@
+//
+//  AppDependency.swift
+//  KeyboCore
+//
+//  Created by Martin Svoboda on 26.04.2026.
+//  Copyright © 2026 Freedom Martin, s.r.o. All rights reserved.
+//
+
+import Foundation
+
+public final class AppDependency {
+
+	// MARK: - Services
+
+	let networkService: NetworkServicing = NetworkService()
+}
+
+public nonisolated(unsafe) let dependencies = AppDependency()
