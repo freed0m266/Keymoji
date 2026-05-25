@@ -1,6 +1,6 @@
 # 19 — Slack-style emoji typing (`:smile:` → 😄)
 
-**Status:** Todo
+**Status:** Done — 2026-05-25
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
