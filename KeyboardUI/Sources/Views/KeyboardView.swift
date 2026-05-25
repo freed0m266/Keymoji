@@ -11,7 +11,9 @@ public struct KeyboardView: View {
 	public let layout: KeyboardLayout
 	public let width: CGFloat
 	public let recentEmojis: [String]
+	public let favoriteEmojis: [String]
 	public let onKey: (Key) -> Void
+	public let onToggleFavoriteEmoji: (String) -> Void
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: () -> Void
 	public let onPopoverEntry: () -> Void
@@ -21,7 +23,9 @@ public struct KeyboardView: View {
 		layout: KeyboardLayout,
 		width: CGFloat,
 		recentEmojis: [String] = [],
+		favoriteEmojis: [String] = [],
 		onKey: @escaping (Key) -> Void,
+		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
@@ -30,7 +34,9 @@ public struct KeyboardView: View {
 		self.layout = layout
 		self.width = width
 		self.recentEmojis = recentEmojis
+		self.favoriteEmojis = favoriteEmojis
 		self.onKey = onKey
+		self.onToggleFavoriteEmoji = onToggleFavoriteEmoji
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
@@ -50,6 +56,7 @@ public struct KeyboardView: View {
 			if isEmojiKeyboard {
 				EmojiPanelView(
 					recents: recentEmojis,
+					favorites: favoriteEmojis,
 					onSelectEmoji: { emoji in
 						// Synthesize a transient `Key` for emoji insertion so it flows through the
 						// existing dispatch path. `role: .character` keeps `KeyView`-style feedback
@@ -64,6 +71,7 @@ public struct KeyboardView: View {
 						)
 						onKey(key)
 					},
+					onToggleFavorite: onToggleFavoriteEmoji,
 					onSwitchToLetters: {
 						let key = Key(
 							id: "emojiPanel.switchToLetters",
@@ -201,5 +209,16 @@ public struct KeyboardView: View {
 		onKey: { _ in }
 	)
 	.preferredColorScheme(.light)
+}
+
+#Preview("Emojis / with favorites / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .emojis, showNumberRow: true, returnKeyType: .default),
+		width: 393,
+		recentEmojis: ["😀", "👋"],
+		favoriteEmojis: ["❤️", "🚀", "🍕", "🐶"],
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
 }
 #endif

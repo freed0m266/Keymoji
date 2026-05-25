@@ -7,7 +7,9 @@ import KeyboardCore
 /// invokes `onSelectEmoji`, which the controller wires to text insertion + recents update.
 public struct EmojiPanelView: View {
 	let recents: [String]
+	let favorites: [String]
 	let onSelectEmoji: (String) -> Void
+	let onToggleFavorite: (String) -> Void
 	let onSwitchToLetters: () -> Void
 	let onDelete: () -> Void
 	let onKeyTapHaptic: () -> Void
@@ -17,20 +19,33 @@ public struct EmojiPanelView: View {
 
 	public init(
 		recents: [String],
+		favorites: [String] = [],
 		onSelectEmoji: @escaping (String) -> Void,
+		onToggleFavorite: @escaping (String) -> Void = { _ in },
 		onSwitchToLetters: @escaping () -> Void = {},
 		onDelete: @escaping () -> Void = {},
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {}
 	) {
 		self.recents = recents
+		self.favorites = favorites
 		self.onSelectEmoji = onSelectEmoji
+		self.onToggleFavorite = onToggleFavorite
 		self.onSwitchToLetters = onSwitchToLetters
 		self.onDelete = onDelete
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
-		// Open on Recents only when there's something to show — otherwise jump straight to smileys.
-		self._selectedCategory = State(initialValue: recents.isEmpty ? .smileys : .recents)
+		// Open priority: favorites > recents > smileys. The most personalized tab wins so
+		// returning users land on what they curated rather than the bundled catalog.
+		let initial: EmojiCategory
+		if !favorites.isEmpty {
+			initial = .favorites
+		} else if !recents.isEmpty {
+			initial = .recents
+		} else {
+			initial = .smileys
+		}
+		self._selectedCategory = State(initialValue: initial)
 	}
 
 	private static let glyphSize: CGFloat = 28
@@ -42,6 +57,7 @@ public struct EmojiPanelView: View {
 
 	private var visibleCategories: [EmojiCategory] {
 		var out: [EmojiCategory] = []
+		if !favorites.isEmpty { out.append(.favorites) }
 		if !recents.isEmpty { out.append(.recents) }
 		out.append(contentsOf: EmojiCatalog.staticCategories)
 		return out
@@ -49,6 +65,8 @@ public struct EmojiPanelView: View {
 
 	private var currentEmojis: [String] {
 		switch selectedCategory {
+		case .favorites:
+			favorites
 		case .recents:
 			recents
 		default:
@@ -64,7 +82,7 @@ public struct EmojiPanelView: View {
 		grid
 			.overlay(alignment: .bottom) {
 				categoryTabs
-					.padding(.top, 64)
+					.padding(.top, 52)
 					.background {
 						LinearGradient(
 							// TODO: Replace color
@@ -78,6 +96,14 @@ public struct EmojiPanelView: View {
 						)
 						.allowsHitTesting(false)
 					}
+			}
+			// Snap away from `.favorites`/`.recents` if the user empties the list while it's the
+			// active tab (e.g. long-presses to unfavorite the last entry). Without this the tab
+			// stays selected but its row is gone, leaving an unreachable empty grid.
+			.onChange(of: visibleCategories) { _, newValue in
+				if !newValue.contains(selectedCategory) {
+					selectedCategory = newValue.first ?? .smileys
+				}
 			}
 	}
 
@@ -130,6 +156,8 @@ public struct EmojiPanelView: View {
 
 	private func categoryTabIcon(_ category: EmojiCategory) -> some View {
 		switch category {
+		case .favorites:
+			Image(systemName: "star.fill")
 		case .recents:
 			Image(systemName: "clock")
 		case .smileys:
@@ -184,12 +212,19 @@ public struct EmojiPanelView: View {
 								onKeyTapHaptic()
 								onKeyClick()
 								onSelectEmoji(emoji)
+							},
+							onLongPress: {
+								// Long-press toggles favorite membership. Fire the popover-entry haptic
+								// to confirm the toggle landed without ambiguity vs. an ordinary tap.
+								onKeyTapHaptic()
+								onToggleFavorite(emoji)
 							}
 						)
 					}
 				}
 				.padding(.horizontal, 6)
 				.padding(.vertical, 2)
+				.padding(.bottom, 52)
 			}
 		}
 	}
@@ -212,6 +247,7 @@ private struct EmojiCell: View {
 	let glyphSize: CGFloat
 	let height: CGFloat
 	let onTap: () -> Void
+	let onLongPress: () -> Void
 
 	var body: some View {
 		Button(action: onTap) {
@@ -224,6 +260,9 @@ private struct EmojiCell: View {
 				.contentShape(Rectangle())
 		}
 		.buttonStyle(EmojiCellButtonStyle())
+		// SwiftUI cancels the Button's tap action when this long-press fires first, so the two
+		// gestures stay mutually exclusive: a quick tap inserts, a held finger toggles favorite.
+		.onLongPressGesture(minimumDuration: 0.45, perform: onLongPress)
 		.accessibilityElement()
 		.accessibilityLabel(emoji)
 		.accessibilityAddTraits(.isKeyboardKey)
@@ -257,5 +296,16 @@ private struct EmojiCellButtonStyle: ButtonStyle {
 	.frame(width: 393, height: 220)
 	.background(Color(.systemBackground))
 	.preferredColorScheme(.light)
+}
+
+#Preview("Emoji panel — with favorites / Dark") {
+	EmojiPanelView(
+		recents: ["😀", "👋", "🎉"],
+		favorites: ["❤️", "🚀", "🍕", "🐶"],
+		onSelectEmoji: { _ in }
+	)
+	.frame(width: 393, height: 220)
+	.background(Color(.systemBackground))
+	.preferredColorScheme(.dark)
 }
 #endif

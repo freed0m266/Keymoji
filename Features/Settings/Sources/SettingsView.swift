@@ -26,6 +26,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		NavigationStack {
 			Form {
 				keyboardSection
+				favoritesSection
 				supportSection
 				aboutSection
 			}
@@ -71,6 +72,18 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		case .system: return Texts.Keyboard.Appearance.system
 		case .light:  return Texts.Keyboard.Appearance.light
 		case .dark:   return Texts.Keyboard.Appearance.dark
+		}
+	}
+
+	private var favoritesSection: some View {
+		Section {
+			NavigationLink {
+				FavoritesEditorView(viewModel: favoritesEditorVM())
+			} label: {
+				Text(Texts.Favorites.row)
+			}
+		} footer: {
+			Text(Texts.Favorites.footer)
 		}
 	}
 
