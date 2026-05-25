@@ -43,4 +43,11 @@ final class UIKitHaptics: HapticFeedbackProviding {
 		guard isEnabled() else { return }
 		selectionGen.selectionChanged()
 	}
+
+	func trackpadModeEntered() {
+		guard isEnabled() else { return }
+		// Heavier than `keyTap` (light, 1.0 intensity vs. soft 0.7) so the entry feels distinct from
+		// the normal touch-down feedback. Apple's stock keyboard plays a similar "thunk" on entry.
+		softImpact.impactOccurred(intensity: 1.0)
+	}
 }

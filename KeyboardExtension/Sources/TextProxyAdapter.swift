@@ -26,4 +26,8 @@ final class TextProxyAdapter: TextDocumentProxying {
 	func deleteBackward() {
 		proxy.deleteBackward()
 	}
+
+	func adjustTextPosition(byCharacterOffset offset: Int) {
+		proxy.adjustTextPosition(byCharacterOffset: offset)
+	}
 }
