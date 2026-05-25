@@ -1,6 +1,8 @@
 # 20 — Emoji codes reference screen
 
-**Status:** Todo
+**Status:** Done — 2026-05-25
+
+**Status (history):** Todo
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Low
 
