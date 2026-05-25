@@ -12,6 +12,7 @@ public struct KeyboardView: View {
 	public let width: CGFloat
 	public let onKey: (Key) -> Void
 	public let onKeyTapHaptic: () -> Void
+	public let onKeyClick: () -> Void
 	public let onPopoverEntry: () -> Void
 	public let onHighlightChanged: () -> Void
 
@@ -20,6 +21,7 @@ public struct KeyboardView: View {
 		width: CGFloat,
 		onKey: @escaping (Key) -> Void,
 		onKeyTapHaptic: @escaping () -> Void = {},
+		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {}
 	) {
@@ -27,6 +29,7 @@ public struct KeyboardView: View {
 		self.width = width
 		self.onKey = onKey
 		self.onKeyTapHaptic = onKeyTapHaptic
+		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
 	}
@@ -45,6 +48,7 @@ public struct KeyboardView: View {
 					totalWidth: max(0, width - horizontalPadding * 2),
 					onKey: onKey,
 					onKeyTapHaptic: onKeyTapHaptic,
+					onKeyClick: onKeyClick,
 					onPopoverEntry: onPopoverEntry,
 					onHighlightChanged: onHighlightChanged
 				)

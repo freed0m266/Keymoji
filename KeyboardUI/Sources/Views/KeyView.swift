@@ -11,6 +11,7 @@ struct KeyView: View {
 	let popoverAlignment: HorizontalAlignment
 	let onTap: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
+	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 
@@ -41,6 +42,7 @@ struct KeyView: View {
 		popoverAlignment: HorizontalAlignment = .center,
 		onTap: @escaping (Key) -> Void,
 		onKeyTapHaptic: @escaping () -> Void = {},
+		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {}
 	) {
@@ -51,6 +53,7 @@ struct KeyView: View {
 		self.popoverAlignment = popoverAlignment
 		self.onTap = onTap
 		self.onKeyTapHaptic = onKeyTapHaptic
+		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
 	}
@@ -108,11 +111,12 @@ struct KeyView: View {
 		didCommitAlternate = false
 		didRepeatBackspace = false
 
-		// Fire the "key tap" haptic at touch-down (matches Apple/SwiftKey feel — feedback when the
-		// finger lands, not when it lifts). Excludes system controls (shift, page switch, globe)
-		// to avoid noisy double-haptics on non-character interactions.
-		if firesKeyTapHaptic {
+		// Fire the "key tap" haptic + click at touch-down (matches Apple/SwiftKey feel — feedback
+		// when the finger lands, not when it lifts). Excludes system controls (shift, page switch,
+		// globe) to avoid noisy double-feedback on non-character interactions.
+		if firesKeyTapFeedback {
 			onKeyTapHaptic()
+			onKeyClick()
 		}
 
 		if case .backspace = key.action {
@@ -123,8 +127,8 @@ struct KeyView: View {
 	}
 
 	/// True for keys whose primary action inserts text or directly mutates the document.
-	/// Mirrors Apple's convention of haptic-on-character-key but silent system controls.
-	private var firesKeyTapHaptic: Bool {
+	/// Mirrors Apple's convention of feedback-on-character-key but silent system controls.
+	private var firesKeyTapFeedback: Bool {
 		switch key.action {
 		case .insertText, .insertRawText, .backspace, .space, .return:
 			return true
@@ -155,7 +159,7 @@ struct KeyView: View {
 	/// Delete-on-hold: after the initial delay, fire the first repeat backspace, then keep
 	/// firing on the repeat interval until touch up. `Task.isCancelled` checks after each sleep
 	/// guarantee we don't fire one extra backspace past the user releasing the key.
-	/// A haptic accompanies each repeat fire — the initial touch-down already fired one.
+	/// A haptic + click accompanies each repeat fire — the initial touch-down already fired one.
 	private func startBackspaceRepeat() {
 		backspaceRepeatTask?.cancel()
 		backspaceRepeatTask = Task { @MainActor in
@@ -165,12 +169,14 @@ struct KeyView: View {
 			didRepeatBackspace = true
 			onTap(key)
 			onKeyTapHaptic()
+			onKeyClick()
 
 			while !Task.isCancelled, isPressed {
 				try? await Task.sleep(for: Self.backspaceRepeatInterval)
 				guard !Task.isCancelled, isPressed else { return }
 				onTap(key)
 				onKeyTapHaptic()
+				onKeyClick()
 			}
 		}
 	}

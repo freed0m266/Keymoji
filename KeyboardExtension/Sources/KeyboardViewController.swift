@@ -96,6 +96,7 @@ final class KeyboardViewController: UIInputViewController {
 			state: state,
 			dispatch: { [weak self] key in self?.handle(key) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
+			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
 			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
 		)
@@ -128,6 +129,7 @@ final class KeyboardViewController: UIInputViewController {
 			state: state,
 			dispatch: { [weak self] key in self?.handle(key) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
+			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
 			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
 		)
@@ -136,15 +138,15 @@ final class KeyboardViewController: UIInputViewController {
 	// MARK: - Input
 
 	private func handle(_ key: Key) {
-		// Haptic for the key tap itself is fired by `KeyView` on touch-down (matches Apple/SwiftKey
-		// feel). The dispatcher is concerned with state + text proxy only.
+		// Haptic + click for the key tap itself are fired by `KeyView` on touch-down (matches
+		// Apple/SwiftKey feel — feedback when the finger lands, not when it lifts). The dispatcher
+		// is concerned with state + text proxy only.
 		let pageBefore = state.page
 		InputDispatcher.dispatch(
 			key: key,
 			state: &state,
 			proxy: proxyAdapter,
-			controller: self,
-			clickSound: clickSound
+			controller: self
 		)
 		// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
 		// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but

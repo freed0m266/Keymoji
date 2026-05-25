@@ -9,6 +9,7 @@ struct KeyRowView: View {
 	let totalWidth: CGFloat
 	let onKey: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
+	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 
@@ -27,6 +28,7 @@ struct KeyRowView: View {
 					popoverAlignment: popoverAlignment(forKeyAt: index, keyWidth: keyWidth),
 					onTap: onKey,
 					onKeyTapHaptic: onKeyTapHaptic,
+					onKeyClick: onKeyClick,
 					onPopoverEntry: onPopoverEntry,
 					onHighlightChanged: onHighlightChanged
 				)
@@ -98,6 +100,7 @@ private struct KeyRowPreview: View {
 			totalWidth: totalWidth,
 			onKey: { _ in },
 			onKeyTapHaptic: {},
+			onKeyClick: {},
 			onPopoverEntry: {},
 			onHighlightChanged: {}
 		)

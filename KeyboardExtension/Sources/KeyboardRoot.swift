@@ -8,6 +8,7 @@ struct KeyboardRoot: View {
 	let state: KeyboardState
 	let dispatch: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
+	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 
@@ -22,6 +23,7 @@ struct KeyboardRoot: View {
 			width: state.keyboardWidth,
 			onKey: dispatch,
 			onKeyTapHaptic: onKeyTapHaptic,
+			onKeyClick: onKeyClick,
 			onPopoverEntry: onPopoverEntry,
 			onHighlightChanged: onHighlightChanged
 		)

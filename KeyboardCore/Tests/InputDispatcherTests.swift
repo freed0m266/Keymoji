@@ -6,13 +6,11 @@ final class InputDispatcherTests: XCTestCase {
 
 	private var proxy: MockProxy!
 	private var controller: MockController!
-	private var clickSound: MockClickSound!
 
 	override func setUp() {
 		super.setUp()
 		proxy = MockProxy()
 		controller = MockController()
-		clickSound = MockClickSound()
 	}
 
 	// MARK: - Character insertion
@@ -228,68 +226,10 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(controller.advanceCount, 1)
 	}
 
-	// MARK: - Click sound
-
-	func testClickSound_firesOnTextInsertion() {
-		var state = KeyboardState(page: .letters(.lower))
-		dispatch(letterKey("a"), &state)
-		XCTAssertEqual(clickSound.playCount, 1)
-	}
-
-	func testClickSound_firesOnRawTextInsertion() {
-		var state = KeyboardState(page: .letters(.lower))
-		let key = Key(id: "alt", primary: .text("é"), alternates: [], action: .insertRawText("é"), visualWeight: .standard, role: .character)
-		dispatch(key, &state)
-		XCTAssertEqual(clickSound.playCount, 1)
-	}
-
-	func testClickSound_firesOnSpace() {
-		var state = KeyboardState(page: .letters(.lower))
-		dispatch(makeKey(.space), &state)
-		XCTAssertEqual(clickSound.playCount, 1)
-	}
-
-	func testClickSound_firesOnReturn() {
-		var state = KeyboardState(page: .letters(.lower))
-		dispatch(makeKey(.return), &state)
-		XCTAssertEqual(clickSound.playCount, 1)
-	}
-
-	func testClickSound_firesOnBackspace() {
-		var state = KeyboardState(page: .letters(.lower))
-		dispatch(makeKey(.backspace), &state)
-		XCTAssertEqual(clickSound.playCount, 1)
-	}
-
-	func testClickSound_doesNotFireOnShift() {
-		var state = KeyboardState(page: .letters(.lower))
-		dispatch(makeKey(.shift), &state)
-		XCTAssertEqual(clickSound.playCount, 0)
-	}
-
-	func testClickSound_doesNotFireOnPageSwitch() {
-		var state = KeyboardState(page: .letters(.lower))
-		dispatch(makeKey(.switchPage(.symbols(.primary))), &state)
-		XCTAssertEqual(clickSound.playCount, 0)
-	}
-
-	func testClickSound_doesNotFireOnNextKeyboard() {
-		var state = KeyboardState()
-		dispatch(makeKey(.nextKeyboard), &state)
-		XCTAssertEqual(clickSound.playCount, 0)
-	}
-
 	// MARK: - Helpers
 
 	private func dispatch(_ key: Key, _ state: inout KeyboardState, now: () -> Date = Date.init) {
-		InputDispatcher.dispatch(
-			key: key,
-			state: &state,
-			proxy: proxy,
-			controller: controller,
-			clickSound: clickSound,
-			now: now
-		)
+		InputDispatcher.dispatch(key: key, state: &state, proxy: proxy, controller: controller, now: now)
 	}
 
 	private func letterKey(_ char: String) -> Key {
@@ -330,14 +270,6 @@ private final class MockProxy: TextDocumentProxying {
 
 	func deleteBackward() {
 		deleteCount += 1
-	}
-}
-
-@MainActor
-private final class MockClickSound: KeyClickSounding {
-	var playCount = 0
-	func play() {
-		playCount += 1
 	}
 }
 

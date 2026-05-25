@@ -10,40 +10,31 @@ public enum InputDispatcher {
 	/// Window within which two space taps collapse into ". ". Matches Apple-like behavior.
 	public static let doubleSpaceWindow: TimeInterval = 0.5
 
-	/// Dispatch the user's tap to text proxy and state-machine. Haptic feedback is *not* a
-	/// dispatcher concern — `KeyView` fires `keyTap` on touch-down for the press-feel feel
-	/// (matches Apple/SwiftKey), and on each backspace repeat fire.
-	///
-	/// The click sound (`clickSound.play()`) *is* a dispatcher concern: unlike haptics it must
-	/// fire only on actions that produce text output (insertText/space/return/backspace), not
-	/// on every key down — page switches and modifier taps should be silent, matching the
-	/// system keyboard. `clickSound` defaults to `NoopClickSound` so tests can ignore it.
+	/// Dispatch the user's tap to text proxy and state-machine. Haptic feedback and the
+	/// keyboard click sound are *not* a dispatcher concern — `KeyView` fires both on touch-down
+	/// for the press-feel feel (matches Apple/SwiftKey), and on each backspace repeat fire.
 	public static func dispatch(
 		key: Key,
 		state: inout KeyboardState,
 		proxy: any TextDocumentProxying,
 		controller: any KeyboardControlling,
-		clickSound: any KeyClickSounding = NoopClickSound(),
 		now: () -> Date = Date.init
 	) {
 		switch key.action {
 		case .insertText(let text):
 			let shifted = textWithShiftApplied(text, state: state)
 			proxy.insertText(shifted)
-			clickSound.play()
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: shifted, state: &state)
 
 		case .insertRawText(let text):
 			// Long-press alternates ship already-cased text; skip shift apply.
 			proxy.insertText(text)
-			clickSound.play()
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: text, state: &state)
 
 		case .backspace:
 			proxy.deleteBackward()
-			clickSound.play()
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
 
@@ -52,7 +43,6 @@ public enum InputDispatcher {
 
 		case .space:
 			handleSpace(state: &state, proxy: proxy, now: now())
-			clickSound.play()
 			// After a space on either symbol page, hop back to letters. The user is presumably
 			// starting a new word; SwiftKey/Apple stock behave the same way. Auto-cap (in the
 			// controller's `textDidChange`) will then promote to `.upper` if appropriate.
@@ -62,7 +52,6 @@ public enum InputDispatcher {
 
 		case .return:
 			proxy.insertText("\n")
-			clickSound.play()
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
 
