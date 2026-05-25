@@ -8,10 +8,11 @@ import Foundation
 /// deletes `consumedLength` characters from the proxy and inserts `emoji`.
 ///
 /// Match rule: the buffer must end with `:`, immediately preceded by ≥1 valid shortcode
-/// character (ASCII letters/digits/`_`/`+`/`-`), then another `:`. The captured shortcode
-/// is lowercased before lookup so `:Smile:` resolves the same as `:smile:`. Any other
-/// character inside the would-be shortcode (whitespace, punctuation, accented letters)
-/// cancels the match; the dispatcher leaves the text alone.
+/// character (ASCII letters/digits/`_`/`+`/`-`), then an opening `:` that sits at a
+/// **word boundary** — either the start of the document or after whitespace. This
+/// prevents accidental matches inside `12:30`, `http://`, or mid-word patterns like
+/// `Time:00`. The captured shortcode is lowercased before lookup so `:Smile:` resolves
+/// the same as `:smile:`.
 public enum SlackEmojiParser {
 
 	public struct Match: Equatable, Sendable {
@@ -44,6 +45,10 @@ public enum SlackEmojiParser {
 		while i >= 0 {
 			let c = chars[i]
 			if c == ":" {
+				// Opening colon must sit at a word boundary — either at the start of the document
+				// or right after whitespace. Without this, `12:30` and `http://x:smile:` would
+				// trigger the substitution. The suggester applies the same rule for consistency.
+				if i > 0, !isWordBoundary(chars[i - 1]) { return nil }
 				let shortcodeStart = i + 1
 				let shortcodeEnd = closingIndex - 1
 				// `::` (no chars between colons) is not a valid shortcode.
@@ -57,6 +62,13 @@ public enum SlackEmojiParser {
 			i -= 1
 		}
 		return nil
+	}
+
+	/// True when `c` qualifies as a "word boundary" preceding an opening shortcode colon:
+	/// any Unicode whitespace or a newline. Punctuation does NOT count — `Mr.:smile:` shouldn't
+	/// fire, since the `.` glues the colon to the previous word.
+	static func isWordBoundary(_ c: Character) -> Bool {
+		c.unicodeScalars.allSatisfy { CharacterSet.whitespacesAndNewlines.contains($0) }
 	}
 
 	private static func isValidShortcodeChar(_ c: Character) -> Bool {
