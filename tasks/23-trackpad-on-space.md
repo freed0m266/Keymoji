@@ -1,6 +1,6 @@
 # 23 — Trackpad mode (long-press space)
 
-**Status:** Todo
+**Status:** Done — 2026-05-26
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
