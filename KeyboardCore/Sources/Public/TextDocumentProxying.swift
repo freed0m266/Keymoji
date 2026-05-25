@@ -12,4 +12,8 @@ public protocol TextDocumentProxying: AnyObject {
 	var documentContextAfterInput: String? { get }
 	func insertText(_ text: String)
 	func deleteBackward()
+	/// Move the insertion point by `offset` characters (negative = left, positive = right).
+	/// Backs the trackpad-on-space cursor scrubbing. Maps directly to
+	/// `UITextDocumentProxy.adjustTextPosition(byCharacterOffset:)`.
+	func adjustTextPosition(byCharacterOffset offset: Int)
 }

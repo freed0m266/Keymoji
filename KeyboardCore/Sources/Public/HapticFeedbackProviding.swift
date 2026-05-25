@@ -10,6 +10,9 @@ public protocol HapticFeedbackProviding {
 	func keyTap()
 	func popoverEntry()
 	func popoverHighlightChanged()
+	/// Fired once when the user's long-press on space crosses into trackpad-mode cursor scrubbing.
+	/// Matches the "thunk" Apple plays at trackpad entry to signal that subsequent drags move the cursor.
+	func trackpadModeEntered()
 }
 
 public struct NoopHaptics: HapticFeedbackProviding {
@@ -17,4 +20,5 @@ public struct NoopHaptics: HapticFeedbackProviding {
 	public func keyTap() {}
 	public func popoverEntry() {}
 	public func popoverHighlightChanged() {}
+	public func trackpadModeEntered() {}
 }

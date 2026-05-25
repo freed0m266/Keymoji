@@ -78,6 +78,15 @@ public enum InputDispatcher {
 			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+
+		case .cursorOffset(let offset):
+			// Trackpad-mode scrubbing. Skip the no-op offset to avoid bouncing the proxy needlessly.
+			// Reset space tracking so a subsequent space tap can't be misread as a double-space.
+			if offset != 0 {
+				proxy.adjustTextPosition(byCharacterOffset: offset)
+			}
+			state.lastInsertWasSpace = false
+			state.lastSpaceInsertedAt = nil
 		}
 	}
 

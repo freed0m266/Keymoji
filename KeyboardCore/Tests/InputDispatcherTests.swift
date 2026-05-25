@@ -398,6 +398,42 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(proxy.deleteCount, 0)
 	}
 
+	// MARK: - Cursor offset (trackpad mode)
+
+	func testCursorOffset_positive_forwardsToProxy() {
+		var state = KeyboardState()
+		dispatch(makeKey(.cursorOffset(3)), &state)
+		XCTAssertEqual(proxy.cursorOffsets, [3])
+	}
+
+	func testCursorOffset_negative_forwardsToProxy() {
+		var state = KeyboardState()
+		dispatch(makeKey(.cursorOffset(-2)), &state)
+		XCTAssertEqual(proxy.cursorOffsets, [-2])
+	}
+
+	func testCursorOffset_zero_skipsProxyCall() {
+		var state = KeyboardState()
+		dispatch(makeKey(.cursorOffset(0)), &state)
+		XCTAssertTrue(proxy.cursorOffsets.isEmpty)
+	}
+
+	func testCursorOffset_resetsSpaceTracking() {
+		// Without the reset, a subsequent space tap could be misinterpreted as the second half
+		// of a double-space → ". " substitution.
+		var state = KeyboardState(lastInsertWasSpace: true, lastSpaceInsertedAt: Date())
+		dispatch(makeKey(.cursorOffset(1)), &state)
+		XCTAssertFalse(state.lastInsertWasSpace)
+		XCTAssertNil(state.lastSpaceInsertedAt)
+	}
+
+	func testCursorOffset_doesNotInsertOrDelete() {
+		var state = KeyboardState()
+		dispatch(makeKey(.cursorOffset(5)), &state)
+		XCTAssertTrue(proxy.inserted.isEmpty)
+		XCTAssertEqual(proxy.deleteCount, 0)
+	}
+
 	// MARK: - Next keyboard
 
 	func testNextKeyboard_callsController() {
@@ -450,6 +486,7 @@ private final class MockProxy: TextDocumentProxying {
 	var documentContextAfterInput: String?
 	var inserted: [String] = []
 	var deleteCount = 0
+	var cursorOffsets: [Int] = []
 	/// Running buffer of what's been inserted minus what's been deleted. Lets the dispatcher's
 	/// Slack-emoji substitution path read a realistic `documentContextBeforeInput` after each
 	/// insert. `insertText` appends; `deleteBackward` drops the trailing `Character`.
@@ -470,6 +507,10 @@ private final class MockProxy: TextDocumentProxying {
 		if !buffer.isEmpty {
 			buffer.removeLast()
 		}
+	}
+
+	func adjustTextPosition(byCharacterOffset offset: Int) {
+		cursorOffsets.append(offset)
 	}
 }
 

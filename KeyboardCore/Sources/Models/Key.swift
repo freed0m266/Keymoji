@@ -70,6 +70,9 @@ public enum KeyAction: Sendable, Equatable {
 	case nextKeyboard
 	case dismissKeyboard
 	case switchPage(KeyboardPage)
+	/// Move the cursor by `offset` characters (negative = left). Emitted by `KeyView` while
+	/// the user drags inside trackpad-mode (long-press on space). Does not insert/delete text.
+	case cursorOffset(Int)
 }
 
 public enum KeyRole: Sendable, Equatable {
