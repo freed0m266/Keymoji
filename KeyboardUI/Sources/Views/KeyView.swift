@@ -66,7 +66,7 @@ struct KeyView: View {
 				.lineLimit(1)
 				.padding(.horizontal, 4)
 		}
-		.frame(minHeight: 44)
+		.frame(minHeight: 38)
 		.contentShape(Rectangle())
 		.overlay(alignment: popoverOverlayAlignment) {
 			if isShowingPopover, hasTextAlternates {

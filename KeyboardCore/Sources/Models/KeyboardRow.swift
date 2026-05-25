@@ -11,6 +11,10 @@ public struct KeyboardRow: Identifiable, Sendable, Equatable {
 	public let keys: [Key]
 	public let referenceWeight: Double?
 
+	public var isNumberRow: Bool {
+		id == "numberRow"
+	}
+
 	public init(id: String, keys: [Key], referenceWeight: Double? = nil) {
 		self.id = id
 		self.keys = keys

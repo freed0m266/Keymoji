@@ -33,7 +33,7 @@ public struct KeyboardView: View {
 
 	private let horizontalPadding: CGFloat = 3
 	private let verticalPadding: CGFloat = 4
-	private let rowSpacing: CGFloat = 6
+	private let rowSpacing: CGFloat = 10
 
 	public var body: some View {
 		VStack(spacing: rowSpacing) {
@@ -48,6 +48,7 @@ public struct KeyboardView: View {
 					onPopoverEntry: onPopoverEntry,
 					onHighlightChanged: onHighlightChanged
 				)
+				.frame(maxHeight: row.isNumberRow ? 38 : nil)
 			}
 		}
 		.padding(.horizontal, horizontalPadding)
