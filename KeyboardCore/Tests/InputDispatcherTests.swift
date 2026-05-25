@@ -61,6 +61,66 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertNil(state.lastSpaceInsertedAt)
 	}
 
+	// MARK: - Word delete
+
+	func testTrailingWordDeleteCount_emptyString_isZero() {
+		XCTAssertEqual(InputDispatcher.trailingWordDeleteCount(in: ""), 0)
+	}
+
+	func testTrailingWordDeleteCount_singleWord_consumesWord() {
+		XCTAssertEqual(InputDispatcher.trailingWordDeleteCount(in: "Hello"), 5)
+	}
+
+	func testTrailingWordDeleteCount_trailingSpaces_consumesSpacesAndWord() {
+		XCTAssertEqual(InputDispatcher.trailingWordDeleteCount(in: "Hello world   "), 8)
+	}
+
+	func testTrailingWordDeleteCount_onlyWhitespace_consumesAll() {
+		XCTAssertEqual(InputDispatcher.trailingWordDeleteCount(in: "   "), 3)
+	}
+
+	func testTrailingWordDeleteCount_wordWithPrecedingText_consumesOnlyTrailingWord() {
+		XCTAssertEqual(InputDispatcher.trailingWordDeleteCount(in: "Hello world"), 5)
+	}
+
+	func testTrailingWordDeleteCount_treatsNewlineAsWhitespace() {
+		XCTAssertEqual(InputDispatcher.trailingWordDeleteCount(in: "Hello\nworld"), 5)
+	}
+
+	func testDeleteWord_removesTrailingWord_andSpace() {
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "Hello world "
+		dispatch(makeKey(.deleteWord), &state)
+		// "world " — 5 chars + 1 trailing space = 6 deleteBackward calls.
+		XCTAssertEqual(proxy.deleteCount, 6)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Hello ")
+	}
+
+	func testDeleteWord_atTextEnd_removesWord() {
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "Hello world"
+		dispatch(makeKey(.deleteWord), &state)
+		XCTAssertEqual(proxy.deleteCount, 5)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Hello ")
+	}
+
+	func testDeleteWord_emptyContext_stillDeletesOneChar() {
+		// Hidden contexts (password fields) report nil/empty. We still emit one delete so
+		// the user feels the key responding to their hold.
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = nil
+		dispatch(makeKey(.deleteWord), &state)
+		XCTAssertEqual(proxy.deleteCount, 1)
+	}
+
+	func testDeleteWord_resetsSpaceTracking() {
+		var state = KeyboardState(lastInsertWasSpace: true, lastSpaceInsertedAt: Date())
+		proxy.documentContextBeforeInput = "hi "
+		dispatch(makeKey(.deleteWord), &state)
+		XCTAssertFalse(state.lastInsertWasSpace)
+		XCTAssertNil(state.lastSpaceInsertedAt)
+	}
+
 	// MARK: - Shift simple toggle
 
 	func testShift_fromLowerToUpper() {

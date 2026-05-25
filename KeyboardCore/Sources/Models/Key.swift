@@ -62,6 +62,8 @@ public enum KeyAction: Sendable, Equatable {
 	/// Used by long-press popover commits to bypass shift-apply (alternate is already in the right case).
 	case insertRawText(String)
 	case backspace
+	/// Backspace through one trailing "word" — emitted by `KeyView` after a long delete-on-hold.
+	case deleteWord
 	case shift
 	case space
 	case `return`

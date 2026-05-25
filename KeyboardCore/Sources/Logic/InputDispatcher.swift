@@ -40,6 +40,17 @@ public enum InputDispatcher {
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
 
+		case .deleteWord:
+			let count = trailingWordDeleteCount(in: proxy.documentContextBeforeInput ?? "")
+			// At-least-one delete keeps the key responsive even when the context preview is empty
+			// (e.g. password fields hide it) — the user is still holding delete and expects feedback.
+			let effectiveCount = max(count, 1)
+			for _ in 0..<effectiveCount {
+				proxy.deleteBackward()
+			}
+			state.lastInsertWasSpace = false
+			state.lastSpaceInsertedAt = nil
+
 		case .shift:
 			ShiftStateMachine.apply(.shiftTapped(at: now()), to: &state)
 
@@ -105,6 +116,33 @@ public enum InputDispatcher {
 		if !state.lastInsertWasSpace {
 			state.lastSpaceInsertedAt = nil
 		}
+	}
+
+	// MARK: - Word delete
+
+	/// Number of trailing characters to remove for one word-delete pulse. Mirrors macOS
+	/// Option+Delete: first consume any trailing whitespace run, then the contiguous
+	/// trailing non-whitespace run. Returns 0 for empty/nil text — callers may floor to 1
+	/// when they still want a visible response.
+	static func trailingWordDeleteCount(in text: String) -> Int {
+		var count = 0
+		var index = text.endIndex
+
+		while index > text.startIndex {
+			let prev = text.index(before: index)
+			guard text[prev].isWhitespace else { break }
+			index = prev
+			count += 1
+		}
+
+		while index > text.startIndex {
+			let prev = text.index(before: index)
+			guard !text[prev].isWhitespace else { break }
+			index = prev
+			count += 1
+		}
+
+		return count
 	}
 
 	// MARK: - Slack-style emoji shortcodes
