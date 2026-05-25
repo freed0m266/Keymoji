@@ -8,6 +8,7 @@
 
 import SwiftUI
 import About
+import EmojiCodes
 import KeyboCore
 import KeyboResources
 import Onboarding
@@ -27,6 +28,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			Form {
 				keyboardSection
 				favoritesSection
+				emojiCodesSection
 				supportSection
 				aboutSection
 			}
@@ -84,6 +86,18 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			}
 		} footer: {
 			Text(Texts.Favorites.footer)
+		}
+	}
+
+	private var emojiCodesSection: some View {
+		Section {
+			NavigationLink {
+				EmojiCodesView(viewModel: emojiCodesVM())
+			} label: {
+				Text(Texts.EmojiCodes.row)
+			}
+		} footer: {
+			Text(Texts.EmojiCodes.footer)
 		}
 	}
 
