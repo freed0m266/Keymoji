@@ -1,6 +1,6 @@
 # 18 — Favorite emojis editor
 
-**Status:** Todo
+**Status:** Done — 2026-05-25
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium
 
