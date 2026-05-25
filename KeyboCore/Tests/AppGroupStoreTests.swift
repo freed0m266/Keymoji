@@ -84,4 +84,21 @@ final class AppGroupStoreTests: XCTestCase {
 		let other = AppGroupStore(suiteName: Self.testSuite)
 		XCTAssertFalse(other.hapticFeedbackEnabled)
 	}
+
+	// MARK: - Favorite emojis
+
+	func testFavoriteEmojis_defaultsToEmpty() {
+		XCTAssertEqual(store.favoriteEmojis, [])
+	}
+
+	func testFavoriteEmojis_roundTripsAndPreservesOrder() {
+		store.favoriteEmojis = ["❤️", "😀", "🚀"]
+		XCTAssertEqual(store.favoriteEmojis, ["❤️", "😀", "🚀"])
+	}
+
+	func testFavoriteEmojis_resetClearsList() {
+		store.favoriteEmojis = ["😀"]
+		store.reset()
+		XCTAssertEqual(store.favoriteEmojis, [])
+	}
 }

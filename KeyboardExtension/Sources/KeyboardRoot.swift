@@ -7,6 +7,7 @@ import KeyboardUI
 struct KeyboardRoot: View {
 	let state: KeyboardState
 	let dispatch: (Key) -> Void
+	let toggleFavoriteEmoji: (String) -> Void
 	let onKeyTapHaptic: () -> Void
 	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
@@ -22,7 +23,9 @@ struct KeyboardRoot: View {
 			layout: layout,
 			width: state.keyboardWidth,
 			recentEmojis: state.recentEmojis,
+			favoriteEmojis: state.favoriteEmojis,
 			onKey: dispatch,
+			onToggleFavoriteEmoji: toggleFavoriteEmoji,
 			onKeyTapHaptic: onKeyTapHaptic,
 			onKeyClick: onKeyClick,
 			onPopoverEntry: onPopoverEntry,

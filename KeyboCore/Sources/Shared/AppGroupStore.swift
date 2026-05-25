@@ -110,4 +110,12 @@ public extension AppGroupStore {
 		get { stringArray(forKey: .recentEmojis) }
 		set { setStringArray(newValue, forKey: .recentEmojis) }
 	}
+
+	/// User-curated favorite emojis, ordered by preference (first = leftmost in the panel).
+	/// Edited from the host app's Settings screen and toggled by long-press on the emoji panel;
+	/// read by the keyboard extension on `viewWillAppear` to drive the "Favorites" tab.
+	var favoriteEmojis: [String] {
+		get { stringArray(forKey: .favoriteEmojis) }
+		set { setStringArray(newValue, forKey: .favoriteEmojis) }
+	}
 }

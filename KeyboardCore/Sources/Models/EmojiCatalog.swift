@@ -1,9 +1,11 @@
 import Foundation
 
-/// Top-level categories shown as tabs in the emoji panel. Order mirrors Apple's stock picker.
-/// `recents` is rendered first when there's at least one recent entry; otherwise hidden and the
-/// panel opens on `.smileys`.
+/// Top-level categories shown as tabs in the emoji panel. Order mirrors Apple's stock picker
+/// plus a Keybo-specific `favorites` tab pinned to the left when the user has curated any.
+/// `favorites` and `recents` are runtime-driven (not part of the bundled catalog) and only
+/// appear when their respective data sources are non-empty.
 public enum EmojiCategory: String, Sendable, CaseIterable, Equatable, Identifiable {
+	case favorites
 	case recents
 	case smileys
 	case people
@@ -20,6 +22,7 @@ public enum EmojiCategory: String, Sendable, CaseIterable, Equatable, Identifiab
 	/// Accessibility label for the tab. Kept English-only in v1.1 — localization can be layered later.
 	public var accessibilityLabel: String {
 		switch self {
+		case .favorites:  return "Favorites"
 		case .recents:    return "Recently used"
 		case .smileys:    return "Smileys & emotion"
 		case .people:     return "People"
@@ -47,6 +50,7 @@ public enum EmojiCatalog {
 
 	public static func emojis(for category: EmojiCategory) -> [String] {
 		switch category {
+		case .favorites: return []
 		case .recents:   return []
 		case .smileys:   return smileys
 		case .people:    return people

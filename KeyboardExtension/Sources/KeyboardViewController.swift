@@ -69,6 +69,11 @@ final class KeyboardViewController: UIInputViewController {
 			state.recentEmojis = storedRecents
 			changed = true
 		}
+		let storedFavorites = store.favoriteEmojis
+		if state.favoriteEmojis != storedFavorites {
+			state.favoriteEmojis = storedFavorites
+			changed = true
+		}
 		if changed { rebuild() }
 	}
 
@@ -102,6 +107,7 @@ final class KeyboardViewController: UIInputViewController {
 		let root = KeyboardRoot(
 			state: state,
 			dispatch: { [weak self] key in self?.handle(key) },
+			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
@@ -135,6 +141,7 @@ final class KeyboardViewController: UIInputViewController {
 		hostingController?.rootView = KeyboardRoot(
 			state: state,
 			dispatch: { [weak self] key in self?.handle(key) },
+			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
@@ -179,6 +186,21 @@ final class KeyboardViewController: UIInputViewController {
 			state.returnKeyType = newType
 			rebuild()
 		}
+	}
+
+	/// Toggles `emoji` in the user's favorites and persists the change cross-process so the
+	/// host app's Favorites editor reflects it on next read. Mutates `state` + rebuilds the
+	/// view so the panel updates immediately without waiting for the next `viewWillAppear`.
+	private func toggleFavorite(_ emoji: String) {
+		var updated = state.favoriteEmojis
+		if let index = updated.firstIndex(of: emoji) {
+			updated.remove(at: index)
+		} else {
+			updated.append(emoji)
+		}
+		state.favoriteEmojis = updated
+		store.favoriteEmojis = updated
+		rebuild()
 	}
 
 	/// Moves the just-inserted emoji to the head of `recentEmojis` (deduped) and persists.
