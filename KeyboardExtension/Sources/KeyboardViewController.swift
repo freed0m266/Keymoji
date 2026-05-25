@@ -154,7 +154,8 @@ final class KeyboardViewController: UIInputViewController {
 			canEscalateBackspace: { [weak self] in
 				guard let context = self?.textDocumentProxy.documentContextBeforeInput else { return false }
 				return !context.isEmpty
-			}
+			},
+			onTrackpadModeEntered: { [weak self] in self?.haptics.trackpadModeEntered() }
 		)
 	}
 

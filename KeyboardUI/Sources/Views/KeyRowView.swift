@@ -13,6 +13,7 @@ struct KeyRowView: View {
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 	let canEscalateBackspace: (() -> Bool)?
+	let onTrackpadModeChanged: (Bool) -> Void
 
 	private let spacing: CGFloat = 4
 
@@ -32,7 +33,8 @@ struct KeyRowView: View {
 					onKeyClick: onKeyClick,
 					onPopoverEntry: onPopoverEntry,
 					onHighlightChanged: onHighlightChanged,
-					canEscalateBackspace: canEscalateBackspace
+					canEscalateBackspace: canEscalateBackspace,
+					onTrackpadModeChanged: onTrackpadModeChanged
 				)
 				.frame(width: keyWidth)
 			}
@@ -105,7 +107,8 @@ private struct KeyRowPreview: View {
 			onKeyClick: {},
 			onPopoverEntry: {},
 			onHighlightChanged: {},
-			canEscalateBackspace: nil
+			canEscalateBackspace: nil,
+			onTrackpadModeChanged: { _ in }
 		)
 		.padding(.horizontal, 3)
 		.padding(.vertical, 8)

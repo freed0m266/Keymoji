@@ -26,6 +26,11 @@ public struct KeyboardView: View {
 	/// find word boundaries). Defaults to nil — escalation is allowed unconditionally,
 	/// which is fine for previews and tests that don't run a real proxy.
 	public let canEscalateBackspace: (() -> Bool)?
+	/// Fired once when trackpad-on-space mode engages. The keyboard owns the visual fade
+	/// internally; this hook lets the host fire the entry haptic.
+	public let onTrackpadModeEntered: () -> Void
+
+	@State private var isInTrackpadMode = false
 
 	public init(
 		layout: KeyboardLayout,
@@ -40,7 +45,8 @@ public struct KeyboardView: View {
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {},
-		canEscalateBackspace: (() -> Bool)? = nil
+		canEscalateBackspace: (() -> Bool)? = nil,
+		onTrackpadModeEntered: @escaping () -> Void = {}
 	) {
 		self.layout = layout
 		self.width = width
@@ -55,6 +61,7 @@ public struct KeyboardView: View {
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
 		self.canEscalateBackspace = canEscalateBackspace
+		self.onTrackpadModeEntered = onTrackpadModeEntered
 	}
 
 	private let horizontalPadding: CGFloat = 3
@@ -146,7 +153,8 @@ public struct KeyboardView: View {
 						onKeyClick: onKeyClick,
 						onPopoverEntry: onPopoverEntry,
 						onHighlightChanged: onHighlightChanged,
-						canEscalateBackspace: canEscalateBackspace
+						canEscalateBackspace: canEscalateBackspace,
+						onTrackpadModeChanged: handleTrackpadModeChanged
 					)
 					.frame(maxHeight: row.isNumberRow ? 38 : nil)
 				}
@@ -156,6 +164,15 @@ public struct KeyboardView: View {
 		.padding(.top, topPadding)
 		.frame(width: width, height: keyboardHeight)
 		.background(Color(.systemBackground))
+		// Fade the whole keyboard while the user is scrubbing the cursor — matches stock iOS,
+		// where the keys recede so the surface visually becomes a trackpad.
+		.opacity(isInTrackpadMode ? 0.45 : 1.0)
+		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
+	}
+
+	private func handleTrackpadModeChanged(_ active: Bool) {
+		isInTrackpadMode = active
+		if active { onTrackpadModeEntered() }
 	}
 
 	private var visibleRows: [KeyboardRow] {

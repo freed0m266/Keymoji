@@ -18,6 +18,10 @@ struct KeyView: View {
 	/// word-by-word delete to compute boundaries. When the closure is absent (previews,
 	/// snapshot tests) escalation is allowed unconditionally.
 	let canEscalateBackspace: (() -> Bool)?
+	/// Fired when a long-press on the space key escalates into trackpad-mode cursor scrubbing.
+	/// `true` on entry, `false` on release. Parents drive the keyboard-wide fade overlay
+	/// and the entry haptic from this callback.
+	let onTrackpadModeChanged: (Bool) -> Void
 
 	@State private var isPressed = false
 	@State private var isShowingPopover = false
@@ -27,6 +31,16 @@ struct KeyView: View {
 	@State private var isWordDeleting = false
 	@State private var longPressTask: Task<Void, Never>?
 	@State private var backspaceRepeatTask: Task<Void, Never>?
+	@State private var trackpadArmTask: Task<Void, Never>?
+	/// True once the press has been held long enough to arm trackpad mode. Drag motion past the
+	/// activation threshold from here on will enter trackpad mode. Reset on touch up.
+	@State private var isTrackpadArmed = false
+	/// True once trackpad mode has actually engaged (armed + crossed activation drag distance).
+	/// While true, drags emit `.cursorOffset` keys instead of triggering the normal `.space` tap.
+	@State private var isTrackpadActive = false
+	/// Last drag location (in KeyView coords) at which we emitted a cursor offset. Each character
+	/// of horizontal motion past this anchor emits a one-character offset and advances the anchor.
+	@State private var trackpadAnchorX: CGFloat = 0
 
 	/// 450ms — slightly more generous than Apple's ~350ms, kinder to slow thumbs.
 	private static let longPressDelay: Duration = .milliseconds(450)
@@ -40,6 +54,15 @@ struct KeyView: View {
 	/// Repeat interval once word-delete mode is active. Slower than char repeat — each pulse
 	/// chews through a whole word, so we want the user to be able to release in time.
 	private static let backspaceWordRepeatInterval: Duration = .milliseconds(220)
+	/// Hold duration on space before trackpad mode is *armed*. After this elapses the user only
+	/// needs to drag a few points to actually engage the trackpad.
+	private static let trackpadArmDelay: Duration = .milliseconds(300)
+	/// Minimum horizontal drag (in points) once armed before trackpad mode engages. Keeps a
+	/// stationary long-press from accidentally swallowing a regular `.space` tap.
+	private static let trackpadActivationDistance: CGFloat = 6
+	/// How many points of horizontal drag equal one character of cursor movement. Tuned to match
+	/// the feel of Apple's stock trackpad — comfortable on iPhone portrait without over-shooting.
+	private static let trackpadPointsPerCharacter: CGFloat = 10
 
 	private static let popoverCellSize = CGSize(width: 40, height: 44)
 	private static let popoverCellSpacing: CGFloat = 2
@@ -56,7 +79,8 @@ struct KeyView: View {
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {},
-		canEscalateBackspace: (() -> Bool)? = nil
+		canEscalateBackspace: (() -> Bool)? = nil,
+		onTrackpadModeChanged: @escaping (Bool) -> Void = { _ in }
 	) {
 		self.key = key
 		self.style = style
@@ -69,6 +93,7 @@ struct KeyView: View {
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
 		self.canEscalateBackspace = canEscalateBackspace
+		self.onTrackpadModeChanged = onTrackpadModeChanged
 	}
 
 	var body: some View {
@@ -106,10 +131,13 @@ struct KeyView: View {
 		DragGesture(minimumDistance: 0)
 			.onChanged { value in
 				if !isPressed {
-					handleTouchDown()
+					handleTouchDown(at: value.location)
 				}
 				if isShowingPopover {
 					updateHighlight(from: value.location)
+				}
+				if isSpaceKey {
+					handleSpaceDrag(at: value.location)
 				}
 			}
 			.onEnded { _ in
@@ -117,13 +145,21 @@ struct KeyView: View {
 			}
 	}
 
+	private var isSpaceKey: Bool {
+		if case .space = key.action { return true }
+		return false
+	}
+
 	// MARK: - Gesture lifecycle
 
-	private func handleTouchDown() {
+	private func handleTouchDown(at location: CGPoint) {
 		isPressed = true
 		didCommitAlternate = false
 		didRepeatBackspace = false
 		isWordDeleting = false
+		isTrackpadArmed = false
+		isTrackpadActive = false
+		trackpadAnchorX = location.x
 
 		// Fire the "key tap" haptic + click at touch-down (matches Apple/SwiftKey feel — feedback
 		// when the finger lands, not when it lifts). Excludes system controls (shift, page switch,
@@ -135,6 +171,8 @@ struct KeyView: View {
 
 		if case .backspace = key.action {
 			startBackspaceRepeat()
+		} else if isSpaceKey {
+			startTrackpadArmTimer()
 		} else if hasTextAlternates {
 			startLongPressTimer()
 		}
@@ -146,7 +184,7 @@ struct KeyView: View {
 		switch key.action {
 		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return:
 			return true
-		case .shift, .switchPage, .nextKeyboard, .dismissKeyboard:
+		case .shift, .switchPage, .nextKeyboard, .dismissKeyboard, .cursorOffset:
 			return false
 		}
 	}
@@ -164,18 +202,85 @@ struct KeyView: View {
 		longPressTask = nil
 		backspaceRepeatTask?.cancel()
 		backspaceRepeatTask = nil
+		trackpadArmTask?.cancel()
+		trackpadArmTask = nil
+
+		let wasTrackpadActive = isTrackpadActive
+		if wasTrackpadActive {
+			onTrackpadModeChanged(false)
+		}
+		isTrackpadArmed = false
+		isTrackpadActive = false
 
 		if isShowingPopover {
 			commitAlternate(at: highlightedAlternateIndex)
 			isShowingPopover = false
-		} else if didCommitAlternate || didRepeatBackspace {
-			// First action already fired during the hold — don't double-fire here.
+		} else if didCommitAlternate || didRepeatBackspace || wasTrackpadActive {
+			// First action already fired during the hold — don't double-fire here. For trackpad,
+			// suppressing the trailing `.space` tap matches Apple stock behavior.
 		} else {
 			onTap(key)
 		}
 		didCommitAlternate = false
 		didRepeatBackspace = false
 		isWordDeleting = false
+	}
+
+	// MARK: - Trackpad mode (long-press space)
+
+	/// After `trackpadArmDelay` of pressing space, mark trackpad as armed. From there the next
+	/// horizontal drag past `trackpadActivationDistance` will engage it. Mirrors stock iOS: a
+	/// stationary hold doesn't yet swallow the space tap — the drag is what commits to trackpad.
+	private func startTrackpadArmTimer() {
+		trackpadArmTask?.cancel()
+		trackpadArmTask = Task { @MainActor in
+			try? await Task.sleep(for: Self.trackpadArmDelay)
+			guard !Task.isCancelled, isPressed else { return }
+			isTrackpadArmed = true
+		}
+	}
+
+	private func handleSpaceDrag(at location: CGPoint) {
+		guard isTrackpadArmed else { return }
+
+		if !isTrackpadActive {
+			// Wait for the activation drag before engaging — keeps stationary long-press from
+			// silently swallowing the upcoming `.space` tap.
+			let drag = location.x - trackpadAnchorX
+			guard abs(drag) >= Self.trackpadActivationDistance else { return }
+			isTrackpadActive = true
+			// Treat the activation distance as a dead zone: anchor at the activation crossing
+			// point, not at the current location, so any drag past the threshold immediately
+			// counts toward the first cursor offset. Quick fling-and-release would otherwise
+			// move nothing because the first `onChanged` after arming often jumps several
+			// dozen points past the threshold in a single frame.
+			let direction: CGFloat = drag > 0 ? 1 : -1
+			trackpadAnchorX += direction * Self.trackpadActivationDistance
+			onTrackpadModeChanged(true)
+			// Fall through to emit any remaining offset from this same frame.
+		}
+
+		// Stage 1: horizontal only. Emit one cursor-offset key per `trackpadPointsPerCharacter`
+		// crossed since the last anchor, then advance the anchor by that many points. Carrying the
+		// remainder across frames keeps long slow drags accurate (no rounding drift).
+		let dx = location.x - trackpadAnchorX
+		let charsRaw = (dx / Self.trackpadPointsPerCharacter).rounded(.towardZero)
+		guard charsRaw != 0 else { return }
+		let chars = Int(charsRaw)
+		emitCursorOffset(chars)
+		trackpadAnchorX += CGFloat(chars) * Self.trackpadPointsPerCharacter
+	}
+
+	private func emitCursorOffset(_ offset: Int) {
+		let synthesized = Key(
+			id: "\(key.id).trackpad",
+			primary: key.primary,
+			alternates: [],
+			action: .cursorOffset(offset),
+			visualWeight: key.visualWeight,
+			role: key.role
+		)
+		onTap(synthesized)
 	}
 
 	/// Delete-on-hold: after the initial delay, fire the first repeat backspace, then keep
@@ -376,6 +481,7 @@ struct KeyView: View {
 		case .nextKeyboard:           return "Next keyboard"
 		case .dismissKeyboard:        return "Dismiss keyboard"
 		case .switchPage:             return "Switch keyboard layout"
+		case .cursorOffset:           return "Move cursor"
 		}
 	}
 }
