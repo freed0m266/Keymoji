@@ -12,8 +12,10 @@ public struct KeyboardView: View {
 	public let width: CGFloat
 	public let recentEmojis: [String]
 	public let favoriteEmojis: [String]
+	public let slackSuggestions: [SlackEmojiSuggester.Suggestion]
 	public let onKey: (Key) -> Void
 	public let onToggleFavoriteEmoji: (String) -> Void
+	public let onSelectSlackSuggestion: (SlackEmojiSuggester.Suggestion) -> Void
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: () -> Void
 	public let onPopoverEntry: () -> Void
@@ -24,8 +26,10 @@ public struct KeyboardView: View {
 		width: CGFloat,
 		recentEmojis: [String] = [],
 		favoriteEmojis: [String] = [],
+		slackSuggestions: [SlackEmojiSuggester.Suggestion] = [],
 		onKey: @escaping (Key) -> Void,
 		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
+		onSelectSlackSuggestion: @escaping (SlackEmojiSuggester.Suggestion) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
@@ -35,8 +39,10 @@ public struct KeyboardView: View {
 		self.width = width
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
+		self.slackSuggestions = slackSuggestions
 		self.onKey = onKey
 		self.onToggleFavoriteEmoji = onToggleFavoriteEmoji
+		self.onSelectSlackSuggestion = onSelectSlackSuggestion
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
@@ -49,6 +55,20 @@ public struct KeyboardView: View {
 
 	private var isEmojiKeyboard: Bool {
 		layout.page == .emojis
+	}
+
+	/// Suggestion bar appears only on letter pages while the user is composing a shortcode.
+	/// On symbol or emoji pages the bar is suppressed (the user can't be in a shortcode-authoring
+	/// state there anyway), and the controller is expected to pass `slackSuggestions == []`.
+	private var showsSuggestionBar: Bool {
+		guard !isEmojiKeyboard, case .letters = layout.page else { return false }
+		return !slackSuggestions.isEmpty
+	}
+
+	/// When the suggestion bar is up, it *replaces* the number row to keep the keyboard height
+	/// constant. With number row off, the bar stacks on top and the keyboard grows by `barHeight`.
+	private var showsNumberRow: Bool {
+		layout.rows.contains(where: \.isNumberRow) && !showsSuggestionBar
 	}
 
 	public var body: some View {
@@ -99,7 +119,15 @@ public struct KeyboardView: View {
 				)
 				.frame(maxWidth: .infinity, maxHeight: .infinity)
 			} else {
-				ForEach(layout.rows) { row in
+				if showsSuggestionBar {
+					SlackSuggestionBarView(
+						suggestions: slackSuggestions,
+						onSelect: onSelectSlackSuggestion,
+						onKeyTapHaptic: onKeyTapHaptic,
+						onKeyClick: onKeyClick
+					)
+				}
+				ForEach(visibleRows) { row in
 					KeyRowView(
 						row: row,
 						page: layout.page,
@@ -121,9 +149,21 @@ public struct KeyboardView: View {
 		.background(Color(.systemBackground))
 	}
 
+	private var visibleRows: [KeyboardRow] {
+		// Drop the number row whenever the suggestion bar takes its slot.
+		showsSuggestionBar ? layout.rows.filter { !$0.isNumberRow } : layout.rows
+	}
+
 	/// Hardcoded heights for iPhone portrait, v1.0. Adjust after on-device testing.
+	/// When the suggestion bar replaces the number row the total height is unchanged; when it
+	/// stacks on top of a number-row-less keyboard, height grows by the bar (~44 pt incl. spacing).
 	private var keyboardHeight: CGFloat {
-		layout.showsNumberRow ? 260 : 216
+		let base: CGFloat = layout.showsNumberRow ? 260 : 216
+		let barFootprint: CGFloat = 44
+		if showsSuggestionBar && !layout.showsNumberRow {
+			return base + barFootprint
+		}
+		return base
 	}
 }
 

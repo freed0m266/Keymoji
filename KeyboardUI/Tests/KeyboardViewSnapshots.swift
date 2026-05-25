@@ -120,6 +120,43 @@ final class KeyboardViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, colorScheme: .light)
 	}
 
+	// MARK: - Slack suggestion bar
+
+	func testSlackSuggestions_replacesNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
+		let suggestions: [SlackEmojiSuggester.Suggestion] = [
+			.init(shortcode: "smile", emoji: "😄"),
+			.init(shortcode: "smiley", emoji: "😃"),
+			.init(shortcode: "smirk", emoji: "😏"),
+			.init(shortcode: "smiling_imp", emoji: "😈"),
+			.init(shortcode: "smoking", emoji: "🚬")
+		]
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			slackSuggestions: suggestions,
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, colorScheme: .dark)
+		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
+
+	func testSlackSuggestions_withoutNumberRow_growsKeyboard() {
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
+		let suggestions: [SlackEmojiSuggester.Suggestion] = [
+			.init(shortcode: "fire", emoji: "🔥"),
+			.init(shortcode: "thumbsup", emoji: "👍")
+		]
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			slackSuggestions: suggestions,
+			onKey: { _ in }
+		)
+		let size = CGSize(width: 393, height: 260)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
+	}
+
 	func testEmojis_withFavorites_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .emojis, showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(
