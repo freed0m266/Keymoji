@@ -1,6 +1,6 @@
 # 29 — Plynulý swipe-down dismiss klávesnice
 
-**Status:** Todo
+**Status:** Done — 2026-05-26
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium (daily UX, viditelný regress oproti konkurenci)
 

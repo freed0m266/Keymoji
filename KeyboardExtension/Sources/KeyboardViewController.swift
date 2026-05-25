@@ -58,7 +58,32 @@ final class KeyboardViewController: UIInputViewController {
 			state.keyboardWidth = width
 			rebuild()
 		}
+		updateHostRasterization()
 		perfSignposter.endInterval("viewDidLayoutSubviews", signpostState)
+	}
+
+	/// Task 29 experiment — swipe-down dismiss jank.
+	/// Profiling showed that during the iOS-driven dismiss animation our `rebuild()` guard works
+	/// (rebuild fires 1–2× across the gesture, not per-frame), but SwiftUI still does a ~4 ms
+	/// `UnaryChildGeometry<_FrameLayout>` *Creation* on each `KeyboInputView.layoutSubviews`
+	/// pass — five of those in the dismiss window stack up to a measured 33 ms hitch.
+	///
+	/// Fix: while CoreAnimation is position-animating our input view (swipe-down dismiss, also
+	/// the initial slide-up), tell it to render the SwiftUI host to a bitmap once and reuse the
+	/// cache for every frame of the motion. The animation only moves `origin.y` — content is
+	/// invariant for the duration, so the cached bitmap is correct. We unflip the switch as soon
+	/// as the animation ends so interactive renders (key flashes, popovers, trackpad fade) stay
+	/// direct and don't pay re-rasterization cost.
+	private func updateHostRasterization() {
+		guard let hostLayer = hostingController?.view.layer else { return }
+		let isAnimating = view.layer.animationKeys()?.isEmpty == false
+		guard hostLayer.shouldRasterize != isAnimating else { return }
+		perfSignposter.emitEvent("rasterizeToggle", "on=\(isAnimating)")
+		hostLayer.shouldRasterize = isAnimating
+		if isAnimating {
+			// Cache at native pixel density so the composite stays sharp.
+			hostLayer.rasterizationScale = traitCollection.displayScale
+		}
 	}
 
 	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
