@@ -6,4 +6,5 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case showNumberRow
 	case hapticFeedbackEnabled
 	case onboardingComplete
+	case appearance
 }

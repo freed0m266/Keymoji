@@ -78,4 +78,12 @@ public extension AppGroupStore {
 		get { bool(forKey: .onboardingComplete, default: false) }
 		set { setBool(newValue, forKey: .onboardingComplete) }
 	}
+
+	var appearance: AppearancePreference {
+		get {
+			guard let raw = string(forKey: .appearance) else { return .system }
+			return AppearancePreference(rawValue: raw) ?? .system
+		}
+		set { setString(newValue.rawValue, forKey: .appearance) }
+	}
 }

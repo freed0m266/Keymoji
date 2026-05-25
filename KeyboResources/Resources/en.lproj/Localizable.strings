@@ -32,6 +32,11 @@
 "settings.keyboard.showNumberRow" = "Always show number row";
 "settings.keyboard.hapticFeedback" = "Haptic feedback";
 "settings.keyboard.hapticFooter" = "Haptic feedback requires Allow Full Access in Settings → General → Keyboard → Keybo.";
+"settings.keyboard.appearance" = "Appearance";
+"settings.keyboard.appearance.system" = "System";
+"settings.keyboard.appearance.light" = "Light";
+"settings.keyboard.appearance.dark" = "Dark";
+"settings.keyboard.appearanceFooter" = "Override the keyboard's color scheme. System follows the app that's showing the keyboard.";
 
 "about.title" = "About Keybo";
 "about.versionLabel" = "Version %@";

@@ -27,6 +27,7 @@ final class KeyboardViewController: UIInputViewController {
 	override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
 		refreshFromStore()
+		refreshAppearance()
 		refreshReturnKeyType()
 	}
 
@@ -50,6 +51,23 @@ final class KeyboardViewController: UIInputViewController {
 			state.showNumberRow = showRow
 			rebuild()
 		}
+	}
+
+	/// Applies the user's `AppearancePreference` by overriding the host controller's trait
+	/// collection. `.unspecified` means "inherit from the consuming app" (the v1.0 behavior).
+	/// SwiftUI's `.preferredColorScheme` doesn't propagate reliably out of `UIInputViewController`
+	/// — it tries to set the scene's interface style, which keyboard extensions don't own —
+	/// so we drive it at the UIKit layer instead.
+	private func refreshAppearance() {
+		let style: UIUserInterfaceStyle = {
+			switch store.appearance {
+			case .system: return .unspecified
+			case .light:  return .light
+			case .dark:   return .dark
+			}
+		}()
+		hostingController?.overrideUserInterfaceStyle = style
+		hostingController?.view.overrideUserInterfaceStyle = style
 	}
 
 	override func textWillChange(_ textInput: UITextInput?) {}
