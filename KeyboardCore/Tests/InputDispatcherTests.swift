@@ -254,6 +254,90 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
 
+	// MARK: - Slack-style emoji substitution
+
+	func testSlackShortcode_completedByClosingColon_replacesWithEmoji() {
+		var state = KeyboardState(page: .letters(.lower))
+		typeString(":smile", into: &state)
+		// Sanity check: nothing has been replaced yet.
+		XCTAssertEqual(proxy.documentContextBeforeInput, ":smile")
+		// Closing colon triggers the substitution.
+		dispatch(letterKey(":"), &state)
+		// Final buffer = emoji, no leftover colons.
+		XCTAssertEqual(proxy.documentContextBeforeInput, "😄")
+		// Backspaces were issued to consume `:smile:` (7 chars).
+		XCTAssertEqual(proxy.deleteCount, 7)
+	}
+
+	func testSlackShortcode_afterText_preservesPrefix() {
+		var state = KeyboardState(page: .letters(.lower))
+		proxy.documentContextBeforeInput = "Hello "
+		typeString(":fire:", into: &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Hello 🔥")
+	}
+
+	func testSlackShortcode_unknownCode_leavesTextIntact() {
+		var state = KeyboardState(page: .letters(.lower))
+		typeString(":notarealcode:", into: &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, ":notarealcode:")
+		XCTAssertEqual(proxy.deleteCount, 0)
+	}
+
+	func testSlackShortcode_caseInsensitive() {
+		var state = KeyboardState(page: .letters(.lower))
+		// Force upper page so the dispatcher uppercases inserts; verifies lowercase normalization
+		// in the parser is what makes this work, not the dispatcher's casing.
+		state.page = .letters(.capsLock)
+		typeString(":smile:", into: &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "😄")
+	}
+
+	func testSlackShortcode_onlyFiresOnClosingColon() {
+		var state = KeyboardState(page: .letters(.lower))
+		// Typing `:smile` (no closing colon) must NOT issue any deleteBackward —
+		// the substitution scan should be a no-op until the trailing `:` lands.
+		typeString(":smile", into: &state)
+		XCTAssertEqual(proxy.deleteCount, 0)
+	}
+
+	func testSlackShortcode_addsEmojiToRecents() {
+		var state = KeyboardState(page: .letters(.lower), recentEmojis: ["👍"])
+		typeString(":smile:", into: &state)
+		// Newest first, deduped against any prior occurrence.
+		XCTAssertEqual(state.recentEmojis, ["😄", "👍"])
+	}
+
+	func testSlackShortcode_dedupesExistingRecent() {
+		var state = KeyboardState(page: .letters(.lower), recentEmojis: ["👍", "😄", "🔥"])
+		typeString(":smile:", into: &state)
+		// Existing "😄" moves to the head rather than appearing twice.
+		XCTAssertEqual(state.recentEmojis, ["😄", "👍", "🔥"])
+	}
+
+	func testSlackShortcode_recentsRespectCapacity() {
+		let prior = (0..<KeyboardState.recentEmojisCapacity).map { "🙂\($0)" }
+		var state = KeyboardState(page: .letters(.lower), recentEmojis: prior)
+		typeString(":fire:", into: &state)
+		XCTAssertEqual(state.recentEmojis.count, KeyboardState.recentEmojisCapacity)
+		XCTAssertEqual(state.recentEmojis.first, "🔥")
+		// Oldest entry got dropped.
+		XCTAssertFalse(state.recentEmojis.contains(prior.last!))
+	}
+
+	func testSlackShortcode_unknownCode_leavesRecentsAlone() {
+		let prior = ["👍", "🔥"]
+		var state = KeyboardState(page: .letters(.lower), recentEmojis: prior)
+		typeString(":notarealcode:", into: &state)
+		XCTAssertEqual(state.recentEmojis, prior)
+	}
+
+	func testSlackShortcode_doubleColonNoChars_noReplacement() {
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("::", into: &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "::")
+		XCTAssertEqual(proxy.deleteCount, 0)
+	}
+
 	// MARK: - Next keyboard
 
 	func testNextKeyboard_callsController() {
@@ -266,6 +350,14 @@ final class InputDispatcherTests: XCTestCase {
 
 	private func dispatch(_ key: Key, _ state: inout KeyboardState, now: () -> Date = Date.init) {
 		InputDispatcher.dispatch(key: key, state: &state, proxy: proxy, controller: controller, now: now)
+	}
+
+	/// Dispatch each character in `string` as a separate `.insertText` key. Mirrors what the user
+	/// would do tapping one key at a time and lets integration tests build up real document context.
+	private func typeString(_ string: String, into state: inout KeyboardState) {
+		for char in string {
+			dispatch(letterKey(String(char)), &state)
+		}
 	}
 
 	private func letterKey(_ char: String) -> Key {
@@ -295,17 +387,29 @@ final class InputDispatcherTests: XCTestCase {
 
 @MainActor
 private final class MockProxy: TextDocumentProxying {
-	var documentContextBeforeInput: String?
 	var documentContextAfterInput: String?
 	var inserted: [String] = []
 	var deleteCount = 0
+	/// Running buffer of what's been inserted minus what's been deleted. Lets the dispatcher's
+	/// Slack-emoji substitution path read a realistic `documentContextBeforeInput` after each
+	/// insert. `insertText` appends; `deleteBackward` drops the trailing `Character`.
+	private var buffer = ""
+
+	var documentContextBeforeInput: String? {
+		get { buffer.isEmpty ? nil : buffer }
+		set { buffer = newValue ?? "" }
+	}
 
 	func insertText(_ text: String) {
 		inserted.append(text)
+		buffer.append(text)
 	}
 
 	func deleteBackward() {
 		deleteCount += 1
+		if !buffer.isEmpty {
+			buffer.removeLast()
+		}
 	}
 }
 
