@@ -38,6 +38,14 @@
 "settings.keyboard.appearance.light" = "Light";
 "settings.keyboard.appearance.dark" = "Dark";
 "settings.keyboard.appearanceFooter" = "Override the keyboard's color scheme. System follows the app that's showing the keyboard.";
+"settings.favorites.row" = "Favorite emojis";
+"settings.favorites.footer" = "Pinned to the front of the emoji panel for quick access.";
+"settings.favorites.title" = "Favorite emojis";
+"settings.favorites.add" = "Add";
+"settings.favorites.emptyTitle" = "No favorites yet";
+"settings.favorites.emptyMessage" = "Pick the emojis you reach for most — they'll appear first in the keyboard's emoji panel.";
+"settings.favorites.listFooter" = "Drag to reorder. Swipe left to remove.";
+"settings.favorites.picker.title" = "Add favorites";
 
 "about.title" = "About Keybo";
 "about.versionLabel" = "Version %@";
