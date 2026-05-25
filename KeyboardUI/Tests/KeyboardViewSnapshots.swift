@@ -93,4 +93,30 @@ final class KeyboardViewSnapshots: XCTestCase {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .send)
 		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
 	}
+
+	// MARK: - Emoji page
+
+	func testEmojis_noRecents_withNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .emojis, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: [],
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, colorScheme: .dark)
+		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
+
+	func testEmojis_withRecents_withNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .emojis, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: ["😀", "👋", "🎉", "❤️", "🚀", "🍕", "🐶", "🌈"],
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, colorScheme: .dark)
+		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
 }
