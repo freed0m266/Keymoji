@@ -119,4 +119,17 @@ final class KeyboardViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
 	}
+
+	func testEmojis_withFavorites_withNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .emojis, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: ["😀", "👋"],
+			favoriteEmojis: ["❤️", "🚀", "🍕", "🐶"],
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, colorScheme: .dark)
+		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
 }
