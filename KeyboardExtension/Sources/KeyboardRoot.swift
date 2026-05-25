@@ -14,6 +14,7 @@ struct KeyboardRoot: View {
 	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
+	let canEscalateBackspace: () -> Bool
 
 	var body: some View {
 		let layout = KeyboardCore.makeLayout(
@@ -33,7 +34,8 @@ struct KeyboardRoot: View {
 			onKeyTapHaptic: onKeyTapHaptic,
 			onKeyClick: onKeyClick,
 			onPopoverEntry: onPopoverEntry,
-			onHighlightChanged: onHighlightChanged
+			onHighlightChanged: onHighlightChanged,
+			canEscalateBackspace: canEscalateBackspace
 		)
 	}
 }

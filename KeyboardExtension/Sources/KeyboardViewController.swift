@@ -148,7 +148,13 @@ final class KeyboardViewController: UIInputViewController {
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
-			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
+			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() },
+			// Word-delete needs visible context. Password fields and other hidden inputs
+			// return nil/empty here — falling back keeps char-repeat going at full speed.
+			canEscalateBackspace: { [weak self] in
+				guard let context = self?.textDocumentProxy.documentContextBeforeInput else { return false }
+				return !context.isEmpty
+			}
 		)
 	}
 

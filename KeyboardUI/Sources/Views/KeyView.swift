@@ -14,12 +14,17 @@ struct KeyView: View {
 	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
+	/// Returns true iff the document proxy currently exposes enough context for a
+	/// word-by-word delete to compute boundaries. When the closure is absent (previews,
+	/// snapshot tests) escalation is allowed unconditionally.
+	let canEscalateBackspace: (() -> Bool)?
 
 	@State private var isPressed = false
 	@State private var isShowingPopover = false
 	@State private var highlightedAlternateIndex = 0
 	@State private var didCommitAlternate = false
 	@State private var didRepeatBackspace = false
+	@State private var isWordDeleting = false
 	@State private var longPressTask: Task<Void, Never>?
 	@State private var backspaceRepeatTask: Task<Void, Never>?
 
@@ -29,6 +34,12 @@ struct KeyView: View {
 	private static let backspaceInitialDelay: Duration = .milliseconds(400)
 	/// Repeat interval once delete-on-hold is firing.
 	private static let backspaceRepeatInterval: Duration = .milliseconds(80)
+	/// Elapsed char-repeat time after which delete-on-hold escalates to word-by-word.
+	/// Matches Apple's behavior of switching from per-character to per-word delete after ~2 s.
+	private static let backspaceWordModeDelay: Duration = .milliseconds(2000)
+	/// Repeat interval once word-delete mode is active. Slower than char repeat — each pulse
+	/// chews through a whole word, so we want the user to be able to release in time.
+	private static let backspaceWordRepeatInterval: Duration = .milliseconds(220)
 
 	private static let popoverCellSize = CGSize(width: 40, height: 44)
 	private static let popoverCellSpacing: CGFloat = 2
@@ -44,7 +55,8 @@ struct KeyView: View {
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
-		onHighlightChanged: @escaping () -> Void = {}
+		onHighlightChanged: @escaping () -> Void = {},
+		canEscalateBackspace: (() -> Bool)? = nil
 	) {
 		self.key = key
 		self.style = style
@@ -56,12 +68,13 @@ struct KeyView: View {
 		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
+		self.canEscalateBackspace = canEscalateBackspace
 	}
 
 	var body: some View {
 		ZStack {
 			RoundedRectangle(cornerRadius: style.cornerRadius)
-				.fill(isPressed ? style.pressedBackgroundColor : style.backgroundColor)
+				.fill(keyBackgroundColor)
 			content
 				.foregroundStyle(style.foregroundColor)
 				.font(style.font)
@@ -110,6 +123,7 @@ struct KeyView: View {
 		isPressed = true
 		didCommitAlternate = false
 		didRepeatBackspace = false
+		isWordDeleting = false
 
 		// Fire the "key tap" haptic + click at touch-down (matches Apple/SwiftKey feel — feedback
 		// when the finger lands, not when it lifts). Excludes system controls (shift, page switch,
@@ -130,11 +144,18 @@ struct KeyView: View {
 	/// Mirrors Apple's convention of feedback-on-character-key but silent system controls.
 	private var firesKeyTapFeedback: Bool {
 		switch key.action {
-		case .insertText, .insertRawText, .backspace, .space, .return:
+		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return:
 			return true
 		case .shift, .switchPage, .nextKeyboard, .dismissKeyboard:
 			return false
 		}
+	}
+
+	/// Background tint for the key. Word-delete mode replaces the normal pressed grey with a
+	/// muted orange — the visual cue that mode escalated, matching stock iOS.
+	private var keyBackgroundColor: Color {
+		if isWordDeleting { return Color.orange.opacity(0.6) }
+		return isPressed ? style.pressedBackgroundColor : style.backgroundColor
 	}
 
 	private func handleTouchUp() {
@@ -154,12 +175,17 @@ struct KeyView: View {
 		}
 		didCommitAlternate = false
 		didRepeatBackspace = false
+		isWordDeleting = false
 	}
 
 	/// Delete-on-hold: after the initial delay, fire the first repeat backspace, then keep
 	/// firing on the repeat interval until touch up. `Task.isCancelled` checks after each sleep
 	/// guarantee we don't fire one extra backspace past the user releasing the key.
 	/// A haptic + click accompanies each repeat fire — the initial touch-down already fired one.
+	///
+	/// After ~2 s of char-by-char repeat, escalates to word-by-word delete at a slower cadence
+	/// (matches Apple). Each word pulse synthesizes a `.deleteWord` key so the dispatcher can
+	/// consume one trailing word in a single round-trip.
 	private func startBackspaceRepeat() {
 		backspaceRepeatTask?.cancel()
 		backspaceRepeatTask = Task { @MainActor in
@@ -167,18 +193,59 @@ struct KeyView: View {
 			guard !Task.isCancelled, isPressed else { return }
 
 			didRepeatBackspace = true
-			onTap(key)
-			onKeyTapHaptic()
-			onKeyClick()
+			fireBackspaceRepeat()
 
+			let repeatStart = ContinuousClock.now
 			while !Task.isCancelled, isPressed {
 				try? await Task.sleep(for: Self.backspaceRepeatInterval)
 				guard !Task.isCancelled, isPressed else { return }
-				onTap(key)
-				onKeyTapHaptic()
-				onKeyClick()
+				if repeatStart.duration(to: .now) >= Self.backspaceWordModeDelay { break }
+				fireBackspaceRepeat()
+			}
+
+			guard !Task.isCancelled, isPressed else { return }
+
+			// Hidden contexts (password fields, etc.) hide `documentContextBeforeInput`, so
+			// the dispatcher can't compute word boundaries. Escalating there would slow the
+			// delete cadence from 80 ms to 220 ms with zero boundary benefit — stay in char
+			// repeat instead. If the callback isn't wired, default to escalating.
+			let canEscalate = canEscalateBackspace?() ?? true
+			if !canEscalate {
+				while !Task.isCancelled, isPressed {
+					fireBackspaceRepeat()
+					try? await Task.sleep(for: Self.backspaceRepeatInterval)
+					guard !Task.isCancelled, isPressed else { return }
+				}
+				return
+			}
+
+			isWordDeleting = true
+			while !Task.isCancelled, isPressed {
+				fireWordDeleteRepeat()
+				try? await Task.sleep(for: Self.backspaceWordRepeatInterval)
+				guard !Task.isCancelled, isPressed else { return }
 			}
 		}
+	}
+
+	private func fireBackspaceRepeat() {
+		onTap(key)
+		onKeyTapHaptic()
+		onKeyClick()
+	}
+
+	private func fireWordDeleteRepeat() {
+		let synthesized = Key(
+			id: "\(key.id).word",
+			primary: key.primary,
+			alternates: [],
+			action: .deleteWord,
+			visualWeight: key.visualWeight,
+			role: key.role
+		)
+		onTap(synthesized)
+		onKeyTapHaptic()
+		onKeyClick()
 	}
 
 	private func startLongPressTimer() {
@@ -302,6 +369,7 @@ struct KeyView: View {
 		case .insertText(let s):     return s
 		case .insertRawText(let s):  return s
 		case .backspace:              return "Delete"
+		case .deleteWord:             return "Delete word"
 		case .shift:                  return "Shift"
 		case .space:                  return "Space"
 		case .return:                 return "Return"

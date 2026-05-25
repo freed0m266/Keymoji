@@ -20,6 +20,12 @@ public struct KeyboardView: View {
 	public let onKeyClick: () -> Void
 	public let onPopoverEntry: () -> Void
 	public let onHighlightChanged: () -> Void
+	/// Returns true when the underlying document proxy currently exposes
+	/// `documentContextBeforeInput`. The keyboard uses this to decide whether a long
+	/// delete-on-hold may escalate to word-by-word delete (which needs visible context to
+	/// find word boundaries). Defaults to nil — escalation is allowed unconditionally,
+	/// which is fine for previews and tests that don't run a real proxy.
+	public let canEscalateBackspace: (() -> Bool)?
 
 	public init(
 		layout: KeyboardLayout,
@@ -33,7 +39,8 @@ public struct KeyboardView: View {
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
-		onHighlightChanged: @escaping () -> Void = {}
+		onHighlightChanged: @escaping () -> Void = {},
+		canEscalateBackspace: (() -> Bool)? = nil
 	) {
 		self.layout = layout
 		self.width = width
@@ -47,6 +54,7 @@ public struct KeyboardView: View {
 		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
 		self.onHighlightChanged = onHighlightChanged
+		self.canEscalateBackspace = canEscalateBackspace
 	}
 
 	private let horizontalPadding: CGFloat = 3
@@ -137,7 +145,8 @@ public struct KeyboardView: View {
 						onKeyTapHaptic: onKeyTapHaptic,
 						onKeyClick: onKeyClick,
 						onPopoverEntry: onPopoverEntry,
-						onHighlightChanged: onHighlightChanged
+						onHighlightChanged: onHighlightChanged,
+						canEscalateBackspace: canEscalateBackspace
 					)
 					.frame(maxHeight: row.isNumberRow ? 38 : nil)
 				}
