@@ -29,6 +29,12 @@ final class SettingsSnapshots: XCTestCase {
 		assertSnapshot(view)
 	}
 
+	func testSettings_keyClickSoundOn_dark() {
+		let view = SettingsView(viewModel: SettingsViewModelMock(keyClickSoundEnabled: true))
+			.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
 	func testSettings_appearanceSystem_dark() {
 		let view = SettingsView(viewModel: SettingsViewModelMock(appearance: .system))
 			.preferredColorScheme(.dark)

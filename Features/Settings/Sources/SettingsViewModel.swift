@@ -13,6 +13,7 @@ import KeyboCore
 public protocol SettingsViewModeling: Observable, AnyObject {
 	var showNumberRow: Bool { get set }
 	var hapticFeedbackEnabled: Bool { get set }
+	var keyClickSoundEnabled: Bool { get set }
 	var appearance: AppearancePreference { get set }
 	var versionString: String { get }
 }
@@ -33,6 +34,10 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		didSet { store.hapticFeedbackEnabled = hapticFeedbackEnabled }
 	}
 
+	public var keyClickSoundEnabled: Bool {
+		didSet { store.keyClickSoundEnabled = keyClickSoundEnabled }
+	}
+
 	public var appearance: AppearancePreference {
 		didSet { store.appearance = appearance }
 	}
@@ -45,6 +50,7 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.store = store
 		self.showNumberRow = store.showNumberRow
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
+		self.keyClickSoundEnabled = store.keyClickSoundEnabled
 		self.appearance = store.appearance
 		self.versionString = Self.makeVersionString()
 		super.init()

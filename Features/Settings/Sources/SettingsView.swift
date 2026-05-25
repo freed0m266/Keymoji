@@ -47,6 +47,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		Section {
 			Toggle(Texts.Keyboard.showNumberRow, isOn: $viewModel.showNumberRow)
 			Toggle(Texts.Keyboard.hapticFeedback, isOn: $viewModel.hapticFeedbackEnabled)
+			Toggle(Texts.Keyboard.keyClickSound, isOn: $viewModel.keyClickSoundEnabled)
 		} header: {
 			Text(Texts.Keyboard.header)
 		} footer: {

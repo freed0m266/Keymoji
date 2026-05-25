@@ -15,17 +15,20 @@ import KeyboCore
 public final class SettingsViewModelMock: SettingsViewModeling {
 	public var showNumberRow: Bool
 	public var hapticFeedbackEnabled: Bool
+	public var keyClickSoundEnabled: Bool
 	public var appearance: AppearancePreference
 	public var versionString: String
 
 	public init(
 		showNumberRow: Bool = true,
 		hapticFeedbackEnabled: Bool = true,
+		keyClickSoundEnabled: Bool = false,
 		appearance: AppearancePreference = .system,
 		versionString: String = "1.0 (1)"
 	) {
 		self.showNumberRow = showNumberRow
 		self.hapticFeedbackEnabled = hapticFeedbackEnabled
+		self.keyClickSoundEnabled = keyClickSoundEnabled
 		self.appearance = appearance
 		self.versionString = versionString
 	}
