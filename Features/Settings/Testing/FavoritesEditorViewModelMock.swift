@@ -8,6 +8,7 @@
 
 #if DEBUG
 import Foundation
+import SwiftUI
 
 @Observable
 @MainActor
