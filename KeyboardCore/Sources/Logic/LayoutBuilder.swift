@@ -11,7 +11,12 @@ public enum LayoutBuilder {
 	) -> KeyboardLayout {
 		var rows: [KeyboardRow] = []
 
-		if showNumberRow {
+		// The emoji page skips the number row entirely — digits would crowd the picker and
+		// have no use while browsing emojis. `KeyboardLayout.showsNumberRow` still propagates
+		// the user's preference so the *overall* keyboard height (260 vs 216) stays consistent
+		// when toggling between pages.
+		let includeNumberRow = showNumberRow && page != .emojis
+		if includeNumberRow {
 			rows.append(makeNumberRow())
 		}
 
@@ -20,6 +25,10 @@ public enum LayoutBuilder {
 			rows.append(contentsOf: makeLetterRows(shift: shift))
 		case .symbols(let symbolPage):
 			rows.append(contentsOf: makeSymbolRows(symbolPage))
+		case .emojis:
+			// Emoji page renders an `EmojiPanelView` in place of the letter/symbol rows.
+			// No row keys here — only the page-specific bottom row appears below.
+			break
 		}
 
 		rows.append(makeBottomRow(page: page))
@@ -233,6 +242,15 @@ public enum LayoutBuilder {
 	// MARK: - Bottom row
 
 	private static func makeBottomRow(page: KeyboardPage) -> KeyboardRow {
+		switch page {
+		case .letters, .symbols:
+			return makeStandardBottomRow(page: page)
+		case .emojis:
+			return makeEmojiBottomRow()
+		}
+	}
+
+	private static func makeStandardBottomRow(page: KeyboardPage) -> KeyboardRow {
 		let toggle: Key
 		switch page {
 		case .letters:
@@ -255,6 +273,9 @@ public enum LayoutBuilder {
 				visualWeight: .small,
 				role: .system
 			)
+		case .emojis:
+			// Unreachable — emojis is handled by `makeEmojiBottomRow`.
+			fatalError("emojis page should not reach makeStandardBottomRow")
 		}
 
 		let globe = Key(
@@ -262,6 +283,16 @@ public enum LayoutBuilder {
 			primary: .symbol(.globe),
 			alternates: [],
 			action: .nextKeyboard,
+			visualWeight: .small,
+			role: .system
+		)
+		// Slot for jumping to the emoji panel. Sits between globe and space to mirror SwiftKey's
+		// placement; tapping it pushes the page state to `.emojis`.
+		let emoji = Key(
+			id: "bottom.emojiSwitcher",
+			primary: .symbol(.smiley),
+			alternates: [],
+			action: .switchPage(.emojis),
 			visualWeight: .small,
 			role: .system
 		)
@@ -292,7 +323,42 @@ public enum LayoutBuilder {
 
 		return KeyboardRow(
 			id: "bottomRow",
-			keys: [toggle, globe, space, dot, returnKey]
+			keys: [toggle, globe, emoji, space, dot, returnKey]
+		)
+	}
+
+	/// Bottom row shown while on the emoji page. ABC jumps back to letters; globe still cycles
+	/// system input modes; space + delete behave as on the regular pages. No `.` or page-toggle —
+	/// emoji input has different ergonomics.
+	private static func makeEmojiBottomRow() -> KeyboardRow {
+		let abc = Key(
+			id: "bottom.pageToggle",
+			primary: .text("ABC"),
+			alternates: [],
+			action: .switchPage(.letters(.lower)),
+			visualWeight: .small,
+			role: .system
+		)
+		let globe = Key(
+			id: "globe",
+			primary: .symbol(.globe),
+			alternates: [],
+			action: .nextKeyboard,
+			visualWeight: .small,
+			role: .system
+		)
+		let space = Key(
+			id: "space",
+			primary: .text("space"),
+			alternates: [],
+			action: .space,
+			visualWeight: .space,
+			role: .system
+		)
+		let delete = makeDeleteKey()
+		return KeyboardRow(
+			id: "bottomRow",
+			keys: [abc, globe, space, delete]
 		)
 	}
 }

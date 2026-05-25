@@ -218,6 +218,42 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
 
+	// MARK: - Emoji page
+
+	func testSwitchToEmojis_setsEmojiPage() {
+		var state = KeyboardState(page: .letters(.lower))
+		dispatch(makeKey(.switchPage(.emojis)), &state)
+		XCTAssertEqual(state.page, .emojis)
+	}
+
+	func testInsertEmoji_onEmojiPage_insertsAndStaysOnEmojis() {
+		var state = KeyboardState(page: .emojis)
+		let key = Key(
+			id: "emoji.😀",
+			primary: .text("😀"),
+			alternates: [],
+			action: .insertText("😀"),
+			visualWeight: .standard,
+			role: .character
+		)
+		dispatch(key, &state)
+		XCTAssertEqual(proxy.inserted, ["😀"])
+		XCTAssertEqual(state.page, .emojis)
+	}
+
+	func testSpace_onEmojiPage_doesNotSwitchToLetters() {
+		var state = KeyboardState(page: .emojis)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(proxy.inserted, [" "])
+		XCTAssertEqual(state.page, .emojis)
+	}
+
+	func testSwitchFromEmojisBackToLetters_works() {
+		var state = KeyboardState(page: .emojis)
+		dispatch(makeKey(.switchPage(.letters(.lower))), &state)
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
 	// MARK: - Next keyboard
 
 	func testNextKeyboard_callsController() {

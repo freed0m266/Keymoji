@@ -42,6 +42,7 @@ public enum SystemSymbol: String, Sendable, Equatable {
 	case delete
 	case `return`
 	case globe
+	case smiley
 
 	public var systemName: String {
 		switch self {
@@ -51,6 +52,7 @@ public enum SystemSymbol: String, Sendable, Equatable {
 		case .delete:       return "delete.left"
 		case .return:       return "return"
 		case .globe:        return "globe"
+		case .smiley:       return "face.smiling"
 		}
 	}
 }

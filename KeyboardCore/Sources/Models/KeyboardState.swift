@@ -27,6 +27,15 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `GeometryReader` inside the keyboard view turned out to under-report on some hosts.
 	public var keyboardWidth: CGFloat
 
+	/// Most-recently-used emojis (newest first). Drives the "Recently used" category in the
+	/// emoji panel. Populated on viewWillAppear from `AppGroupStore` and updated after each
+	/// emoji insertion. Capped at `KeyboardState.recentEmojisCapacity` by the dispatcher.
+	public var recentEmojis: [String]
+
+	/// Maximum number of emojis tracked in `recentEmojis`. Keeps the recents tab to two short
+	/// rows on iPhone portrait — long enough to be useful, short enough that it never scrolls.
+	public static let recentEmojisCapacity = 30
+
 	public init(
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
@@ -35,7 +44,8 @@ public struct KeyboardState: Sendable, Equatable {
 		lastSpaceInsertedAt: Date? = nil,
 		lastShiftTapAt: Date? = nil,
 		autoCapitalized: Bool = false,
-		keyboardWidth: CGFloat = 0
+		keyboardWidth: CGFloat = 0,
+		recentEmojis: [String] = []
 	) {
 		self.page = page
 		self.returnKeyType = returnKeyType
@@ -45,5 +55,6 @@ public struct KeyboardState: Sendable, Equatable {
 		self.lastShiftTapAt = lastShiftTapAt
 		self.autoCapitalized = autoCapitalized
 		self.keyboardWidth = keyboardWidth
+		self.recentEmojis = recentEmojis
 	}
 }

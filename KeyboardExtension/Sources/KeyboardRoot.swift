@@ -21,6 +21,7 @@ struct KeyboardRoot: View {
 		KeyboardView(
 			layout: layout,
 			width: state.keyboardWidth,
+			recentEmojis: state.recentEmojis,
 			onKey: dispatch,
 			onKeyTapHaptic: onKeyTapHaptic,
 			onKeyClick: onKeyClick,

@@ -2,9 +2,11 @@ import Foundation
 
 /// Top-level keyboard page state. `letters(_:)` carries the current shift state;
 /// `symbols(_:)` carries which of the two symbol sub-pages is showing.
+/// `emojis` is the emoji picker — its own category selection lives in view state, not here.
 public enum KeyboardPage: Sendable, Equatable {
 	case letters(ShiftState)
 	case symbols(SymbolPage)
+	case emojis
 }
 
 public enum ShiftState: Sendable, Equatable {

@@ -229,34 +229,70 @@ final class LayoutBuilderTests: XCTestCase {
 
 	// MARK: - Bottom row
 
-	func testBottomRow_onLettersPage_hasNumericToggle() {
+	func testBottomRow_onLettersPage_hasNumericToggleAndEmojiSwitcher() {
 		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
 		let row = layout.rows.last!
 		XCTAssertEqual(row.id, "bottomRow")
-		XCTAssertEqual(row.keys.count, 5)
+		XCTAssertEqual(row.keys.count, 6)
 
 		let toggle = row.keys[0]
 		XCTAssertEqual(toggle.primary, .text("123"))
 		XCTAssertEqual(toggle.action, .switchPage(.symbols(.primary)))
 
 		XCTAssertEqual(row.keys[1].action, .nextKeyboard)
-		XCTAssertEqual(row.keys[2].action, .space)
-		XCTAssertEqual(row.keys[3].action, .insertText("."))
-		XCTAssertEqual(row.keys[4].action, .return)
+		// Emoji switcher sits between globe and space and jumps to the emoji page.
+		XCTAssertEqual(row.keys[2].primary, .symbol(.smiley))
+		XCTAssertEqual(row.keys[2].action, .switchPage(.emojis))
+		XCTAssertEqual(row.keys[3].action, .space)
+		XCTAssertEqual(row.keys[4].action, .insertText("."))
+		XCTAssertEqual(row.keys[5].action, .return)
 	}
 
-	func testBottomRow_onSymbolsPrimary_hasABCToggle() {
+	func testBottomRow_onSymbolsPrimary_hasABCToggleAndEmojiSwitcher() {
 		let layout = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
 		let row = layout.rows.last!
+		XCTAssertEqual(row.keys.count, 6)
 		XCTAssertEqual(row.keys[0].primary, .text("ABC"))
 		XCTAssertEqual(row.keys[0].action, .switchPage(.letters(.lower)))
+		XCTAssertEqual(row.keys[2].action, .switchPage(.emojis))
 	}
 
-	func testBottomRow_onSymbolsAlternate_hasABCToggle() {
+	func testBottomRow_onSymbolsAlternate_hasABCToggleAndEmojiSwitcher() {
 		let layout = LayoutBuilder.layout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
 		let row = layout.rows.last!
+		XCTAssertEqual(row.keys.count, 6)
 		XCTAssertEqual(row.keys[0].primary, .text("ABC"))
 		XCTAssertEqual(row.keys[0].action, .switchPage(.letters(.lower)))
+		XCTAssertEqual(row.keys[2].action, .switchPage(.emojis))
+	}
+
+	// MARK: - Emoji page
+
+	func testEmojiPage_withoutNumberRow_hasOnlyBottomRow() {
+		let layout = LayoutBuilder.layout(page: .emojis, showNumberRow: false, returnKeyType: .default)
+		XCTAssertEqual(layout.rows.count, 1)
+		XCTAssertEqual(layout.rows.first?.id, "bottomRow")
+	}
+
+	func testEmojiPage_dropsNumberRowEvenWhenPreferenceIsTrue() {
+		// Digits have no role in the emoji picker, so the number row is skipped here. Overall
+		// keyboard height stays consistent across pages because `KeyboardView.keyboardHeight`
+		// is driven by `layout.showsNumberRow`, not the row count.
+		let layout = LayoutBuilder.layout(page: .emojis, showNumberRow: true, returnKeyType: .default)
+		XCTAssertEqual(layout.rows.count, 1)
+		XCTAssertEqual(layout.rows.first?.id, "bottomRow")
+		XCTAssertTrue(layout.showsNumberRow, "preference should still propagate so height stays at 260")
+	}
+
+	func testEmojiPage_bottomRow_hasABCGlobeSpaceDelete() {
+		let layout = LayoutBuilder.layout(page: .emojis, showNumberRow: false, returnKeyType: .default)
+		let row = layout.rows.last!
+		XCTAssertEqual(row.keys.count, 4)
+		XCTAssertEqual(row.keys[0].primary, .text("ABC"))
+		XCTAssertEqual(row.keys[0].action, .switchPage(.letters(.lower)))
+		XCTAssertEqual(row.keys[1].action, .nextKeyboard)
+		XCTAssertEqual(row.keys[2].action, .space)
+		XCTAssertEqual(row.keys[3].action, .backspace)
 	}
 
 	// MARK: - Return key type & equality

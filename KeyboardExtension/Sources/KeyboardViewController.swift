@@ -58,11 +58,18 @@ final class KeyboardViewController: UIInputViewController {
 	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
 	/// v1.0 has no live observation — settings changes from the host take effect next time the keyboard appears.
 	private func refreshFromStore() {
+		var changed = false
 		let showRow = store.showNumberRow
 		if state.showNumberRow != showRow {
 			state.showNumberRow = showRow
-			rebuild()
+			changed = true
 		}
+		let storedRecents = store.recentEmojis
+		if state.recentEmojis != storedRecents {
+			state.recentEmojis = storedRecents
+			changed = true
+		}
+		if changed { rebuild() }
 	}
 
 	/// Applies the user's `AppearancePreference` by overriding the host controller's trait
@@ -148,6 +155,7 @@ final class KeyboardViewController: UIInputViewController {
 			proxy: proxyAdapter,
 			controller: self
 		)
+		recordRecentEmojiIfNeeded(key: key)
 		// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
 		// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
 		// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the
@@ -171,6 +179,23 @@ final class KeyboardViewController: UIInputViewController {
 			state.returnKeyType = newType
 			rebuild()
 		}
+	}
+
+	/// Moves the just-inserted emoji to the head of `recentEmojis` (deduped) and persists.
+	/// Keyed off `key.id` prefix because the synthesized emoji keys carry no other distinguishing
+	/// info — `.insertText` with arbitrary content would otherwise match regular character keys.
+	private func recordRecentEmojiIfNeeded(key: Key) {
+		guard key.id.hasPrefix("emoji.") else { return }
+		guard case .insertText(let emoji) = key.action, !emoji.isEmpty else { return }
+
+		var updated = state.recentEmojis
+		updated.removeAll { $0 == emoji }
+		updated.insert(emoji, at: 0)
+		if updated.count > KeyboardState.recentEmojisCapacity {
+			updated = Array(updated.prefix(KeyboardState.recentEmojisCapacity))
+		}
+		state.recentEmojis = updated
+		store.recentEmojis = updated
 	}
 
 	private func refreshAutoCapitalization() {
