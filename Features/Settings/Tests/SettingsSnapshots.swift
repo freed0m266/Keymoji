@@ -9,6 +9,7 @@
 import XCTest
 import SwiftUI
 import SnapshotTesting
+import KeyboCore
 @testable import Settings
 
 @MainActor
@@ -24,6 +25,24 @@ final class SettingsSnapshots: XCTestCase {
 
 	func testSettings_bothOff_dark() {
 		let view = SettingsView(viewModel: SettingsViewModelMock(showNumberRow: false, hapticFeedbackEnabled: false))
+			.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
+	func testSettings_appearanceSystem_dark() {
+		let view = SettingsView(viewModel: SettingsViewModelMock(appearance: .system))
+			.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
+	func testSettings_appearanceLight_dark() {
+		let view = SettingsView(viewModel: SettingsViewModelMock(appearance: .light))
+			.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
+	func testSettings_appearanceDark_dark() {
+		let view = SettingsView(viewModel: SettingsViewModelMock(appearance: .dark))
 			.preferredColorScheme(.dark)
 		assertSnapshot(view)
 	}

@@ -13,6 +13,7 @@ import KeyboCore
 public protocol SettingsViewModeling: Observable, AnyObject {
 	var showNumberRow: Bool { get set }
 	var hapticFeedbackEnabled: Bool { get set }
+	var appearance: AppearancePreference { get set }
 	var versionString: String { get }
 }
 
@@ -32,6 +33,10 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		didSet { store.hapticFeedbackEnabled = hapticFeedbackEnabled }
 	}
 
+	public var appearance: AppearancePreference {
+		didSet { store.appearance = appearance }
+	}
+
 	public let versionString: String
 
 	private let store: AppGroupStore
@@ -40,6 +45,7 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.store = store
 		self.showNumberRow = store.showNumberRow
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
+		self.appearance = store.appearance
 		self.versionString = Self.makeVersionString()
 		super.init()
 	}

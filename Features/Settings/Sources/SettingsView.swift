@@ -42,6 +42,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 	}
 
+	@ViewBuilder
 	private var keyboardSection: some View {
 		Section {
 			Toggle(Texts.Keyboard.showNumberRow, isOn: $viewModel.showNumberRow)
@@ -50,6 +51,25 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			Text(Texts.Keyboard.header)
 		} footer: {
 			Text(Texts.Keyboard.hapticFooter)
+		}
+
+		Section {
+			Picker(Texts.Keyboard.appearance, selection: $viewModel.appearance) {
+				ForEach(AppearancePreference.allCases, id: \.self) { pref in
+					Text(label(for: pref)).tag(pref)
+				}
+			}
+			.pickerStyle(.segmented)
+		} footer: {
+			Text(Texts.Keyboard.appearanceFooter)
+		}
+	}
+
+	private func label(for preference: AppearancePreference) -> String {
+		switch preference {
+		case .system: return Texts.Keyboard.Appearance.system
+		case .light:  return Texts.Keyboard.Appearance.light
+		case .dark:   return Texts.Keyboard.Appearance.dark
 		}
 	}
 
