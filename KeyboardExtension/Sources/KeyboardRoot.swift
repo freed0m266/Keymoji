@@ -18,12 +18,14 @@ struct KeyboardRoot: View {
 	let onTrackpadModeEntered: () -> Void
 
 	var body: some View {
+		let signpostState = perfSignposter.beginInterval("KeyboardRoot.body")
+		defer { perfSignposter.endInterval("KeyboardRoot.body", signpostState) }
 		let layout = KeyboardCore.makeLayout(
 			page: state.page,
 			showNumberRow: state.showNumberRow,
 			returnKeyType: state.returnKeyType
 		)
-		KeyboardView(
+		return KeyboardView(
 			layout: layout,
 			width: state.keyboardWidth,
 			recentEmojis: state.recentEmojis,

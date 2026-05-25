@@ -44,15 +44,21 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	override func viewDidLayoutSubviews() {
+		let signpostState = perfSignposter.beginInterval(
+			"viewDidLayoutSubviews",
+			"bounds=\(self.view.bounds.width)x\(self.view.bounds.height)"
+		)
 		super.viewDidLayoutSubviews()
 		// `view.bounds.width` is the authoritative visible width of the keyboard host. We propagate
 		// it into state so SwiftUI's `KeyboardView` can size itself exactly, avoiding the right-edge
 		// clipping caused by `GeometryReader` under-reporting inside `UIInputView` on real devices.
 		let width = view.bounds.width
 		if state.keyboardWidth != width, width > 0 {
+			perfSignposter.emitEvent("widthChanged", "from=\(self.state.keyboardWidth) to=\(width)")
 			state.keyboardWidth = width
 			rebuild()
 		}
+		perfSignposter.endInterval("viewDidLayoutSubviews", signpostState)
 	}
 
 	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
@@ -130,7 +136,9 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func rebuild() {
+		let signpostState = perfSignposter.beginInterval("rebuild")
 		hostingController?.rootView = makeRoot()
+		perfSignposter.endInterval("rebuild", signpostState)
 	}
 
 	/// Build the SwiftUI root with the current state and the live Slack typeahead suggestions.
@@ -314,4 +322,13 @@ extension KeyboardViewController: KeyboardControlling {}
 // `playInputClick` requires Allow Full Access to be enabled for the extension.
 private final class KeyboInputView: UIInputView, UIInputViewAudioFeedback {
 	var enableInputClicksWhenVisible: Bool { true }
+
+	override func layoutSubviews() {
+		let signpostState = perfSignposter.beginInterval(
+			"KeyboInputView.layoutSubviews",
+			"frame=\(self.frame.origin.y)/\(self.frame.size.height)"
+		)
+		super.layoutSubviews()
+		perfSignposter.endInterval("KeyboInputView.layoutSubviews", signpostState)
+	}
 }
