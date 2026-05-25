@@ -178,6 +178,46 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(proxy.deleteCount, 0)
 	}
 
+	// MARK: - Space auto-switch back to letters
+
+	func testSpace_onSymbolsPrimary_autoSwitchesToLetters() {
+		var state = KeyboardState(page: .symbols(.primary))
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(proxy.inserted, [" "])
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
+	func testSpace_onSymbolsAlternate_autoSwitchesToLetters() {
+		var state = KeyboardState(page: .symbols(.alternate))
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(proxy.inserted, [" "])
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
+	func testSpace_onLetters_doesNotChangePage() {
+		var state = KeyboardState(page: .letters(.lower))
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
+	func testDoubleSpace_onSymbolsPrimary_substitutesAndSwitches() {
+		var state = KeyboardState(page: .symbols(.primary))
+		let t0 = Date(timeIntervalSince1970: 1000)
+		let t1 = t0.addingTimeInterval(0.3)
+
+		dispatch(makeKey(.space), &state, now: { t0 })
+		// First space inserted, page hopped to letters.
+		XCTAssertEqual(proxy.inserted, [" "])
+		XCTAssertEqual(state.page, .letters(.lower))
+
+		dispatch(makeKey(.space), &state, now: { t1 })
+		// Double-tap detection survives the page switch (timestamp/flag tracking intact),
+		// so the second space substitutes to ". " and the page stays on letters.
+		XCTAssertEqual(proxy.inserted, [" ", ". "])
+		XCTAssertEqual(proxy.deleteCount, 1)
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
 	// MARK: - Next keyboard
 
 	func testNextKeyboard_callsController() {

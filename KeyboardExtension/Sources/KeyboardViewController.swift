@@ -108,6 +108,7 @@ final class KeyboardViewController: UIInputViewController {
 	private func handle(_ key: Key) {
 		// Haptic for the key tap itself is fired by `KeyView` on touch-down (matches Apple/SwiftKey
 		// feel). The dispatcher is concerned with state + text proxy only.
+		let pageBefore = state.page
 		InputDispatcher.dispatch(
 			key: key,
 			state: &state,
@@ -119,7 +120,12 @@ final class KeyboardViewController: UIInputViewController {
 		// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the
 		// re-eval automatically. For `.shift` we must NOT re-evaluate: doing so would immediately
 		// override a manual lowercase override at sentence start (Instagram message field, etc.).
+		// `.space` on a symbol page implicitly switches to letters *after* `insertText`; any
+		// `textDidChange` that fired synchronously during the insert saw the old `.symbols` page
+		// and skipped auto-cap, so re-run here for that implicit transition (covers "Yes! How…").
 		if case .switchPage = key.action {
+			refreshAutoCapitalization()
+		} else if case .space = key.action, pageBefore != state.page {
 			refreshAutoCapitalization()
 		}
 		rebuild()

@@ -1,6 +1,6 @@
 # 27 — Auto-switch back to letters after space on symbols
 
-**Status:** Todo
+**Status:** Done — 2026-05-25
 
 **Priorita:** v1.1 · **Úsilí:** XS · **Dopad:** Medium (daily typing flow)
 

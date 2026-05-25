@@ -43,6 +43,12 @@ public enum InputDispatcher {
 
 		case .space:
 			handleSpace(state: &state, proxy: proxy, now: now())
+			// After a space on either symbol page, hop back to letters. The user is presumably
+			// starting a new word; SwiftKey/Apple stock behave the same way. Auto-cap (in the
+			// controller's `textDidChange`) will then promote to `.upper` if appropriate.
+			if case .symbols = state.page {
+				state.page = .letters(.lower)
+			}
 
 		case .return:
 			proxy.insertText("\n")
