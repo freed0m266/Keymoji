@@ -51,6 +51,16 @@ public final class AppGroupStore: @unchecked Sendable {
 		suite.set(value, forKey: key.rawValue)
 	}
 
+	// MARK: - String array
+
+	public func stringArray(forKey key: AppGroupStoreKey) -> [String] {
+		suite.stringArray(forKey: key.rawValue) ?? []
+	}
+
+	public func setStringArray(_ value: [String], forKey key: AppGroupStoreKey) {
+		suite.set(value, forKey: key.rawValue)
+	}
+
 	// MARK: - Debug reset
 
 	/// Removes all Keybo-managed keys from the suite. Used by tests and developer reset flows.
@@ -92,5 +102,12 @@ public extension AppGroupStore {
 			return AppearancePreference(rawValue: raw) ?? .system
 		}
 		set { setString(newValue.rawValue, forKey: .appearance) }
+	}
+
+	/// Most-recently-used emojis, newest first. Updated by the keyboard extension after each
+	/// emoji insertion; read by the extension on `viewWillAppear` to seed the recents tab.
+	var recentEmojis: [String] {
+		get { stringArray(forKey: .recentEmojis) }
+		set { setStringArray(newValue, forKey: .recentEmojis) }
 	}
 }
