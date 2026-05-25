@@ -5,6 +5,7 @@ let features: [Feature] = [
 	example,
 	onboarding,
 	about,
+	emojiCodes,
 	settings
 ]
 let appTargets: [Target] = features.flatMap(\.allTargets)

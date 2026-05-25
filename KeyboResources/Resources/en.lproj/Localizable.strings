@@ -46,6 +46,15 @@
 "settings.favorites.emptyMessage" = "Pick the emojis you reach for most — they'll appear first in the keyboard's emoji panel.";
 "settings.favorites.listFooter" = "Drag to reorder. Swipe left to remove.";
 "settings.favorites.picker.title" = "Add favorites";
+"settings.emojiCodes.row" = "Emoji codes reference";
+"settings.emojiCodes.footer" = "Browse all Slack-style shortcodes the keyboard recognises.";
+
+"emojiCodes.title" = "Emoji codes";
+"emojiCodes.searchPrompt" = "Search shortcodes";
+"emojiCodes.emptyTitle" = "No matches";
+"emojiCodes.emptyMessage" = "Try a different search term.";
+"emojiCodes.copyHint" = "Tap a row to copy the shortcode.";
+"emojiCodes.copiedToast" = "Copied %@";
 
 "about.title" = "About Keybo";
 "about.versionLabel" = "Version %@";
