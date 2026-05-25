@@ -1,6 +1,6 @@
 # 26 — Sound feedback toggle (`playInputClick()`)
 
-**Status:** Todo
+**Status:** Done — 2026-05-25
 
 **Priorita:** v1.1 · **Úsilí:** XS · **Dopad:** Low
 
