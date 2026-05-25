@@ -46,10 +46,11 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 24. [24 — Delete word-by-word (long hold)](24-delete-word-by-word.md)
 25. [25 — Key preview popup (Apple-style bublina nad prstem)](25-key-preview-popup.md)
 26. [26 — Sound feedback toggle (`playInputClick()`)](26-sound-feedback.md)
+27. [27 — Auto-switch back to letters after space on symbols](27-auto-switch-to-letters-after-space.md)
 
 ## Pre-App-Store
 
-27. [27 — Real app icon](27-app-icon.md)
+28. [28 — Real app icon](28-app-icon.md)
 
 ## Mimo scope úplně
 

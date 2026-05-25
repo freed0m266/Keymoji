@@ -1,4 +1,4 @@
-# 27 — Real app icon (před App Store releasem)
+# 28 — Real app icon (před App Store releasem)
 
 **Status:** Todo
 
