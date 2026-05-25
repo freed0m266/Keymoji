@@ -156,6 +156,7 @@ final class KeyboardViewController: UIInputViewController {
 		// Apple/SwiftKey feel — feedback when the finger lands, not when it lifts). The dispatcher
 		// is concerned with state + text proxy only.
 		let pageBefore = state.page
+		let recentsBefore = state.recentEmojis
 		InputDispatcher.dispatch(
 			key: key,
 			state: &state,
@@ -163,6 +164,12 @@ final class KeyboardViewController: UIInputViewController {
 			controller: self
 		)
 		recordRecentEmojiIfNeeded(key: key)
+		// The dispatcher updates `state.recentEmojis` directly when a Slack-style shortcode
+		// substitution lands (the emoji is inserted via the proxy, not a synthesized `emoji.` key,
+		// so the path above is a no-op for it). Mirror the change to the cross-process store here.
+		if state.recentEmojis != recentsBefore, state.recentEmojis != store.recentEmojis {
+			store.recentEmojis = state.recentEmojis
+		}
 		// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
 		// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
 		// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the

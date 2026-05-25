@@ -26,12 +26,14 @@ public enum InputDispatcher {
 			proxy.insertText(shifted)
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: shifted, state: &state)
+			applySlackEmojiSubstitutionIfNeeded(justInserted: shifted, state: &state, proxy: proxy)
 
 		case .insertRawText(let text):
 			// Long-press alternates ship already-cased text; skip shift apply.
 			proxy.insertText(text)
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: text, state: &state)
+			applySlackEmojiSubstitutionIfNeeded(justInserted: text, state: &state, proxy: proxy)
 
 		case .backspace:
 			proxy.deleteBackward()
@@ -103,5 +105,41 @@ public enum InputDispatcher {
 		if !state.lastInsertWasSpace {
 			state.lastSpaceInsertedAt = nil
 		}
+	}
+
+	// MARK: - Slack-style emoji shortcodes
+
+	/// After a text insert, check whether the document now ends with a `:shortcode:` we recognize
+	/// and, if so, delete the trailing shortcode and insert the emoji in its place. Only fires
+	/// when the *just-inserted* text was the closing `:` — that's the moment a shortcode can
+	/// have just completed, and the cheap fast-path avoids scanning every keystroke.
+	///
+	/// On a hit, also moves the inserted emoji to the head of `state.recentEmojis` (deduped,
+	/// capped) so the Recents tab tracks Slack-typed emojis alongside picker-tapped ones. The
+	/// caller (e.g. `KeyboardViewController`) is responsible for persisting `state.recentEmojis`
+	/// to `AppGroupStore`.
+	private static func applySlackEmojiSubstitutionIfNeeded(
+		justInserted: String,
+		state: inout KeyboardState,
+		proxy: any TextDocumentProxying
+	) {
+		guard justInserted == ":" else { return }
+		guard let context = proxy.documentContextBeforeInput else { return }
+		guard let match = SlackEmojiParser.detectMatch(atEndOf: context) else { return }
+		for _ in 0..<match.consumedLength {
+			proxy.deleteBackward()
+		}
+		proxy.insertText(match.emoji)
+		moveEmojiToFrontOfRecents(match.emoji, state: &state)
+	}
+
+	private static func moveEmojiToFrontOfRecents(_ emoji: String, state: inout KeyboardState) {
+		var updated = state.recentEmojis
+		updated.removeAll { $0 == emoji }
+		updated.insert(emoji, at: 0)
+		if updated.count > KeyboardState.recentEmojisCapacity {
+			updated = Array(updated.prefix(KeyboardState.recentEmojisCapacity))
+		}
+		state.recentEmojis = updated
 	}
 }
