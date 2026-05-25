@@ -47,6 +47,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 25. [25 — Key preview popup (Apple-style bublina nad prstem)](25-key-preview-popup.md)
 26. [26 — Sound feedback toggle (`playInputClick()`)](26-sound-feedback.md)
 27. [27 — Auto-switch back to letters after space on symbols](27-auto-switch-to-letters-after-space.md)
+29. [29 — Plynulý swipe-down dismiss klávesnice](29-swipe-down-dismiss-jank.md)
 
 ## Pre-App-Store
 
