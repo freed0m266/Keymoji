@@ -18,6 +18,9 @@ final class KeyboardViewController: UIInputViewController {
 	private lazy var haptics: any HapticFeedbackProviding = UIKitHaptics(isEnabled: { [weak self] in
 		self?.store.hapticFeedbackEnabled ?? true
 	})
+	private lazy var clickSound: any KeyClickSounding = UIKitClickSound(isEnabled: { [weak self] in
+		self?.store.keyClickSoundEnabled ?? false
+	})
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -131,7 +134,8 @@ final class KeyboardViewController: UIInputViewController {
 			key: key,
 			state: &state,
 			proxy: proxyAdapter,
-			controller: self
+			controller: self,
+			clickSound: clickSound
 		)
 		// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
 		// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
@@ -186,3 +190,11 @@ final class KeyboardViewController: UIInputViewController {
 // `advanceToNextInputMode()` and `dismissKeyboard()` are inherited from UIInputViewController,
 // so this conformance is empty — just declares the protocol relationship.
 extension KeyboardViewController: KeyboardControlling {}
+
+// MARK: - UIInputViewAudioFeedback conformance
+// Required for `UIDevice.current.playInputClick()` to produce audio from a keyboard extension.
+// The per-app toggle is enforced inside `UIKitClickSound`; iOS additionally gates audibility on
+// the user's Settings → Sounds & Haptics → Keyboard Clicks preference.
+extension KeyboardViewController: UIInputViewAudioFeedback {
+	var enableInputClicksWhenVisible: Bool { true }
+}

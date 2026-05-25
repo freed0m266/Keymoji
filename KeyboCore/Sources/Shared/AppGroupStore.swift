@@ -74,6 +74,13 @@ public extension AppGroupStore {
 		set { setBool(newValue, forKey: .hapticFeedbackEnabled) }
 	}
 
+	/// Keyboard click sound toggle. Defaults to `false` — Apple's stock setting in
+	/// Settings → Sounds & Haptics also ships off; matching that avoids surprising users.
+	var keyClickSoundEnabled: Bool {
+		get { bool(forKey: .keyClickSoundEnabled, default: false) }
+		set { setBool(newValue, forKey: .keyClickSoundEnabled) }
+	}
+
 	var onboardingComplete: Bool {
 		get { bool(forKey: .onboardingComplete, default: false) }
 		set { setBool(newValue, forKey: .onboardingComplete) }

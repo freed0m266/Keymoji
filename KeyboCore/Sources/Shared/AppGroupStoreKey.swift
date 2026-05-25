@@ -5,6 +5,7 @@ import Foundation
 public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case showNumberRow
 	case hapticFeedbackEnabled
+	case keyClickSoundEnabled
 	case onboardingComplete
 	case appearance
 }
