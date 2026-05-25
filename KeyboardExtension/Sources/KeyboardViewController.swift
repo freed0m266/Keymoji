@@ -22,6 +22,15 @@ final class KeyboardViewController: UIInputViewController {
 		self?.store.keyClickSoundEnabled ?? false
 	})
 
+	/// Install a `UIInputView` subclass that adopts `UIInputViewAudioFeedback` as the controller's
+	/// root view. iOS routes `UIDevice.current.playInputClick()` through the currently visible
+	/// **input view**'s conformance — adopting the protocol on `UIInputViewController` itself does
+	/// not work, the controller is never inspected. `inputViewStyle: .keyboard` matches the default
+	/// `UIInputViewController.view` style so the SwiftUI host on top renders identically.
+	override func loadView() {
+		view = KeyboInputView(frame: .zero, inputViewStyle: .keyboard)
+	}
+
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		installHostingController()
@@ -191,10 +200,12 @@ final class KeyboardViewController: UIInputViewController {
 // so this conformance is empty — just declares the protocol relationship.
 extension KeyboardViewController: KeyboardControlling {}
 
-// MARK: - UIInputViewAudioFeedback conformance
-// Required for `UIDevice.current.playInputClick()` to produce audio from a keyboard extension.
-// The per-app toggle is enforced inside `UIKitClickSound`; iOS additionally gates audibility on
-// the user's Settings → Sounds & Haptics → Keyboard Clicks preference.
-extension KeyboardViewController: UIInputViewAudioFeedback {
+// MARK: - Click-sound input view
+// `UIDevice.current.playInputClick()` only produces audio when the *visible input view* — not the
+// controller — conforms to `UIInputViewAudioFeedback` and returns `true` from
+// `enableInputClicksWhenVisible`. iOS additionally gates audibility on the user's Settings →
+// Sounds & Haptics → Keyboard Clicks preference, and (per Apple's custom keyboard guide)
+// `playInputClick` requires Allow Full Access to be enabled for the extension.
+private final class KeyboInputView: UIInputView, UIInputViewAudioFeedback {
 	var enableInputClicksWhenVisible: Bool { true }
 }

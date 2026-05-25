@@ -32,7 +32,7 @@
 "settings.keyboard.showNumberRow" = "Always show number row";
 "settings.keyboard.hapticFeedback" = "Haptic feedback";
 "settings.keyboard.keyClickSound" = "Key click sound";
-"settings.keyboard.hapticFooter" = "Haptic feedback requires Allow Full Access in Settings → General → Keyboard → Keybo. Key clicks also require Keyboard Clicks enabled in Settings → Sounds & Haptics.";
+"settings.keyboard.hapticFooter" = "Haptic feedback and key clicks both require Allow Full Access in Settings → General → Keyboard → Keybo. Key clicks additionally require Keyboard Clicks enabled in Settings → Sounds & Haptics.";
 "settings.keyboard.appearance" = "Appearance";
 "settings.keyboard.appearance.system" = "System";
 "settings.keyboard.appearance.light" = "Light";
