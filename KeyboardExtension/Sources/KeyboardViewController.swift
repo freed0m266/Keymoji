@@ -104,15 +104,7 @@ final class KeyboardViewController: UIInputViewController {
 	// MARK: - Hosting
 
 	private func installHostingController() {
-		let root = KeyboardRoot(
-			state: state,
-			dispatch: { [weak self] key in self?.handle(key) },
-			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
-			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
-			onKeyClick: { [weak self] in self?.clickSound.play() },
-			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
-			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
-		)
+		let root = makeRoot()
 		let host = UIHostingController(rootView: root)
 		host.view.translatesAutoresizingMaskIntoConstraints = false
 		host.view.backgroundColor = .clear
@@ -138,15 +130,66 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func rebuild() {
-		hostingController?.rootView = KeyboardRoot(
+		hostingController?.rootView = makeRoot()
+	}
+
+	/// Build the SwiftUI root with the current state and the live Slack typeahead suggestions.
+	/// Suggestions are derived from `documentContextBeforeInput` here (not stored in `KeyboardState`)
+	/// so the view always reflects what the proxy sees right now — including transient cases where
+	/// the dispatcher and the proxy disagree by a frame.
+	private func makeRoot() -> KeyboardRoot {
+		let suggestions = currentSlackSuggestions()
+		return KeyboardRoot(
 			state: state,
+			slackSuggestions: suggestions,
 			dispatch: { [weak self] key in self?.handle(key) },
 			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
+			selectSlackSuggestion: { [weak self] suggestion in self?.selectSlackSuggestion(suggestion) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
 			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() }
 		)
+	}
+
+	/// Compute Slack-style shortcode suggestions from the current document context.
+	/// Only fires on letter pages — the bar is suppressed on symbol/emoji pages since the user
+	/// can't reasonably be authoring a shortcode there.
+	private func currentSlackSuggestions() -> [SlackEmojiSuggester.Suggestion] {
+		guard case .letters = state.page else { return [] }
+		return SlackEmojiSuggester.suggestions(forContext: textDocumentProxy.documentContextBeforeInput)
+	}
+
+	/// User tapped a suggestion chip. Delete the in-progress `:prefix` from the document,
+	/// insert the emoji, mirror the same recents/shift handling as the closing-colon path.
+	private func selectSlackSuggestion(_ suggestion: SlackEmojiSuggester.Suggestion) {
+		guard let context = textDocumentProxy.documentContextBeforeInput else { return }
+		guard let prefix = SlackEmojiSuggester.activeShortcodePrefix(
+			in: context,
+			minLength: SlackEmojiSuggester.defaultMinPrefixLength
+		) else { return }
+
+		// Delete `:` + prefix from the document, then insert the emoji.
+		let charsToDelete = prefix.count + 1
+		for _ in 0..<charsToDelete {
+			textDocumentProxy.deleteBackward()
+		}
+		textDocumentProxy.insertText(suggestion.emoji)
+
+		// Mirror dispatcher behavior: bump emoji to head of recents (deduped, capped), persist,
+		// and downshift caps lock so the next character isn't accidentally uppercased.
+		var updatedRecents = state.recentEmojis
+		updatedRecents.removeAll { $0 == suggestion.emoji }
+		updatedRecents.insert(suggestion.emoji, at: 0)
+		if updatedRecents.count > KeyboardState.recentEmojisCapacity {
+			updatedRecents = Array(updatedRecents.prefix(KeyboardState.recentEmojisCapacity))
+		}
+		state.recentEmojis = updatedRecents
+		store.recentEmojis = updatedRecents
+
+		ShiftStateMachine.apply(.characterInserted, to: &state)
+
+		rebuild()
 	}
 
 	// MARK: - Input

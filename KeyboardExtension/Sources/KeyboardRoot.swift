@@ -6,8 +6,10 @@ import KeyboardUI
 /// `KeyboardState` and routes key taps back to the controller via `dispatch`.
 struct KeyboardRoot: View {
 	let state: KeyboardState
+	let slackSuggestions: [SlackEmojiSuggester.Suggestion]
 	let dispatch: (Key) -> Void
 	let toggleFavoriteEmoji: (String) -> Void
+	let selectSlackSuggestion: (SlackEmojiSuggester.Suggestion) -> Void
 	let onKeyTapHaptic: () -> Void
 	let onKeyClick: () -> Void
 	let onPopoverEntry: () -> Void
@@ -24,8 +26,10 @@ struct KeyboardRoot: View {
 			width: state.keyboardWidth,
 			recentEmojis: state.recentEmojis,
 			favoriteEmojis: state.favoriteEmojis,
+			slackSuggestions: slackSuggestions,
 			onKey: dispatch,
 			onToggleFavoriteEmoji: toggleFavoriteEmoji,
+			onSelectSlackSuggestion: selectSlackSuggestion,
 			onKeyTapHaptic: onKeyTapHaptic,
 			onKeyClick: onKeyClick,
 			onPopoverEntry: onPopoverEntry,
