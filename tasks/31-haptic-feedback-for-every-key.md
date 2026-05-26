@@ -1,6 +1,8 @@
 # 31 — Haptic feedback pro každou klávesu
 
-**Status:** Todo
+**Status:** Done — 2026-05-26
+
+**Status (předchozí):** Todo
 
 **Priorita:** v1.1 · **Úsilí:** XS · **Dopad:** Medium (daily UX, taktilní konzistence)
 
