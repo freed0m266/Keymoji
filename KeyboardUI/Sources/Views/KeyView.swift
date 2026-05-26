@@ -162,8 +162,8 @@ struct KeyView: View {
 		trackpadAnchorX = location.x
 
 		// Fire the "key tap" haptic + click at touch-down (matches Apple/SwiftKey feel — feedback
-		// when the finger lands, not when it lifts). Excludes system controls (shift, page switch)
-		// to avoid noisy double-feedback on non-character interactions.
+		// when the finger lands, not when it lifts). Fires on every key except continuous trackpad
+		// scrubbing, which emits cursor-offset events 60×/s and would drown the user in vibration.
 		if firesKeyTapFeedback {
 			onKeyTapHaptic()
 			onKeyClick()
@@ -178,13 +178,15 @@ struct KeyView: View {
 		}
 	}
 
-	/// True for keys whose primary action inserts text or directly mutates the document.
-	/// Mirrors Apple's convention of feedback-on-character-key but silent system controls.
+	/// True for every key action except continuous trackpad scrubbing. Each `.cursorOffset` is
+	/// emitted per-character of finger drag — firing haptics there would buzz dozens of times per
+	/// second. The trackpad-mode entry itself has its own dedicated "thunk" haptic upstream.
 	private var firesKeyTapFeedback: Bool {
 		switch key.action {
-		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return:
+		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return,
+		     .shift, .switchPage, .dismissKeyboard:
 			return true
-		case .shift, .switchPage, .dismissKeyboard, .cursorOffset:
+		case .cursorOffset:
 			return false
 		}
 	}

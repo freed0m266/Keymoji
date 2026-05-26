@@ -112,7 +112,9 @@ public struct EmojiPanelView: View {
 	private var categoryTabs: some View {
 		HStack(spacing: 0) {
 			cornerButton(iconName: "characters.uppercase") {
-				// Mirror `KeyView.firesKeyTapFeedback`: `.switchPage` is silent (no click/haptic).
+				// Mirror `KeyView.firesKeyTapFeedback`: fire haptic + click on page switch.
+				onKeyTapHaptic()
+				onKeyClick()
 				onSwitchToLetters()
 			}
 			.padding(.leading, 4)
