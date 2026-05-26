@@ -32,7 +32,7 @@ public enum KeyContent: Sendable, Equatable {
 	case symbol(SystemSymbol)
 }
 
-/// Reference to an SF Symbol used to render a system key (shift, delete, return, globe).
+/// Reference to an SF Symbol used to render a system key (shift, delete, return).
 /// `KeyboardCore` is pure Swift, so this enum stores only the symbol identifier;
 /// view-layer (`KeyboardUI`) maps it to an actual `Image(systemName:)`.
 public enum SystemSymbol: String, Sendable, Equatable {
@@ -41,7 +41,6 @@ public enum SystemSymbol: String, Sendable, Equatable {
 	case capsLockFill
 	case delete
 	case `return`
-	case globe
 	case smiley
 
 	public var systemName: String {
@@ -51,7 +50,6 @@ public enum SystemSymbol: String, Sendable, Equatable {
 		case .capsLockFill: return "capslock.fill"
 		case .delete:       return "delete.left"
 		case .return:       return "return"
-		case .globe:        return "globe"
 		case .smiley:       return "face.smiling"
 		}
 	}
@@ -67,7 +65,6 @@ public enum KeyAction: Sendable, Equatable {
 	case shift
 	case space
 	case `return`
-	case nextKeyboard
 	case dismissKeyboard
 	case switchPage(KeyboardPage)
 	/// Move the cursor by `offset` characters (negative = left). Emitted by `KeyView` while
@@ -78,7 +75,7 @@ public enum KeyAction: Sendable, Equatable {
 public enum KeyRole: Sendable, Equatable {
 	/// Inserts character into the document (letters, digits, punctuation).
 	case character
-	/// Controls keyboard behavior (shift, delete, return, space, globe, page toggle).
+	/// Controls keyboard behavior (shift, delete, return, space, page toggle).
 	case system
 }
 

@@ -434,14 +434,6 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(proxy.deleteCount, 0)
 	}
 
-	// MARK: - Next keyboard
-
-	func testNextKeyboard_callsController() {
-		var state = KeyboardState()
-		dispatch(makeKey(.nextKeyboard), &state)
-		XCTAssertEqual(controller.advanceCount, 1)
-	}
-
 	// MARK: - Helpers
 
 	private func dispatch(_ key: Key, _ state: inout KeyboardState, now: () -> Date = Date.init) {
@@ -516,12 +508,7 @@ private final class MockProxy: TextDocumentProxying {
 
 @MainActor
 private final class MockController: KeyboardControlling {
-	var advanceCount = 0
 	var dismissCount = 0
-
-	func advanceToNextInputMode() {
-		advanceCount += 1
-	}
 
 	func dismissKeyboard() {
 		dismissCount += 1

@@ -68,9 +68,6 @@ public enum InputDispatcher {
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
 
-		case .nextKeyboard:
-			controller.advanceToNextInputMode()
-
 		case .dismissKeyboard:
 			controller.dismissKeyboard()
 

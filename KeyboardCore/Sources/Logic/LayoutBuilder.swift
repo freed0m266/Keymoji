@@ -278,16 +278,7 @@ public enum LayoutBuilder {
 			fatalError("emojis page should not reach makeStandardBottomRow")
 		}
 
-		let globe = Key(
-			id: "globe",
-			primary: .symbol(.globe),
-			alternates: [],
-			action: .nextKeyboard,
-			visualWeight: .small,
-			role: .system
-		)
-		// Slot for jumping to the emoji panel. Sits between globe and space to mirror SwiftKey's
-		// placement; tapping it pushes the page state to `.emojis`.
+		// Slot for jumping to the emoji panel — tapping it pushes the page state to `.emojis`.
 		let emoji = Key(
 			id: "bottom.emojiSwitcher",
 			primary: .symbol(.smiley),
@@ -323,27 +314,18 @@ public enum LayoutBuilder {
 
 		return KeyboardRow(
 			id: "bottomRow",
-			keys: [toggle, globe, emoji, space, dot, returnKey]
+			keys: [toggle, emoji, space, dot, returnKey]
 		)
 	}
 
-	/// Bottom row shown while on the emoji page. ABC jumps back to letters; globe still cycles
-	/// system input modes; space + delete behave as on the regular pages. No `.` or page-toggle —
-	/// emoji input has different ergonomics.
+	/// Bottom row shown while on the emoji page. ABC jumps back to letters; space + delete behave
+	/// as on the regular pages. No `.` or page-toggle — emoji input has different ergonomics.
 	private static func makeEmojiBottomRow() -> KeyboardRow {
 		let abc = Key(
 			id: "bottom.pageToggle",
 			primary: .text("ABC"),
 			alternates: [],
 			action: .switchPage(.letters(.lower)),
-			visualWeight: .small,
-			role: .system
-		)
-		let globe = Key(
-			id: "globe",
-			primary: .symbol(.globe),
-			alternates: [],
-			action: .nextKeyboard,
 			visualWeight: .small,
 			role: .system
 		)
@@ -358,7 +340,7 @@ public enum LayoutBuilder {
 		let delete = makeDeleteKey()
 		return KeyboardRow(
 			id: "bottomRow",
-			keys: [abc, globe, space, delete]
+			keys: [abc, space, delete]
 		)
 	}
 }

@@ -162,8 +162,8 @@ struct KeyView: View {
 		trackpadAnchorX = location.x
 
 		// Fire the "key tap" haptic + click at touch-down (matches Apple/SwiftKey feel — feedback
-		// when the finger lands, not when it lifts). Excludes system controls (shift, page switch,
-		// globe) to avoid noisy double-feedback on non-character interactions.
+		// when the finger lands, not when it lifts). Excludes system controls (shift, page switch)
+		// to avoid noisy double-feedback on non-character interactions.
 		if firesKeyTapFeedback {
 			onKeyTapHaptic()
 			onKeyClick()
@@ -184,7 +184,7 @@ struct KeyView: View {
 		switch key.action {
 		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return:
 			return true
-		case .shift, .switchPage, .nextKeyboard, .dismissKeyboard, .cursorOffset:
+		case .shift, .switchPage, .dismissKeyboard, .cursorOffset:
 			return false
 		}
 	}
@@ -478,7 +478,6 @@ struct KeyView: View {
 		case .shift:                  return "Shift"
 		case .space:                  return "Space"
 		case .return:                 return "Return"
-		case .nextKeyboard:           return "Next keyboard"
 		case .dismissKeyboard:        return "Dismiss keyboard"
 		case .switchPage:             return "Switch keyboard layout"
 		case .cursorOffset:           return "Move cursor"

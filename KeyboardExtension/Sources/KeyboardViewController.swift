@@ -367,8 +367,8 @@ final class KeyboardViewController: UIInputViewController {
 }
 
 // MARK: - KeyboardControlling conformance
-// `advanceToNextInputMode()` and `dismissKeyboard()` are inherited from UIInputViewController,
-// so this conformance is empty — just declares the protocol relationship.
+// `dismissKeyboard()` is inherited from UIInputViewController, so this conformance is empty —
+// just declares the protocol relationship.
 extension KeyboardViewController: KeyboardControlling {}
 
 // MARK: - Click-sound input view
