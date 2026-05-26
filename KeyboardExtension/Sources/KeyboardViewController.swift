@@ -58,32 +58,7 @@ final class KeyboardViewController: UIInputViewController {
 			state.keyboardWidth = width
 			rebuild()
 		}
-		updateHostRasterization()
 		perfSignposter.endInterval("viewDidLayoutSubviews", signpostState)
-	}
-
-	/// Task 29 experiment — swipe-down dismiss jank.
-	/// Profiling showed that during the iOS-driven dismiss animation our `rebuild()` guard works
-	/// (rebuild fires 1–2× across the gesture, not per-frame), but SwiftUI still does a ~4 ms
-	/// `UnaryChildGeometry<_FrameLayout>` *Creation* on each `KeyboInputView.layoutSubviews`
-	/// pass — five of those in the dismiss window stack up to a measured 33 ms hitch.
-	///
-	/// Fix: while CoreAnimation is position-animating our input view (swipe-down dismiss, also
-	/// the initial slide-up), tell it to render the SwiftUI host to a bitmap once and reuse the
-	/// cache for every frame of the motion. The animation only moves `origin.y` — content is
-	/// invariant for the duration, so the cached bitmap is correct. We unflip the switch as soon
-	/// as the animation ends so interactive renders (key flashes, popovers, trackpad fade) stay
-	/// direct and don't pay re-rasterization cost.
-	private func updateHostRasterization() {
-		guard let hostLayer = hostingController?.view.layer else { return }
-		let isAnimating = view.layer.animationKeys()?.isEmpty == false
-		guard hostLayer.shouldRasterize != isAnimating else { return }
-		perfSignposter.emitEvent("rasterizeToggle", "on=\(isAnimating)")
-		hostLayer.shouldRasterize = isAnimating
-		if isAnimating {
-			// Cache at native pixel density so the composite stays sharp.
-			hostLayer.rasterizationScale = traitCollection.displayScale
-		}
 	}
 
 	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
@@ -148,6 +123,16 @@ final class KeyboardViewController: UIInputViewController {
 		host.view.preservesSuperviewLayoutMargins = false
 		host.view.layoutMargins = .zero
 
+		// Task 29 — swipe-down dismiss jank. The standard `additionalSafeAreaInsets = .zero`
+		// above only zeros the *additional* layer; system safe-area still propagates through
+		// UIHostingController into SwiftUI. During the swipe-down dismiss iOS continuously
+		// recomputes the keyboard's safe-area as it moves past the home-indicator zone, which
+		// cascades into a SwiftUI layout pass per frame (~4 ms `UnaryChildGeometry<_FrameLayout>`
+		// Creation, measured 5× per dismiss = ~20 ms of the 33 ms hitch). This kills the cascade
+		// at the source by subclassing the hosting view at runtime to permanently return zero
+		// safe-area. Keyboards never need safe-area awareness inside their own bounds anyway.
+		Self.disableSafeAreaInsets(on: host.view)
+
 		addChild(host)
 		view.addSubview(host.view)
 		NSLayoutConstraint.activate([
@@ -158,6 +143,38 @@ final class KeyboardViewController: UIInputViewController {
 		])
 		host.didMove(toParent: self)
 		hostingController = host
+	}
+
+	/// Subclasses `view`'s class at runtime to override `safeAreaInsets` to always return zero.
+	/// Used on the hosting controller's root view to stop UIHostingController from propagating
+	/// per-frame safe-area changes into SwiftUI during system-driven keyboard animations.
+	///
+	/// Implementation: allocates a one-off `<OriginalClass>_DisableSafeArea` subclass that
+	/// overrides the safeAreaInsets getter, then swaps the instance's class via `object_setClass`.
+	/// Cached by suffix so repeated installs (e.g., after extension reload) reuse the same
+	/// subclass instead of leaking a new one each time. Pure Obj-C runtime — no private API.
+	private static func disableSafeAreaInsets(on view: UIView) {
+		guard let viewClass = object_getClass(view) else { return }
+		let subclassName = String(cString: class_getName(viewClass)).appending("_DisableSafeArea")
+		if let existing = NSClassFromString(subclassName) {
+			object_setClass(view, existing)
+			return
+		}
+		guard let utf8Name = (subclassName as NSString).utf8String,
+		      let subclass = objc_allocateClassPair(viewClass, utf8Name, 0) else {
+			return
+		}
+		if let method = class_getInstanceMethod(UIView.self, #selector(getter: UIView.safeAreaInsets)) {
+			let zeroInsets: @convention(block) (AnyObject) -> UIEdgeInsets = { _ in .zero }
+			class_addMethod(
+				subclass,
+				#selector(getter: UIView.safeAreaInsets),
+				imp_implementationWithBlock(zeroInsets),
+				method_getTypeEncoding(method)
+			)
+		}
+		objc_registerClassPair(subclass)
+		object_setClass(view, subclass)
 	}
 
 	private func rebuild() {
