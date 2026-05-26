@@ -29,9 +29,14 @@ public final class FavoritesEditorViewModel: BaseViewModel, FavoritesEditorViewM
 	public private(set) var favorites: [String]
 
 	private let store: AppGroupStore
+	private let notifier: SettingsChangeNotifier
 
-	public init(store: AppGroupStore = .shared) {
+	public init(
+		store: AppGroupStore = .shared,
+		notifier: SettingsChangeNotifier = .shared
+	) {
 		self.store = store
+		self.notifier = notifier
 		self.favorites = store.favoriteEmojis
 		super.init()
 	}
@@ -57,5 +62,6 @@ public final class FavoritesEditorViewModel: BaseViewModel, FavoritesEditorViewM
 
 	private func persist() {
 		store.favoriteEmojis = favorites
+		notifier.post(.favoriteEmojis)
 	}
 }

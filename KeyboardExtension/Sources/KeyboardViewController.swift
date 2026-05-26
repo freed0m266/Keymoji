@@ -15,6 +15,8 @@ final class KeyboardViewController: UIInputViewController {
 	private var hostingController: UIHostingController<KeyboardRoot>?
 	private lazy var proxyAdapter = TextProxyAdapter(textDocumentProxy)
 	private let store = AppGroupStore.shared
+	private let settingsNotifier = SettingsChangeNotifier.shared
+	private var settingsObservers: [SettingsObservationToken] = []
 	private lazy var haptics: any HapticFeedbackProviding = UIKitHaptics(isEnabled: { [weak self] in
 		self?.store.hapticFeedbackEnabled ?? true
 	})
@@ -34,6 +36,7 @@ final class KeyboardViewController: UIInputViewController {
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		installHostingController()
+		installSettingsObservers()
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -55,8 +58,28 @@ final class KeyboardViewController: UIInputViewController {
 		}
 	}
 
-	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance.
-	/// v1.0 has no live observation — settings changes from the host take effect next time the keyboard appears.
+	/// Subscribes to Darwin notifications for the host-mutable settings that affect rendering.
+	/// `hapticFeedbackEnabled` / `keyClickSoundEnabled` aren't observed because their callsites
+	/// re-read `AppGroupStore` on every tap — the next keystroke already picks up the new value.
+	/// Tokens live in `settingsObservers`; they remove themselves on `deinit` when the controller
+	/// is torn down (extension reload), so no explicit cleanup is needed.
+	private func installSettingsObservers() {
+		settingsObservers = [
+			settingsNotifier.addObserver(for: .showNumberRow) { [weak self] in
+				self?.refreshFromStore()
+			},
+			settingsNotifier.addObserver(for: .favoriteEmojis) { [weak self] in
+				self?.refreshFromStore()
+			},
+			settingsNotifier.addObserver(for: .appearance) { [weak self] in
+				self?.refreshAppearance()
+			}
+		]
+	}
+
+	/// Pulls cross-process preferences (number row toggle, etc.) on each appearance and on every
+	/// Darwin notification fired by the host app. The `viewWillAppear` path is the fallback for
+	/// state we may have missed while the controller wasn't around to receive notifications.
 	private func refreshFromStore() {
 		var changed = false
 		let showRow = store.showNumberRow

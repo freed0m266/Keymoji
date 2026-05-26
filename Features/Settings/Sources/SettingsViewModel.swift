@@ -27,27 +27,44 @@ public func settingsVM() -> SettingsViewModel {
 public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 
 	public var showNumberRow: Bool {
-		didSet { store.showNumberRow = showNumberRow }
+		didSet {
+			store.showNumberRow = showNumberRow
+			notifier.post(.showNumberRow)
+		}
 	}
 
 	public var hapticFeedbackEnabled: Bool {
-		didSet { store.hapticFeedbackEnabled = hapticFeedbackEnabled }
+		didSet {
+			store.hapticFeedbackEnabled = hapticFeedbackEnabled
+			notifier.post(.hapticFeedbackEnabled)
+		}
 	}
 
 	public var keyClickSoundEnabled: Bool {
-		didSet { store.keyClickSoundEnabled = keyClickSoundEnabled }
+		didSet {
+			store.keyClickSoundEnabled = keyClickSoundEnabled
+			notifier.post(.keyClickSoundEnabled)
+		}
 	}
 
 	public var appearance: AppearancePreference {
-		didSet { store.appearance = appearance }
+		didSet {
+			store.appearance = appearance
+			notifier.post(.appearance)
+		}
 	}
 
 	public let versionString: String
 
 	private let store: AppGroupStore
+	private let notifier: SettingsChangeNotifier
 
-	public init(store: AppGroupStore = .shared) {
+	public init(
+		store: AppGroupStore = .shared,
+		notifier: SettingsChangeNotifier = .shared
+	) {
 		self.store = store
+		self.notifier = notifier
 		self.showNumberRow = store.showNumberRow
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
 		self.keyClickSoundEnabled = store.keyClickSoundEnabled
