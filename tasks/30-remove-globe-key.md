@@ -1,6 +1,6 @@
 # 30 — Odstranit globe key z bottom row
 
-**Status:** Todo
+**Status:** Done — 2026-05-26
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Low (čistka UI a kódu)
 
