@@ -1,6 +1,6 @@
 # 22 — Cross-process settings observation (Darwin notifications)
 
-**Status:** Todo
+**Status:** Done — 2026-05-26
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Low (UX polish)
 

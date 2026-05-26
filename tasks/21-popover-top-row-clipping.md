@@ -10,15 +10,17 @@ Při long-press na klávesy v top row klávesnice (number row pokud zapnutý, ji
 
 Apple iOS toto řeší rozšířením `inputView` o oblast popoveru nahoru (transparentní), nebo flipnutím popoveru pod klávesu když nahoře není místo.
 
+**Pozn.:** Po dokončení tasku 25 (key preview bublina) trpí stejným clippingem i preview popup — jeho vertikální offset (~92 pt) je dokonce větší než long-press popoveru (52 pt). Tj. fix musí pokrývat oba overlay typy.
+
 ## Scope (až přijde čas)
 
 Tři možné cesty:
 
-- **(a) Resize inputView**: `KeyboardViewController.inputView.frame` extendovat o ~60 pt nahoru, transparentní oblast pro popover. Nejpřesnější Apple-like řešení, ale komplikuje layout.
-- **(b) Flip popover dolů na top row**: detekovat „top row" v `KeyRowView` (`isFirstRowAfterNumberRow` flag) a v `KeyView` `.offset(y: +keyHeight + 12)` místo `-popoverHeight - 12`. UX je trochu jiné než Apple, ale jednodušší.
-- **(c) Reserved padding**: vždy přidat 60 pt nahoru do `KeyboardView` a popover renderovat do něj. Visible space cost.
+- **(a) Resize inputView**: `KeyboardViewController.inputView.frame` extendovat o ~95 pt nahoru, transparentní oblast pro popover a preview bublinu. Nejpřesnější Apple-like řešení, ale komplikuje layout. **Výhoda:** overlay kód v `KeyView` se vůbec nemění — fix žije na jednom místě a pokrývá oba overlay typy zdarma.
+- **(b) Flip popover dolů na top row**: detekovat „top row" v `KeyRowView` (`isFirstRowAfterNumberRow` flag) a v `KeyView` `.offset(y: +keyHeight + 12)` místo `-popoverHeight - 12`. UX je trochu jiné než Apple a musí se aplikovat zvlášť na long-press popover i preview bublinu (= dvojí propagace `placement` parametru přes `KeyRowView` → `KeyView`).
+- **(c) Reserved padding**: vždy přidat ~95 pt nahoru do `KeyboardView` a oba overlay typy renderovat do něj. Visible space cost.
 
-**Doporučení (b)** — minimální komplikace + zachovává viditelnost. Pokud someday user feedback ukáže, že chce Apple-like „above" pro top row, je to upgrade na (a).
+**Doporučení (a)** — overlay kód z tasků 07 a 25 zůstává netknutý, fix je centralizovaný v `KeyboardViewController`. (Před taskem 25 dávalo víc smysl (b), ale s existencí dvou overlay typů se kalkulace překlopila — duplikace `placement` logiky není worth it.)
 
 ## Závislosti
 
