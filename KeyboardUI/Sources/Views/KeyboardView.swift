@@ -87,9 +87,7 @@ public struct KeyboardView: View {
 	}
 
 	public var body: some View {
-		let signpostState = perfSignposter.beginInterval("KeyboardView.body", "width=\(width)")
-		defer { perfSignposter.endInterval("KeyboardView.body", signpostState) }
-		return VStack(spacing: rowSpacing) {
+		VStack(spacing: rowSpacing) {
 			if isEmojiKeyboard {
 				EmojiPanelView(
 					recents: recentEmojis,
