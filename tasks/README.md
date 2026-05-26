@@ -48,6 +48,8 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 26. [26 — Sound feedback toggle (`playInputClick()`)](26-sound-feedback.md)
 27. [27 — Auto-switch back to letters after space on symbols](27-auto-switch-to-letters-after-space.md)
 29. [29 — Plynulý swipe-down dismiss klávesnice](29-swipe-down-dismiss-jank.md)
+30. [30 — Odstranit globe key z bottom row](30-remove-globe-key.md)
+31. [31 — Haptic feedback pro každou klávesu](31-haptic-feedback-for-every-key.md)
 
 ## Pre-App-Store
 
