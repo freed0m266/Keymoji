@@ -8,6 +8,34 @@ import Foundation
 /// users can type `:Smile:` and still get a match.
 public enum SlackEmojiTable {
 
+	/// Reverse lookup from `defaultTable`: returns the canonical shortcode for `emoji`,
+	/// or `nil` if no entry maps to it. When multiple shortcodes map to the same emoji
+	/// (e.g. `+1` and `thumbsup` both → 👍), the shorter shortcode wins; ties break
+	/// alphabetically so the result is deterministic. Backed by a lazily-built cache.
+	public static func shortcode(for emoji: String) -> String? {
+		defaultReverseLookup[emoji]
+	}
+
+	/// Builds a deterministic `emoji → shortcode` map. Shortest shortcode wins; ties
+	/// break alphabetically.
+	static func reverseLookup(from table: [String: String]) -> [String: String] {
+		var result: [String: String] = [:]
+		result.reserveCapacity(table.count)
+		for (shortcode, emoji) in table {
+			if let existing = result[emoji] {
+				if shortcode.count < existing.count ||
+					(shortcode.count == existing.count && shortcode < existing) {
+					result[emoji] = shortcode
+				}
+			} else {
+				result[emoji] = shortcode
+			}
+		}
+		return result
+	}
+
+	private static let defaultReverseLookup: [String: String] = reverseLookup(from: defaultTable)
+
 	public static let defaultTable: [String: String] = [
 		// Smileys / faces
 		"smile":            "😄",

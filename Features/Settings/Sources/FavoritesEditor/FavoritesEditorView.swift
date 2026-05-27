@@ -71,15 +71,7 @@ public struct FavoritesEditorView<ViewModel: FavoritesEditorViewModeling>: View 
 		List {
 			Section {
 				ForEach(viewModel.favorites, id: \.self) { emoji in
-					HStack(spacing: 12) {
-						Text(emoji)
-							.font(.system(size: 28))
-						Text(emoji)
-							.font(.body)
-							.foregroundStyle(.secondary)
-					}
-					.accessibilityElement()
-					.accessibilityLabel(emoji)
+					row(for: emoji)
 				}
 				.onDelete { offsets in viewModel.remove(at: offsets) }
 				.onMove { source, destination in viewModel.move(fromOffsets: source, toOffset: destination) }
@@ -87,6 +79,27 @@ public struct FavoritesEditorView<ViewModel: FavoritesEditorViewModeling>: View 
 				Text(Texts.listFooter)
 			}
 		}
+	}
+
+	private func row(for emoji: String) -> some View {
+		let shortcode = SlackEmojiTable.shortcode(for: emoji)
+		return HStack(spacing: 12) {
+			Text(emoji)
+				.font(.system(size: 28))
+				.frame(width: 40, alignment: .center)
+			if let shortcode {
+				Text(":\(shortcode):")
+					.font(.body.monospaced())
+					.foregroundStyle(.primary)
+					.lineLimit(1)
+			} else {
+				Text(Texts.noShortcode)
+					.font(.body.italic())
+					.foregroundStyle(.secondary)
+			}
+		}
+		.accessibilityElement()
+		.accessibilityLabel(shortcode.map { "\(emoji), :\($0):" } ?? emoji)
 	}
 }
 
