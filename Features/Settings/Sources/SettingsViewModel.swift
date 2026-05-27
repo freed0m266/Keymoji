@@ -54,8 +54,6 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		}
 	}
 
-	public let versionString: String
-
 	private let store: AppGroupStore
 	private let notifier: SettingsChangeNotifier
 
@@ -69,13 +67,6 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
 		self.keyClickSoundEnabled = store.keyClickSoundEnabled
 		self.appearance = store.appearance
-		self.versionString = Self.makeVersionString()
 		super.init()
-	}
-
-	private static func makeVersionString() -> String {
-		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0"
-		let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
-		return "\(version) (\(build))"
 	}
 }

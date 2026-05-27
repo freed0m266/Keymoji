@@ -25,10 +25,7 @@ public func aboutVM() -> AboutViewModel {
 @Observable
 public final class AboutViewModel: BaseViewModel, AboutViewModeling {
 
-	public let versionString: String
-
 	public override init() {
-		self.versionString = Self.makeVersionString()
 		super.init()
 	}
 
@@ -40,11 +37,5 @@ public final class AboutViewModel: BaseViewModel, AboutViewModeling {
 	public func openSourceCode() {
 		guard let url = URL(string: KeyboURLs.sourceCode) else { return }
 		UIApplication.shared.open(url)
-	}
-
-	private static func makeVersionString() -> String {
-		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0"
-		let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
-		return "\(version) (\(build))"
 	}
 }

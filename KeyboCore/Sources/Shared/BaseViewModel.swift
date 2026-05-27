@@ -13,7 +13,13 @@ import os.log
 open class BaseViewModel {
 	public var isLoading = false
 	public var errorMessage: String?
-	
+
+	public var versionString: String {
+		let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0"
+		let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+		return "\(version) (\(build))"
+	}
+
 	// MARK: - Init
 	
 	public init() {
