@@ -1,6 +1,6 @@
 # 34 — Rozšířit `EmojiCatalog` na všechny single-codepoint emoji z Wikipedie
 
-**Status:** Todo
+**Status:** Done — 2026-05-27
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium (uživatel může v favorites picku jakýkoliv "běžný" emoji, ne jen curated subset)
 
