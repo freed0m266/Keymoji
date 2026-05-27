@@ -1,6 +1,6 @@
 //
 //  EmojiCatalogPickerView.swift
-//  Settings
+//  EmojiCatalogPicker
 //
 //  Created by Martin Svoboda on 25.05.2026.
 //  Copyright © 2026 Freedom Martin, s.r.o. All rights reserved.
@@ -13,10 +13,10 @@ import KeyboResources
 /// Categorized emoji grid presented as a sheet from the Favorites editor. Tapping a cell
 /// toggles the emoji's membership in the user's favorites; the checkmark badge reflects
 /// the current state so users can browse and curate in one sweep without dismissing.
-struct EmojiCatalogPickerView: View {
-	let selectedEmojis: Set<String>
-	let onToggle: (String) -> Void
-	let onDone: () -> Void
+public struct EmojiCatalogPickerView: View {
+	public let selectedEmojis: Set<String>
+	public let onToggle: (String) -> Void
+	public let onDone: () -> Void
 
 	typealias Texts = L10n.Settings.Favorites.Picker
 
@@ -29,7 +29,17 @@ struct EmojiCatalogPickerView: View {
 		[GridItem(.adaptive(minimum: Self.cellMinWidth, maximum: 64), spacing: Self.gridSpacing)]
 	}
 
-	var body: some View {
+	public init(
+		selectedEmojis: Set<String>,
+		onToggle: @escaping (String) -> Void,
+		onDone: @escaping () -> Void
+	) {
+		self.selectedEmojis = selectedEmojis
+		self.onToggle = onToggle
+		self.onDone = onDone
+	}
+
+	public var body: some View {
 		ScrollView {
 			LazyVStack(alignment: .leading, spacing: 16, pinnedViews: [.sectionHeaders]) {
 				ForEach(EmojiCatalog.staticCategories) { category in

@@ -9,6 +9,7 @@
 import SwiftUI
 import About
 import EmojiCodes
+import FavoriteEmojisEditor
 import KeyboCore
 import KeyboResources
 import Onboarding
@@ -80,7 +81,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	private var favoritesSection: some View {
 		Section {
 			NavigationLink {
-				FavoritesEditorView(viewModel: favoritesEditorVM())
+				FavoriteEmojisEditorView(viewModel: favoriteEmojisEditorVM())
 			} label: {
 				Text(Texts.Favorites.row)
 			}

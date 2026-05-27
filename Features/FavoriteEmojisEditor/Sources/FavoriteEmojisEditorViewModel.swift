@@ -1,6 +1,6 @@
 //
-//  FavoritesEditorViewModel.swift
-//  Settings
+//  FavoriteEmojisEditorViewModel.swift
+//  FavoriteEmojisEditor
 //
 //  Created by Martin Svoboda on 25.05.2026.
 //  Copyright © 2026 Freedom Martin, s.r.o. All rights reserved.
@@ -11,7 +11,7 @@ import SwiftUI
 import KeyboCore
 
 @MainActor
-public protocol FavoritesEditorViewModeling: Observable, AnyObject {
+public protocol FavoriteEmojisEditorViewModeling: Observable, AnyObject {
 	var favorites: [String] { get }
 	func toggle(_ emoji: String)
 	func remove(at offsets: IndexSet)
@@ -19,19 +19,21 @@ public protocol FavoritesEditorViewModeling: Observable, AnyObject {
 }
 
 @MainActor
-public func favoritesEditorVM() -> FavoritesEditorViewModel {
-	FavoritesEditorViewModel()
+public func favoriteEmojisEditorVM() -> some FavoriteEmojisEditorViewModeling {
+	FavoriteEmojisEditorViewModel()
 }
 
 @Observable
-public final class FavoritesEditorViewModel: BaseViewModel, FavoritesEditorViewModeling {
+final class FavoriteEmojisEditorViewModel: BaseViewModel, FavoriteEmojisEditorViewModeling {
 
-	public private(set) var favorites: [String]
+	private(set) var favorites: [String]
 
 	private let store: AppGroupStore
 	private let notifier: SettingsChangeNotifier
 
-	public init(
+	// MARK: - Init
+
+	init(
 		store: AppGroupStore = .shared,
 		notifier: SettingsChangeNotifier = .shared
 	) {
@@ -41,7 +43,9 @@ public final class FavoritesEditorViewModel: BaseViewModel, FavoritesEditorViewM
 		super.init()
 	}
 
-	public func toggle(_ emoji: String) {
+	// MARK: - Public API
+
+	func toggle(_ emoji: String) {
 		if let index = favorites.firstIndex(of: emoji) {
 			favorites.remove(at: index)
 		} else {
@@ -50,15 +54,17 @@ public final class FavoritesEditorViewModel: BaseViewModel, FavoritesEditorViewM
 		persist()
 	}
 
-	public func remove(at offsets: IndexSet) {
+	func remove(at offsets: IndexSet) {
 		favorites.remove(atOffsets: offsets)
 		persist()
 	}
 
-	public func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+	func move(fromOffsets source: IndexSet, toOffset destination: Int) {
 		favorites.move(fromOffsets: source, toOffset: destination)
 		persist()
 	}
+
+	// MARK: - Private API
 
 	private func persist() {
 		store.favoriteEmojis = favorites

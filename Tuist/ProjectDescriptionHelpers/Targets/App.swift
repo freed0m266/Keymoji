@@ -32,7 +32,9 @@ public let app: Target = .target(
 	dependencies: [
 		.target(core),
 		.target(design),
+		.target(emojiCatalogPicker),
 		.target(example),
+		.target(favoriteEmojisEditor),
 		.target(onboarding),
 		.target(about),
 		.target(settings),

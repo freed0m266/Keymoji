@@ -1,6 +1,6 @@
 //
-//  FavoritesEditorSnapshots.swift
-//  Settings_Tests
+//  EmojiCatalogPickerSnapshots.swift
+//  EmojiCatalogPicker_Tests
 //
 //  Created by Martin Svoboda on 27.05.2026.
 //  Copyright © 2026 Freedom Martin, s.r.o. All rights reserved.
@@ -9,38 +9,32 @@
 import XCTest
 import SwiftUI
 import SnapshotTesting
-@testable import Settings
+@testable import EmojiCatalogPicker
 
 @MainActor
-final class FavoritesEditorSnapshots: XCTestCase {
+final class EmojiCatalogPickerSnapshots: XCTestCase {
 
 	private static let size = CGSize(width: 393, height: 852)
 
-	func testFavoritesEditor_withKnownEmojis_dark() {
+	func testEmojiCatalogPicker_noSelection_dark() {
 		let view = NavigationStack {
-			FavoritesEditorView(
-				viewModel: FavoritesEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🐶"])
+			EmojiCatalogPickerView(
+				selectedEmojis: [],
+				onToggle: { _ in },
+				onDone: {}
 			)
 		}
 		.preferredColorScheme(.dark)
 		assertSnapshot(view)
 	}
 
-	func testFavoritesEditor_withUnknownEmoji_dark() {
-		// 🫨 (shaking face) and 🪅 (piñata) are not in SlackEmojiTable — verifies
-		// the italic "No shortcode" fallback renders alongside known shortcodes.
+	func testEmojiCatalogPicker_someSelected_dark() {
 		let view = NavigationStack {
-			FavoritesEditorView(
-				viewModel: FavoritesEditorViewModelMock(favorites: ["🚀", "🫨", "❤️", "🪅"])
+			EmojiCatalogPickerView(
+				selectedEmojis: ["😀", "❤️", "🚀", "🎉", "🐶"],
+				onToggle: { _ in },
+				onDone: {}
 			)
-		}
-		.preferredColorScheme(.dark)
-		assertSnapshot(view)
-	}
-
-	func testFavoritesEditor_empty_dark() {
-		let view = NavigationStack {
-			FavoritesEditorView(viewModel: FavoritesEditorViewModelMock(favorites: []))
 		}
 		.preferredColorScheme(.dark)
 		assertSnapshot(view)

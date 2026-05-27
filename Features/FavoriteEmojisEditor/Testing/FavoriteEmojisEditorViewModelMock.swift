@@ -1,6 +1,6 @@
 //
-//  FavoritesEditorViewModelMock.swift
-//  Settings
+//  FavoriteEmojisEditorViewModelMock.swift
+//  FavoriteEmojisEditor
 //
 //  Created by Martin Svoboda on 25.05.2026.
 //  Copyright © 2026 Freedom Martin, s.r.o. All rights reserved.
@@ -12,7 +12,7 @@ import SwiftUI
 
 @Observable
 @MainActor
-public final class FavoritesEditorViewModelMock: FavoritesEditorViewModeling {
+public final class FavoriteEmojisEditorViewModelMock: FavoriteEmojisEditorViewModeling {
 	public var favorites: [String]
 
 	public init(favorites: [String] = ["❤️", "😀", "🚀"]) {

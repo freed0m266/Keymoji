@@ -2,7 +2,9 @@ import ProjectDescription
 import ProjectDescriptionHelpers
 
 let features: [Feature] = [
+	emojiCatalogPicker,
 	example,
+	favoriteEmojisEditor,
 	onboarding,
 	about,
 	emojiCodes,

@@ -1,16 +1,17 @@
 //
-//  FavoritesEditorView.swift
-//  Settings
+//  FavoriteEmojisEditorView.swift
+//  FavoriteEmojisEditor
 //
 //  Created by Martin Svoboda on 25.05.2026.
 //  Copyright © 2026 Freedom Martin, s.r.o. All rights reserved.
 //
 
 import SwiftUI
+import EmojiCatalogPicker
 import KeyboardCore
 import KeyboResources
 
-public struct FavoritesEditorView<ViewModel: FavoritesEditorViewModeling>: View {
+public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeling>: View {
 	@State private var viewModel: ViewModel
 	@State private var pickerPresented = false
 
@@ -106,8 +107,8 @@ public struct FavoritesEditorView<ViewModel: FavoritesEditorViewModeling>: View 
 #if DEBUG
 #Preview("With favorites") {
 	NavigationStack {
-		FavoritesEditorView(
-			viewModel: FavoritesEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🐶"])
+		FavoriteEmojisEditorView(
+			viewModel: FavoriteEmojisEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🐶"])
 		)
 	}
 	.preferredColorScheme(.dark)
@@ -115,7 +116,7 @@ public struct FavoritesEditorView<ViewModel: FavoritesEditorViewModeling>: View 
 
 #Preview("Empty") {
 	NavigationStack {
-		FavoritesEditorView(viewModel: FavoritesEditorViewModelMock(favorites: []))
+		FavoriteEmojisEditorView(viewModel: FavoriteEmojisEditorViewModelMock(favorites: []))
 	}
 	.preferredColorScheme(.dark)
 }
