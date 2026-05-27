@@ -52,6 +52,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 31. [31 — Haptic feedback pro každou klávesu](31-haptic-feedback-for-every-key.md)
 32. [32 — Favorite emojis: zobrazit shortcode místo druhé kopie emoji](32-favorites-show-shortcodes.md)
 34. [34 — Rozšířit `EmojiCatalog` na všechny single-codepoint emoji z Wikipedie](34-full-unicode-single-emoji-catalog.md)
+35. [35 — Redesign klávesnice: vizuální parita s nativní iOS klávesnicí](35-keyboard-native-look-redesign.md)
 
 ## Pre-App-Store
 
