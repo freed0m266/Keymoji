@@ -51,6 +51,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 30. [30 — Odstranit globe key z bottom row](30-remove-globe-key.md)
 31. [31 — Haptic feedback pro každou klávesu](31-haptic-feedback-for-every-key.md)
 32. [32 — Favorite emojis: zobrazit shortcode místo druhé kopie emoji](32-favorites-show-shortcodes.md)
+34. [34 — Rozšířit `EmojiCatalog` na všechny single-codepoint emoji z Wikipedie](34-full-unicode-single-emoji-catalog.md)
 
 ## Pre-App-Store
 
