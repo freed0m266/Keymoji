@@ -1,6 +1,6 @@
 # 33 — Refactor: splitnout Favorites na 2 moduly, rename + sjednotit ViewModel pattern
 
-**Status:** Todo
+**Status:** Done — 2026-05-27
 
 **Priorita:** Tech debt · **Úsilí:** M · **Dopad:** None (čistý refactor, žádná uživatelská změna)
 
