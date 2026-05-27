@@ -18,23 +18,21 @@ public protocol AboutViewModeling: Observable, AnyObject {
 }
 
 @MainActor
-public func aboutVM() -> AboutViewModel {
+public func aboutVM() -> some AboutViewModeling {
 	AboutViewModel()
 }
 
 @Observable
-public final class AboutViewModel: BaseViewModel, AboutViewModeling {
+final class AboutViewModel: BaseViewModel, AboutViewModeling {
 
-	public override init() {
-		super.init()
-	}
+	// MARK: - Public API
 
-	public func openPrivacyPolicy() {
+	func openPrivacyPolicy() {
 		guard let url = URL(string: KeyboURLs.privacyPolicy) else { return }
 		UIApplication.shared.open(url)
 	}
 
-	public func openSourceCode() {
+	func openSourceCode() {
 		guard let url = URL(string: KeyboURLs.sourceCode) else { return }
 		UIApplication.shared.open(url)
 	}

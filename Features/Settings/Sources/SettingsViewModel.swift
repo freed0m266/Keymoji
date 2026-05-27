@@ -19,35 +19,35 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 }
 
 @MainActor
-public func settingsVM() -> SettingsViewModel {
+public func settingsVM() -> some SettingsViewModeling {
 	SettingsViewModel()
 }
 
 @Observable
-public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
+final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 
-	public var showNumberRow: Bool {
+	var showNumberRow: Bool {
 		didSet {
 			store.showNumberRow = showNumberRow
 			notifier.post(.showNumberRow)
 		}
 	}
 
-	public var hapticFeedbackEnabled: Bool {
+	var hapticFeedbackEnabled: Bool {
 		didSet {
 			store.hapticFeedbackEnabled = hapticFeedbackEnabled
 			notifier.post(.hapticFeedbackEnabled)
 		}
 	}
 
-	public var keyClickSoundEnabled: Bool {
+	var keyClickSoundEnabled: Bool {
 		didSet {
 			store.keyClickSoundEnabled = keyClickSoundEnabled
 			notifier.post(.keyClickSoundEnabled)
 		}
 	}
 
-	public var appearance: AppearancePreference {
+	var appearance: AppearancePreference {
 		didSet {
 			store.appearance = appearance
 			notifier.post(.appearance)
@@ -57,7 +57,9 @@ public final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 	private let store: AppGroupStore
 	private let notifier: SettingsChangeNotifier
 
-	public init(
+	// MARK: - Init
+
+	init(
 		store: AppGroupStore = .shared,
 		notifier: SettingsChangeNotifier = .shared
 	) {

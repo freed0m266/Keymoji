@@ -21,24 +21,23 @@ public protocol OnboardingViewModeling: Observable, AnyObject {
 	func openSettings()
 }
 
-/// Concrete view model is exposed publicly so the host app can hold a single instance in `@State`.
-/// Calling `onboardingVM()` per `body` recomputation would spawn a fresh polling task every time
-/// (Codex P2 from task 11).
 @MainActor
-public func onboardingVM() -> OnboardingViewModel {
+public func onboardingVM() -> some OnboardingViewModeling {
 	OnboardingViewModel(dependencies: dependencies.onboarding)
 }
 
 @Observable
-public final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
+final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 
-	public var currentStep: OnboardingStep = .addKeyboard
-	public private(set) var isKeyboardActivated: Bool = false
+	var currentStep: OnboardingStep = .addKeyboard
+	private(set) var isKeyboardActivated: Bool = false
 
 	private let dependencies: OnboardingDependencies
 	private var pollTask: Task<Void, Never>?
 
-	public init(dependencies: OnboardingDependencies) {
+	// MARK: - Init
+
+	init(dependencies: OnboardingDependencies) {
 		self.dependencies = dependencies
 		super.init()
 		startPollingKeyboardStatus()
@@ -49,24 +48,26 @@ public final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	// The resulting 1s/iter idle wake-up is negligible; proper view-lifecycle cancellation can
 	// be wired in later if it ever shows up in profiles.
 
-	public func didConfirmKeyboardAdded() {
+	// MARK: - Public API
+
+	func didConfirmKeyboardAdded() {
 		currentStep = .allowFullAccess
 	}
 
-	public func didConfirmFullAccess() {
+	func didConfirmFullAccess() {
 		currentStep = .selectKeyboard
 	}
 
-	public func didFinishOnboarding() {
+	func didFinishOnboarding() {
 		dependencies.preferences.markOnboardingComplete()
 	}
 
-	public func openSettings() {
+	func openSettings() {
 		guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
 		UIApplication.shared.open(url)
 	}
 
-	// MARK: - Status polling
+	// MARK: - Private API
 
 	/// `UITextInputMode.activeInputModes` is the only reliable way to detect that the user has
 	/// added our keyboard via iOS Settings. We probe each input mode's KVC `identifier` for the

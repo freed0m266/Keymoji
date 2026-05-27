@@ -33,26 +33,28 @@ public protocol EmojiCodesViewModeling: Observable, AnyObject {
 }
 
 @MainActor
-public func emojiCodesVM() -> EmojiCodesViewModel {
+public func emojiCodesVM() -> some EmojiCodesViewModeling {
 	EmojiCodesViewModel()
 }
 
 @Observable
-public final class EmojiCodesViewModel: BaseViewModel, EmojiCodesViewModeling {
+final class EmojiCodesViewModel: BaseViewModel, EmojiCodesViewModeling {
 
-	public var searchQuery: String = "" {
+	var searchQuery: String = "" {
 		didSet { recomputeEntries() }
 	}
 
-	public private(set) var entries: [EmojiCodeEntry]
-	public private(set) var copiedShortcode: String?
+	private(set) var entries: [EmojiCodeEntry]
+	private(set) var copiedShortcode: String?
 
 	private let allEntries: [EmojiCodeEntry]
 	private let pasteboard: PasteboardWriting
 	private let toastDuration: TimeInterval
 	private var toastTask: Task<Void, Never>?
 
-	public init(
+	// MARK: - Init
+
+	init(
 		table: [String: String] = SlackEmojiTable.defaultTable,
 		pasteboard: PasteboardWriting = SystemPasteboard(),
 		toastDuration: TimeInterval = 1.6
@@ -67,7 +69,9 @@ public final class EmojiCodesViewModel: BaseViewModel, EmojiCodesViewModeling {
 		super.init()
 	}
 
-	public func copy(_ entry: EmojiCodeEntry) {
+	// MARK: - Public API
+
+	func copy(_ entry: EmojiCodeEntry) {
 		pasteboard.setString(entry.wrappedShortcode)
 		UIImpactFeedbackGenerator(style: .light).impactOccurred()
 		copiedShortcode = entry.shortcode
@@ -78,6 +82,8 @@ public final class EmojiCodesViewModel: BaseViewModel, EmojiCodesViewModeling {
 			self.copiedShortcode = nil
 		}
 	}
+
+	// MARK: - Private API
 
 	private func recomputeEntries() {
 		let trimmed = searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()

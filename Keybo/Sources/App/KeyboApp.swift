@@ -9,6 +9,8 @@
 import SwiftUI
 import SwiftyBeaver
 import KeyboCore
+import Onboarding
+import Settings
 
 @main
 struct KeyboApp: App {
@@ -16,7 +18,10 @@ struct KeyboApp: App {
 
 	var body: some Scene {
 		WindowGroup {
-			RootView()
+			RootView(
+				onboardingViewModel: onboardingVM(),
+				settingsViewModel: settingsVM()
+			)
 		}
 	}
 }
