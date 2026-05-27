@@ -1,6 +1,6 @@
 # 32 — Favorite emojis: zobrazit shortcode místo druhé kopie emoji
 
-**Status:** Todo
+**Status:** Done — 2026-05-27
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Low (UI polish + edukace shortcodes)
 
