@@ -50,10 +50,15 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 29. [29 — Plynulý swipe-down dismiss klávesnice](29-swipe-down-dismiss-jank.md)
 30. [30 — Odstranit globe key z bottom row](30-remove-globe-key.md)
 31. [31 — Haptic feedback pro každou klávesu](31-haptic-feedback-for-every-key.md)
+32. [32 — Favorite emojis: zobrazit shortcode místo druhé kopie emoji](32-favorites-show-shortcodes.md)
 
 ## Pre-App-Store
 
 28. [28 — Real app icon](28-app-icon.md)
+
+## Tech debt / Refactoring
+
+33. [33 — Refactor: splitnout Favorites na 2 moduly, rename + sjednotit ViewModel pattern](33-feature-modules-and-vm-refactor.md)
 
 ## Mimo scope úplně
 
