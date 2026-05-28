@@ -443,6 +443,7 @@ struct KeyView: View {
 		switch effectiveContent {
 		case .text(let text):
 			Text(text)
+				.offset(y: isLowercaseLetter(text) ? -2 : 0)
 		case .symbol(let symbol):
 			Image(systemName: symbol.systemName)
 		}
@@ -496,6 +497,10 @@ struct KeyView: View {
 		case .switchPage:             return "Switch keyboard layout"
 		case .cursorOffset:           return "Move cursor"
 		}
+	}
+
+	private func isLowercaseLetter(_ string: String) -> Bool {
+		string.count == 1 && string.first?.isLowercase == true
 	}
 }
 
