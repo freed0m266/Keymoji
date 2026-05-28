@@ -1,6 +1,6 @@
 # 39 — Emoji search v keyboardu (`.emojiSearch` mode)
 
-**Status:** Not started
+**Status:** Done — 2026-05-29
 
 **Priorita:** v1.1 · **Úsilí:** L · **Dopad:** High (discovery napříč 1 400 emoji, parity s nativní iOS klávesnicí)
 
