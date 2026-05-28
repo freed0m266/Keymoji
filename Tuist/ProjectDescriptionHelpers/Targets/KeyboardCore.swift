@@ -8,6 +8,7 @@ public let keyboardCore: Target = .target(
 	product: .framework,
 	bundleId: "\(appBundleId).keyboardcore",
 	sources: "\(targetName)/Sources/**",
+	resources: ["\(targetName)/Resources/**"],
 	dependencies: [
 		.target(name: resources.name),
 		.target(name: core.name)
