@@ -1,6 +1,6 @@
 # 36 — Programovatelná akce na dvojitý tap na space
 
-**Status:** Todo
+**Status:** Done — 2026-05-28
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Medium (daily typing flow)
 
