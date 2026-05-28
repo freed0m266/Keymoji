@@ -1,6 +1,6 @@
 # 38 — Onboarding feature tour: zmínit všechny zásadní funkce
 
-**Status:** Todo
+**Status:** Done — 2026-05-28
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium (discovery zásadních fíčur, retention)
 
