@@ -15,6 +15,7 @@ import SnapshotTesting
 final class OnboardingSnapshots: XCTestCase {
 
 	private static let size = CGSize(width: 393, height: 852) // iPhone 17 portrait
+	private static let iPhoneSESize = CGSize(width: 320, height: 568) // iPhone SE 1st gen portrait
 
 	func testStep1_addKeyboard_dark() {
 		let view = OnboardingView(
@@ -44,22 +45,37 @@ final class OnboardingSnapshots: XCTestCase {
 		assertOnboardingSnapshot(view)
 	}
 
+	func testStep4_featureTour_dark() {
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(currentStep: .featureTour)
+		)
+		assertOnboardingSnapshot(view)
+	}
+
+	func testStep4_featureTour_iPhoneSE() {
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(currentStep: .featureTour)
+		)
+		assertOnboardingSnapshot(view, size: Self.iPhoneSESize)
+	}
+
 	// MARK: - Helper
 
 	private func assertOnboardingSnapshot<V: View>(
 		_ view: V,
+		size: CGSize = OnboardingSnapshots.size,
 		record: Bool = false,
 		file: StaticString = #filePath,
 		testName: String = #function,
 		line: UInt = #line
 	) {
-		let host = view.frame(width: Self.size.width, height: Self.size.height)
+		let host = view.frame(width: size.width, height: size.height)
 		assertSnapshot(
 			of: host,
 			as: .image(
 				drawHierarchyInKeyWindow: false,
 				perceptualPrecision: 0.93,
-				layout: .fixed(width: Self.size.width, height: Self.size.height),
+				layout: .fixed(width: size.width, height: size.height),
 				traits: .init(userInterfaceStyle: .dark)
 			),
 			record: record,
