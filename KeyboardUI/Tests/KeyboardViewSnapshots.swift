@@ -225,4 +225,18 @@ final class KeyboardViewSnapshots: XCTestCase {
 		)
 		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
 	}
+
+	func testEmojiSearchSymbols_primary_query7() {
+		// Native parity: typing `7` in symbols sub-page surfaces matches like 7️⃣ and the
+		// clock-7 glyph. Verifies the numbers/symbols layout renders correctly under search.
+		let layout = KeyboardCore.makeLayout(page: .emojiSearchSymbols(.primary), showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: [],
+			searchQuery: "7",
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+	}
 }
