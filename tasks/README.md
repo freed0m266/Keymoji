@@ -56,6 +56,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 36. [36 — Programovatelná akce na dvojitý tap na space (tečka / dismiss / nic)](36-space-double-tap-action.md)
 37. [37 — `KeyContent.number` case + vertikální zarovnání digitů](37-key-content-number-case.md)
 38. [38 — Onboarding feature tour: zmínit všechny zásadní funkce](38-onboarding-feature-tour.md)
+39. [39 — Emoji search v keyboardu (`.emojiSearch` mode)](39-emoji-search.md)
 
 ## Pre-App-Store
 
