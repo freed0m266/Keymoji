@@ -23,10 +23,12 @@
 #   k = emojilib keyword list (lowercased, deduped, name token already stripped from upstream)
 #   c = EmojiCategory raw value
 #
-# Filter rules — same as the inline catalog (see KeyboardCore/Sources/Models/EmojiCatalog.swift):
-#   - single base codepoint only (one scalar, optionally followed by VS-16 / U+FE0F).
-#   - skip ZWJ sequences, keycaps, regional indicator pairs.
-#   - flags stay hand-curated in EmojiCatalog.flags, never sourced from this dataset.
+# Filter rules:
+#   - accept single base codepoint (one scalar, optionally followed by VS-16 / U+FE0F).
+#   - accept keycap sequences (digit/# + VS-16 + U+20E3) — they're well-known glyphs that
+#     users expect to surface when typing the matching digit into emoji search.
+#   - skip ZWJ sequences and regional indicator pairs (flags stay hand-curated below in
+#     `EmojiCatalog.flags`, never sourced from this dataset).
 
 set -euo pipefail
 
@@ -68,9 +70,14 @@ jq --compact-output --slurpfile keywords "${EMOJILIB_FILE}" '
       "Symbols":                     "symbols"
     }[group] // empty;
 
-  # Single-base-codepoint filter: exactly one scalar, optionally followed by VS-16 (U+FE0F).
-  def is_single_base(glyph):
-    (glyph | explode | map(select(. != 65039)) | length) == 1;
+  # Strip the optional VS-16 (U+FE0F = 65039), then accept either:
+  #   1. exactly one remaining scalar (single base codepoint), or
+  #   2. base scalar + combining-enclosing-keycap (U+20E3 = 8419), i.e. the 12 keycap
+  #      sequences `0..9 # *` paired with the keycap modifier.
+  def is_single_base_or_keycap(glyph):
+    (glyph | explode | map(select(. != 65039))) as $cp
+    | ($cp | length) == 1
+      or (($cp | length) == 2 and $cp[1] == 8419);
 
   ($keywords[0]) as $kw
   | to_entries
@@ -78,7 +85,7 @@ jq --compact-output --slurpfile keywords "${EMOJILIB_FILE}" '
       .value as $v
       | category_for($v.group) as $cat
       | select($cat != null)
-      | select(is_single_base(.key))
+      | select(is_single_base_or_keycap(.key))
       | (
           ($kw[.key] // [])
           # First entry in emojilib is the slug — drop it so `k` is pure keywords.

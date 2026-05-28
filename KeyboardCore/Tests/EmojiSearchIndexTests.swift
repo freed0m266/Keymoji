@@ -49,6 +49,24 @@ final class EmojiSearchIndexTests: XCTestCase {
 		XCTAssertTrue(glyphs.contains("👍"), "thumbsup shortcode must resolve to 👍")
 	}
 
+	// MARK: - Keycap digits
+
+	func testDigitQuery_surfacesMatchingKeycap() {
+		// Typing `7` in emoji search should surface 7️⃣ — native iOS behavior, and the
+		// reason the generator script accepts keycap sequences alongside single-base glyphs.
+		let glyphs = EmojiSearchIndex.search(query: "7").map(\.glyph)
+		XCTAssertTrue(glyphs.contains("7️⃣"), "digit query must surface its keycap; got \(glyphs.prefix(10))")
+	}
+
+	func testKeycapNameToken_matchesKeycapGlyph() {
+		// `keycap` as a query is unusual but explicit — anyone typing it should see the
+		// full keycap collection rather than nothing.
+		let glyphs = EmojiSearchIndex.search(query: "keycap").map(\.glyph)
+		XCTAssertTrue(glyphs.contains("0️⃣"))
+		XCTAssertTrue(glyphs.contains("9️⃣"))
+		XCTAssertTrue(glyphs.contains("#️⃣"))
+	}
+
 	// MARK: - Ranking tiers
 
 	func testRanking_exactNameMatchBeatsKeywordHit() {
