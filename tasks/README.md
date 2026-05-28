@@ -53,6 +53,8 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 32. [32 — Favorite emojis: zobrazit shortcode místo druhé kopie emoji](32-favorites-show-shortcodes.md)
 34. [34 — Rozšířit `EmojiCatalog` na všechny single-codepoint emoji z Wikipedie](34-full-unicode-single-emoji-catalog.md)
 35. [35 — Redesign klávesnice: vizuální parita s nativní iOS klávesnicí](35-keyboard-native-look-redesign.md)
+36. [36 — Programovatelná akce na dvojitý tap na space (tečka / dismiss / nic)](36-space-double-tap-action.md)
+37. [37 — `KeyContent.number` case + vertikální zarovnání digitů](37-key-content-number-case.md)
 
 ## Pre-App-Store
 
