@@ -1,31 +1,26 @@
 {
-  "fill" : "system-dark",
+  "fill" : "automatic",
   "groups" : [
     {
       "layers" : [
         {
-          "fill" : {
-            "automatic-gradient" : "display-p3:0.15720,0.36102,0.13651,1.00000"
-          },
-          "image-name" : "keybo_letter_T.svg",
-          "name" : "keybo_letter_T",
+          "fill-specializations" : [
+            {
+              "value" : {
+                "solid" : "srgb:0.00000,0.58980,1.00000,1.00000"
+              }
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
+              }
+            }
+          ],
+          "image-name" : "keyboard.fill.png",
+          "name" : "keyboard.fill",
           "position" : {
-            "scale" : 1.5,
-            "translation-in-points" : [
-              0,
-              30
-            ]
-          }
-        },
-        {
-          "blend-mode" : "normal",
-          "fill" : {
-            "automatic-gradient" : "display-p3:0.00000,0.00000,0.00000,1.00000"
-          },
-          "image-name" : "dot.svg",
-          "name" : "dot",
-          "position" : {
-            "scale" : 2.2,
+            "scale" : 0.48,
             "translation-in-points" : [
               0,
               0
