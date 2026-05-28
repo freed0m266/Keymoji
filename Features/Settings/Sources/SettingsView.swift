@@ -37,8 +37,16 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			.sheet(item: $sheet) { kind in
 				NavigationStack {
 					switch kind {
-					case .onboarding: OnboardingView(viewModel: onboardingVM(), onFinish: { sheet = nil })
-					case .about:      AboutView(viewModel: aboutVM())
+					case .onboarding:
+						OnboardingView(viewModel: onboardingVM(), onFinish: { sheet = nil })
+					case .featureTour:
+						OnboardingView(
+							viewModel: onboardingVM(),
+							initialStep: .featureTour,
+							onFinish: { sheet = nil }
+						)
+					case .about:
+						AboutView(viewModel: aboutVM())
 					}
 				}
 				.preferredColorScheme(.dark)
@@ -124,6 +132,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	private var supportSection: some View {
 		Section {
 			Button(Texts.setupInstructions) { sheet = .onboarding }
+			Button(Texts.featureTour) { sheet = .featureTour }
 		}
 	}
 
@@ -142,7 +151,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	}
 
 	private enum SheetKind: Identifiable {
-		case onboarding, about
+		case onboarding, featureTour, about
 		var id: String { String(describing: self) }
 	}
 }
