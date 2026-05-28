@@ -1,6 +1,6 @@
 # 37 — `KeyContent.number` case + vertikální zarovnání digitů
 
-**Status:** Todo
+**Status:** Done — 2026-05-28
 
 **Priorita:** v1.1 (visual polish) · **Úsilí:** S · **Dopad:** Medium (vizuální parita kláves)
 
