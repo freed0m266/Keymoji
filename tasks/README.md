@@ -55,6 +55,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 35. [35 — Redesign klávesnice: vizuální parita s nativní iOS klávesnicí](35-keyboard-native-look-redesign.md)
 36. [36 — Programovatelná akce na dvojitý tap na space (tečka / dismiss / nic)](36-space-double-tap-action.md)
 37. [37 — `KeyContent.number` case + vertikální zarovnání digitů](37-key-content-number-case.md)
+38. [38 — Onboarding feature tour: zmínit všechny zásadní funkce](38-onboarding-feature-tour.md)
 
 ## Pre-App-Store
 
