@@ -88,76 +88,19 @@ public struct KeyboardView: View {
 
 	public var body: some View {
 		VStack(spacing: rowSpacing) {
-			if isEmojiKeyboard {
-				EmojiPanelView(
-					recents: recentEmojis,
-					favorites: favoriteEmojis,
-					onSelectEmoji: { emoji in
-						// Synthesize a transient `Key` for emoji insertion so it flows through the
-						// existing dispatch path. `role: .character` keeps `KeyView`-style feedback
-						// semantics in any downstream consumers.
-						let key = Key(
-							id: "emoji.\(emoji)",
-							primary: .text(emoji),
-							alternates: [],
-							action: .insertText(emoji),
-							visualWeight: .standard,
-							role: .character
-						)
-						onKey(key)
-					},
-					onToggleFavorite: onToggleFavoriteEmoji,
-					onSwitchToLetters: {
-						let key = Key(
-							id: "emojiPanel.switchToLetters",
-							primary: .text("ABC"),
-							alternates: [],
-							action: .switchPage(.letters(.lower)),
-							visualWeight: .small,
-							role: .system
-						)
-						onKey(key)
-					},
-					onDelete: {
-						let key = Key(
-							id: "emojiPanel.delete",
-							primary: .symbol(.delete),
-							alternates: [],
-							action: .backspace,
-							visualWeight: .wide,
-							role: .system
-						)
-						onKey(key)
-					},
+			if showsSuggestionBar {
+				SlackSuggestionBarView(
+					suggestions: slackSuggestions,
+					onSelect: onSelectSlackSuggestion,
 					onKeyTapHaptic: onKeyTapHaptic,
 					onKeyClick: onKeyClick
 				)
-				.frame(maxWidth: .infinity, maxHeight: .infinity)
+			}
+
+			if isEmojiKeyboard {
+				emojiKeyboard
 			} else {
-				if showsSuggestionBar {
-					SlackSuggestionBarView(
-						suggestions: slackSuggestions,
-						onSelect: onSelectSlackSuggestion,
-						onKeyTapHaptic: onKeyTapHaptic,
-						onKeyClick: onKeyClick
-					)
-				}
-				ForEach(visibleRows) { row in
-					KeyRowView(
-						row: row,
-						page: layout.page,
-						returnKeyType: layout.returnKeyType,
-						totalWidth: max(0, width - horizontalPadding * 2),
-						onKey: onKey,
-						onKeyTapHaptic: onKeyTapHaptic,
-						onKeyClick: onKeyClick,
-						onPopoverEntry: onPopoverEntry,
-						onHighlightChanged: onHighlightChanged,
-						canEscalateBackspace: canEscalateBackspace,
-						onTrackpadModeChanged: handleTrackpadModeChanged
-					)
-					.frame(maxHeight: row.isNumberRow ? 38 : nil)
-				}
+				defaultKeyboard
 			}
 		}
 		.padding(.horizontal, isEmojiKeyboard ? 0 : horizontalPadding)
@@ -168,6 +111,72 @@ public struct KeyboardView: View {
 		// where the keys recede so the surface visually becomes a trackpad.
 		.opacity(isInTrackpadMode ? 0.45 : 1.0)
 		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
+	}
+
+	private var emojiKeyboard: some View {
+		EmojiPanelView(
+			recents: recentEmojis,
+			favorites: favoriteEmojis,
+			onSelectEmoji: { emoji in
+				// Synthesize a transient `Key` for emoji insertion so it flows through the
+				// existing dispatch path. `role: .character` keeps `KeyView`-style feedback
+				// semantics in any downstream consumers.
+				let key = Key(
+					id: "emoji.\(emoji)",
+					primary: .text(emoji),
+					alternates: [],
+					action: .insertText(emoji),
+					visualWeight: .standard,
+					role: .character
+				)
+				onKey(key)
+			},
+			onToggleFavorite: onToggleFavoriteEmoji,
+			onSwitchToLetters: {
+				let key = Key(
+					id: "emojiPanel.switchToLetters",
+					primary: .text("ABC"),
+					alternates: [],
+					action: .switchPage(.letters(.lower)),
+					visualWeight: .small,
+					role: .system
+				)
+				onKey(key)
+			},
+			onDelete: {
+				let key = Key(
+					id: "emojiPanel.delete",
+					primary: .symbol(.delete),
+					alternates: [],
+					action: .backspace,
+					visualWeight: .wide,
+					role: .system
+				)
+				onKey(key)
+			},
+			onKeyTapHaptic: onKeyTapHaptic,
+			onKeyClick: onKeyClick
+		)
+		.frame(maxWidth: .infinity, maxHeight: .infinity)
+	}
+
+	private var defaultKeyboard: some View {
+		ForEach(visibleRows) { row in
+			KeyRowView(
+				row: row,
+				page: layout.page,
+				returnKeyType: layout.returnKeyType,
+				totalWidth: max(0, width - horizontalPadding * 2),
+				onKey: onKey,
+				onKeyTapHaptic: onKeyTapHaptic,
+				onKeyClick: onKeyClick,
+				onPopoverEntry: onPopoverEntry,
+				onHighlightChanged: onHighlightChanged,
+				canEscalateBackspace: canEscalateBackspace,
+				onTrackpadModeChanged: handleTrackpadModeChanged
+			)
+			.frame(maxHeight: row.isNumberRow ? 36 : nil)
+		}
 	}
 
 	private func handleTrackpadModeChanged(_ active: Bool) {
