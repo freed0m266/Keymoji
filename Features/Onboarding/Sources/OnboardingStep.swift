@@ -8,7 +8,9 @@
 
 import Foundation
 
-/// Three manual steps the user has to take in iOS Settings before Keybo is usable.
+/// Steps shown in the onboarding flow. The first three are manual actions the user has to take in
+/// iOS Settings before Keybo is usable; the fourth is a feature tour that surfaces capabilities
+/// the user wouldn't otherwise discover from the keyboard layout.
 public enum OnboardingStep: Sendable, Hashable, CaseIterable {
 	/// Settings → General → Keyboards → Keyboards → Add New Keyboard → Keybo
 	case addKeyboard
@@ -16,4 +18,6 @@ public enum OnboardingStep: Sendable, Hashable, CaseIterable {
 	case allowFullAccess
 	/// In any text field, tap the globe key and pick Keybo
 	case selectKeyboard
+	/// Discovery screen — see [[FeatureHighlight]] for the rendered list.
+	case featureTour
 }

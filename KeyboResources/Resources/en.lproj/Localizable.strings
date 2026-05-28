@@ -21,8 +21,36 @@
 
 "onboarding.step3.title" = "Switch to Keybo when typing";
 "onboarding.step3.description" = "In any text field, tap the globe icon on the keyboard and choose Keybo.";
-"onboarding.step3.done" = "Done";
+"onboarding.step3.done" = "Continue";
 "onboarding.step3.footer" = "You can re-open this guide later from Settings.";
+
+"onboarding.tour.title" = "What Keybo can do";
+"onboarding.tour.subtitle" = "A few things stock keyboards don't.";
+"onboarding.tour.cta" = "Start typing";
+"onboarding.tour.footer" = "Open Settings any time to revisit this list.";
+
+"onboarding.tour.diacritics.title" = "Hold a letter for accents";
+"onboarding.tour.diacritics.description" = "Press and hold any letter to pick from variants like á, ä, â.";
+
+"onboarding.tour.slack.title" = "Type emoji by name";
+"onboarding.tour.slack.description" = "Type :smile: and the closing colon swaps it for 😄. Manage your shortcodes in Settings.";
+
+"onboarding.tour.favorites.title" = "Favorite emojis at hand";
+"onboarding.tour.favorites.description" = "Pin the emojis you reach for most — they appear first in the emoji panel.";
+
+"onboarding.tour.emojiCodes.title" = "Browse every shortcode";
+"onboarding.tour.emojiCodes.description" = "The Emoji codes screen in Settings lets you search and copy every supported :code:.";
+
+"onboarding.tour.trackpad.title" = "Drag the space bar to move the cursor";
+"onboarding.tour.trackpad.description" = "Press and hold the space bar, then slide your finger to position the cursor precisely.";
+
+"onboarding.tour.deleteWord.title" = "Delete a word at a time";
+"onboarding.tour.deleteWord.description" = "Hold the delete key — after a moment it switches from letters to whole words.";
+
+"onboarding.tour.customize.title" = "Tune it to your taste";
+"onboarding.tour.customize.description" = "Sound, haptics, light/dark, and the double-tap-space action are all toggles in Settings.";
+
+"settings.featureTour" = "What Keybo can do";
 
 "settings.title" = "Keybo";
 "settings.setupInstructions" = "Setup instructions";

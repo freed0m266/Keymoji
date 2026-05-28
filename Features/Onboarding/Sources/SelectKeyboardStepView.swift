@@ -11,7 +11,6 @@ import KeyboResources
 
 struct SelectKeyboardStepView<ViewModel: OnboardingViewModeling>: View {
 	@Bindable var viewModel: ViewModel
-	let onFinish: () -> Void
 
 	typealias Texts = L10n.Onboarding
 
@@ -36,8 +35,7 @@ struct SelectKeyboardStepView<ViewModel: OnboardingViewModeling>: View {
 			Spacer()
 
 			Button {
-				viewModel.didFinishOnboarding()
-				onFinish()
+				viewModel.currentStep = .featureTour
 			} label: {
 				Text(Texts.Step3.done)
 					.font(.headline)

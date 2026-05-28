@@ -17,7 +17,15 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 
 	typealias Texts = L10n.Onboarding
 
-	public init(viewModel: ViewModel, onFinish: @escaping () -> Void = {}) {
+	@MainActor
+	public init(
+		viewModel: ViewModel,
+		initialStep: OnboardingStep? = nil,
+		onFinish: @escaping () -> Void = {}
+	) {
+		if let initialStep {
+			viewModel.currentStep = initialStep
+		}
 		_viewModel = State(wrappedValue: viewModel)
 		self.onFinish = onFinish
 	}
@@ -34,8 +42,10 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 					.tag(OnboardingStep.addKeyboard)
 				AllowFullAccessStepView(viewModel: viewModel)
 					.tag(OnboardingStep.allowFullAccess)
-				SelectKeyboardStepView(viewModel: viewModel, onFinish: onFinish)
+				SelectKeyboardStepView(viewModel: viewModel)
 					.tag(OnboardingStep.selectKeyboard)
+				FeatureTourStepView(viewModel: viewModel, onFinish: onFinish)
+					.tag(OnboardingStep.featureTour)
 			}
 			.tabViewStyle(.page(indexDisplayMode: .always))
 			.indexViewStyle(.page(backgroundDisplayMode: .always))
@@ -59,5 +69,9 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 
 #Preview("Step 3 — Select keyboard") {
 	OnboardingView(viewModel: OnboardingViewModelMock(currentStep: .selectKeyboard))
+}
+
+#Preview("Step 4 — Feature tour") {
+	OnboardingView(viewModel: OnboardingViewModelMock(currentStep: .featureTour))
 }
 #endif
