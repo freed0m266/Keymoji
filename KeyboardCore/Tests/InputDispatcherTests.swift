@@ -448,6 +448,34 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.searchQuery, "", "leaving search must drop the query so re-entry starts fresh")
 	}
 
+	func testEmojiSearch_toggleToSymbolsAndBack_preservesBuffer() {
+		// `123` / `ABC` hops between the QWERTY and symbols sub-pages of search mode. The
+		// query buffer must survive both jumps — they're sibling pages, not an exit.
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "rai")
+		dispatch(makeKey(.switchPage(.emojiSearchSymbols(.primary))), &state)
+		XCTAssertEqual(state.page, .emojiSearchSymbols(.primary))
+		XCTAssertEqual(state.searchQuery, "rai")
+
+		// Now type a digit on the symbols sub-page; it should still flow into the query.
+		dispatch(letterKey("7"), &state)
+		XCTAssertEqual(state.searchQuery, "rai7")
+		XCTAssertTrue(proxy.inserted.isEmpty, "digits on the search-symbols page must not touch the host doc")
+
+		// Toggle back to letters; buffer survives, page returns.
+		dispatch(makeKey(.switchPage(.emojiSearch)), &state)
+		XCTAssertEqual(state.page, .emojiSearch)
+		XCTAssertEqual(state.searchQuery, "rai7")
+	}
+
+	func testEmojiSearchSymbols_exitViaSwitchPage_clearsBuffer() {
+		// Exiting search from the symbols sub-page (e.g. via `×`) must drop the buffer
+		// the same way as exiting from the letters sub-page.
+		var state = KeyboardState(page: .emojiSearchSymbols(.primary), searchQuery: "7")
+		dispatch(makeKey(.switchPage(.emojis)), &state)
+		XCTAssertEqual(state.page, .emojis)
+		XCTAssertEqual(state.searchQuery, "")
+	}
+
 	// MARK: - Slack-style emoji substitution
 
 	func testSlackShortcode_completedByClosingColon_replacesWithEmoji() {

@@ -23,9 +23,10 @@ public enum InputDispatcher {
 	) {
 		// Emoji search has its own input pipeline: characters/space/backspace mutate the
 		// in-memory query buffer instead of the host document. Routed here so every action
-		// case can short-circuit cleanly without sprinkling `if state.page == .emojiSearch`
-		// checks across the regular handling branches.
-		if state.page == .emojiSearch, handleEmojiSearchInput(key: key, state: &state) {
+		// case can short-circuit cleanly without sprinkling `if state.page.isEmojiSearch`
+		// checks across the regular handling branches. Covers both the QWERTY sub-page
+		// (`.emojiSearch`) and the numbers/symbols sub-page (`.emojiSearchSymbols`).
+		if state.page.isEmojiSearch, handleEmojiSearchInput(key: key, state: &state) {
 			return
 		}
 
@@ -81,10 +82,11 @@ public enum InputDispatcher {
 			controller.dismissKeyboard()
 
 		case .switchPage(let newPage):
-			// Leaving the search mode (e.g. `×` clears search → `.emojis`) drops the buffer
-			// so a fresh entry into search starts blank. Centralised here so any future
-			// caller that dispatches `.switchPage` automatically gets the cleanup.
-			if state.page == .emojiSearch, newPage != .emojiSearch {
+			// Leaving the search context (e.g. `×` clears search → `.emojis`) drops the
+			// buffer so a fresh entry into search starts blank. The `123` / `ABC` toggle
+			// hops between `.emojiSearch` and `.emojiSearchSymbols` — both still count as
+			// in-search, so the query buffer survives those transitions.
+			if state.page.isEmojiSearch, !newPage.isEmojiSearch {
 				state.searchQuery = ""
 			}
 			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)

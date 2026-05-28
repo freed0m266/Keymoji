@@ -76,7 +76,7 @@ public struct KeyboardView: View {
 	}
 
 	private var isEmojiSearchKeyboard: Bool {
-		layout.page == .emojiSearch
+		layout.page.isEmojiSearch
 	}
 
 	/// Suggestion bar appears only on letter pages while the user is composing a shortcode.

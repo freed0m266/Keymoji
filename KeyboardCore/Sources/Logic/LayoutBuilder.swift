@@ -12,11 +12,11 @@ public enum LayoutBuilder {
 		var rows: [KeyboardRow] = []
 
 		// The emoji pages skip the number row entirely — digits would crowd the picker and
-		// the search results bar, and we deliberately keep the search-mode bottom row free of
-		// the `123` toggle (per task 39 §6) so digits would have no entry point anyway.
+		// the search results bar. Search mode reaches digits via its own bottom-row `123`
+		// toggle (which jumps into `.emojiSearchSymbols`), not via the number row.
 		// `KeyboardLayout.showsNumberRow` still propagates the user's preference so the
 		// *overall* keyboard height (260 vs 216) stays consistent when toggling between pages.
-		let includeNumberRow = showNumberRow && page != .emojis && page != .emojiSearch
+		let includeNumberRow = showNumberRow && page != .emojis && !page.isEmojiSearch
 		if includeNumberRow {
 			rows.append(makeNumberRow())
 		}
@@ -25,7 +25,7 @@ public enum LayoutBuilder {
 		case .letters(let shift):
 			rows.append(contentsOf: makeLetterRows(shift: shift))
 		case .symbols(let symbolPage):
-			rows.append(contentsOf: makeSymbolRows(symbolPage))
+			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: false))
 		case .emojis:
 			// Emoji page renders an `EmojiPanelView` in place of the letter/symbol rows.
 			// No row keys here — only the page-specific bottom row appears below.
@@ -34,6 +34,11 @@ public enum LayoutBuilder {
 			// Search mode: full QWERTY for typing the query. Always lowercase — query is
 			// case-insensitive at match time, so a Shift key would only add noise.
 			rows.append(contentsOf: makeLetterRows(shift: .lower))
+		case .emojiSearchSymbols(let symbolPage):
+			// Symbols variant of search mode — same row content as the regular `.symbols`
+			// layout, but the in-row `#+=` / `123` toggle keeps the user in the search-mode
+			// symbol pages instead of escaping back to plain symbols.
+			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: true))
 		}
 
 		rows.append(makeBottomRow(page: page))
@@ -155,47 +160,56 @@ public enum LayoutBuilder {
 	/// Punctuation row C (shared between primary and alternate).
 	private static let symbolsRowCPunctuation: [String] = [".", ",", "?", "!", "'"]
 
-	private static func makeSymbolRows(_ page: SymbolPage) -> [KeyboardRow] {
-		let (rowAContent, rowBContent, rowCToggle) = symbolPageContent(page)
+	private static func makeSymbolRows(_ page: SymbolPage, inEmojiSearch: Bool) -> [KeyboardRow] {
+		let (rowAContent, rowBContent, rowCToggle) = symbolPageContent(page, inEmojiSearch: inEmojiSearch)
+		let idPrefix = inEmojiSearch ? "emojiSearchSymbols" : "symbols"
 
 		let rowA = KeyboardRow(
-			id: "symbols.\(page.id).rowA",
+			id: "\(idPrefix).\(page.id).rowA",
 			keys: rowAContent.map(makeSymbolKey)
 		)
 		let rowB = KeyboardRow(
-			id: "symbols.\(page.id).rowB",
+			id: "\(idPrefix).\(page.id).rowB",
 			keys: rowBContent.map(makeSymbolKey)
 		)
 		let rowCPunctuation = symbolsRowCPunctuation.map(makeSymbolKey)
 		// Row C totals 1.5 (toggle) + 5×1.0 (punctuation) + 1.5 (delete) = 8 weight units.
 		// `referenceWeight: 10` keeps the per-key width aligned with rows A and B (which both have 10).
 		let rowC = KeyboardRow(
-			id: "symbols.\(page.id).rowC",
+			id: "\(idPrefix).\(page.id).rowC",
 			keys: [rowCToggle] + rowCPunctuation + [makeDeleteKey()],
 			referenceWeight: 10
 		)
 		return [rowA, rowB, rowC]
 	}
 
-	private static func symbolPageContent(_ page: SymbolPage) -> (rowA: [String], rowB: [String], rowCToggle: Key) {
+	/// In-row `#+=` / `123` toggle. When `inEmojiSearch` is true, the toggle hops between the
+	/// `.emojiSearchSymbols` sub-pages so the user stays in the search context; otherwise it
+	/// flips between the regular `.symbols` sub-pages.
+	private static func symbolPageContent(
+		_ page: SymbolPage,
+		inEmojiSearch: Bool
+	) -> (rowA: [String], rowB: [String], rowCToggle: Key) {
 		switch page {
 		case .primary:
+			let target: KeyboardPage = inEmojiSearch ? .emojiSearchSymbols(.alternate) : .symbols(.alternate)
 			let toggle = Key(
 				id: "symbols.row3.toggleAlt",
 				primary: .text("#+="),
 				alternates: [],
-				action: .switchPage(.symbols(.alternate)),
+				action: .switchPage(target),
 				visualWeight: .wide,
 				role: .system
 			)
 			return (symbolsPrimaryRowA, symbolsPrimaryRowB, toggle)
 
 		case .alternate:
+			let target: KeyboardPage = inEmojiSearch ? .emojiSearchSymbols(.primary) : .symbols(.primary)
 			let toggle = Key(
 				id: "symbols.row3.togglePrimary",
 				primary: .text("123"),
 				alternates: [],
-				action: .switchPage(.symbols(.primary)),
+				action: .switchPage(target),
 				visualWeight: .wide,
 				role: .system
 			)
@@ -252,8 +266,8 @@ public enum LayoutBuilder {
 			return makeStandardBottomRow(page: page)
 		case .emojis:
 			return makeEmojiBottomRow()
-		case .emojiSearch:
-			return makeEmojiSearchBottomRow()
+		case .emojiSearch, .emojiSearchSymbols:
+			return makeEmojiSearchBottomRow(page: page)
 		}
 	}
 
@@ -280,7 +294,7 @@ public enum LayoutBuilder {
 				visualWeight: .small,
 				role: .system
 			)
-		case .emojis, .emojiSearch:
+		case .emojis, .emojiSearch, .emojiSearchSymbols:
 			// Unreachable — emoji pages are handled by their own bottom-row builders.
 			fatalError("emoji page should not reach makeStandardBottomRow")
 		}
@@ -338,7 +352,7 @@ public enum LayoutBuilder {
 		)
 		let space = Key(
 			id: "space",
-			primary: .text("space"),
+			primary: .text(""),
 			alternates: [],
 			action: .space,
 			visualWeight: .space,
@@ -351,23 +365,56 @@ public enum LayoutBuilder {
 		)
 	}
 
-	/// Bottom row shown while typing into the emoji search query. Mirrors the standard
-	/// letters bottom row minus the `123` toggle and the emoji switcher — search mode
-	/// deliberately limits the keyboard to letters + space + delete so the only way out
-	/// is the `×` in the search bar (task 39 §6).
-	private static func makeEmojiSearchBottomRow() -> KeyboardRow {
+	/// Bottom row shown while typing into the emoji search query. Mirrors the native iOS
+	/// emoji-search keyboard: `123` / `ABC` toggle on the left jumps between the QWERTY
+	/// sub-page and the symbols sub-page, space in the middle, return on the right. There
+	/// is no delete key here — row 3 already carries delete in both layouts. Exit out of
+	/// search mode is via the `×` in the search bar above the keyboard.
+	private static func makeEmojiSearchBottomRow(page: KeyboardPage) -> KeyboardRow {
+		let toggle: Key
+		switch page {
+		case .emojiSearch:
+			toggle = Key(
+				id: "bottom.pageToggle",
+				primary: .text("123"),
+				alternates: [],
+				action: .switchPage(.emojiSearchSymbols(.primary)),
+				visualWeight: .small,
+				role: .system
+			)
+		case .emojiSearchSymbols:
+			toggle = Key(
+				id: "bottom.pageToggle",
+				primary: .text("ABC"),
+				alternates: [],
+				action: .switchPage(.emojiSearch),
+				visualWeight: .small,
+				role: .system
+			)
+		case .letters, .symbols, .emojis:
+			// Unreachable — `makeBottomRow` only routes the two emoji-search variants here.
+			fatalError("non-search page should not reach makeEmojiSearchBottomRow")
+		}
+
 		let space = Key(
 			id: "space",
-			primary: .text("space"),
+			primary: .text(""),
 			alternates: [],
 			action: .space,
 			visualWeight: .space,
 			role: .system
 		)
-		let delete = makeDeleteKey()
+		let returnKey = Key(
+			id: "return",
+			primary: .symbol(.return),
+			alternates: [],
+			action: .return,
+			visualWeight: .returnKey,
+			role: .system
+		)
 		return KeyboardRow(
 			id: "bottomRow",
-			keys: [space, delete]
+			keys: [toggle, space, returnKey]
 		)
 	}
 }

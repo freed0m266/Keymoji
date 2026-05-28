@@ -316,15 +316,54 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(chars, ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"])
 	}
 
-	func testEmojiSearchPage_bottomRow_hasOnlySpaceAndDelete() {
-		// Task 39 §6: bottom row keeps only space + delete. No `123`, no smiley — the only
-		// way out of search is the `×` in the search bar.
+	func testEmojiSearchPage_bottomRow_has123ToggleSpaceReturn() {
+		// Native iOS emoji-search keyboard parity: 123 toggle on the left, space in the
+		// middle, return on the right. No delete here — row 3 already carries delete.
 		let layout = LayoutBuilder.layout(page: .emojiSearch, showNumberRow: false, returnKeyType: .default)
 		let row = layout.rows.last!
 		XCTAssertEqual(row.id, "bottomRow")
-		XCTAssertEqual(row.keys.count, 2)
-		XCTAssertEqual(row.keys[0].action, .space)
-		XCTAssertEqual(row.keys[1].action, .backspace)
+		XCTAssertEqual(row.keys.count, 3)
+		XCTAssertEqual(row.keys[0].primary, .text("123"))
+		XCTAssertEqual(row.keys[0].action, .switchPage(.emojiSearchSymbols(.primary)))
+		XCTAssertEqual(row.keys[1].action, .space)
+		XCTAssertEqual(row.keys[2].action, .return)
+	}
+
+	// MARK: - Emoji search symbols page
+
+	func testEmojiSearchSymbolsPrimary_hasSymbolRows() {
+		let layout = LayoutBuilder.layout(page: .emojiSearchSymbols(.primary), showNumberRow: false, returnKeyType: .default)
+		let rowA = layout.rows.first { $0.id == "emojiSearchSymbols.primary.rowA" }
+		let rowB = layout.rows.first { $0.id == "emojiSearchSymbols.primary.rowB" }
+		let rowC = layout.rows.first { $0.id == "emojiSearchSymbols.primary.rowC" }
+		XCTAssertNotNil(rowA, "primary rowA missing")
+		XCTAssertNotNil(rowB, "primary rowB missing")
+		XCTAssertNotNil(rowC, "primary rowC missing")
+		// In-row toggle hops between the search-mode symbol sub-pages, NOT to plain `.symbols`.
+		XCTAssertEqual(rowC?.keys.first?.action, .switchPage(.emojiSearchSymbols(.alternate)))
+	}
+
+	func testEmojiSearchSymbolsAlternate_rowCToggle_pointsBackToPrimary() {
+		let layout = LayoutBuilder.layout(page: .emojiSearchSymbols(.alternate), showNumberRow: false, returnKeyType: .default)
+		let rowC = layout.rows.first { $0.id == "emojiSearchSymbols.alternate.rowC" }
+		XCTAssertEqual(rowC?.keys.first?.action, .switchPage(.emojiSearchSymbols(.primary)))
+	}
+
+	func testEmojiSearchSymbols_bottomRow_hasABCToggleSpaceReturn() {
+		let layout = LayoutBuilder.layout(page: .emojiSearchSymbols(.primary), showNumberRow: false, returnKeyType: .default)
+		let row = layout.rows.last!
+		XCTAssertEqual(row.id, "bottomRow")
+		XCTAssertEqual(row.keys.count, 3)
+		XCTAssertEqual(row.keys[0].primary, .text("ABC"))
+		XCTAssertEqual(row.keys[0].action, .switchPage(.emojiSearch))
+		XCTAssertEqual(row.keys[1].action, .space)
+		XCTAssertEqual(row.keys[2].action, .return)
+	}
+
+	func testEmojiSearchSymbols_dropsNumberRow() {
+		// Same rationale as `.emojiSearch` — search reaches digits via its own `123` toggle.
+		let layout = LayoutBuilder.layout(page: .emojiSearchSymbols(.primary), showNumberRow: true, returnKeyType: .default)
+		XCTAssertFalse(layout.rows.contains { $0.id == "numberRow" })
 	}
 
 	// MARK: - Return key type & equality
