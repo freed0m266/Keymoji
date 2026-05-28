@@ -1,6 +1,6 @@
 # 35 — Redesign klávesnice: vizuální parita s nativní iOS klávesnicí
 
-**Status:** Todo
+**Status:** Done — 2026-05-27
 
 **Priorita:** v1.1 polish · **Úsilí:** M-L · **Dopad:** Medium (vizuální, ne funkční)
 
