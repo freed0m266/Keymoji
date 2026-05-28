@@ -15,6 +15,7 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var hapticFeedbackEnabled: Bool { get set }
 	var keyClickSoundEnabled: Bool { get set }
 	var appearance: AppearancePreference { get set }
+	var spaceDoubleTapAction: SpaceDoubleTapAction { get set }
 	var versionString: String { get }
 }
 
@@ -54,6 +55,13 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		}
 	}
 
+	var spaceDoubleTapAction: SpaceDoubleTapAction {
+		didSet {
+			store.spaceDoubleTapAction = spaceDoubleTapAction
+			notifier.post(.spaceDoubleTapAction)
+		}
+	}
+
 	private let store: AppGroupStore
 	private let notifier: SettingsChangeNotifier
 
@@ -69,6 +77,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
 		self.keyClickSoundEnabled = store.keyClickSoundEnabled
 		self.appearance = store.appearance
+		self.spaceDoubleTapAction = store.spaceDoubleTapAction
 		super.init()
 	}
 }

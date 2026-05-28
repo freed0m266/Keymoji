@@ -38,6 +38,11 @@
 "settings.keyboard.appearance.light" = "Light";
 "settings.keyboard.appearance.dark" = "Dark";
 "settings.keyboard.appearanceFooter" = "Override the keyboard's color scheme. System follows the app that's showing the keyboard.";
+"settings.keyboard.spaceDoubleTapAction" = "Double-tap space";
+"settings.keyboard.spaceDoubleTap.insertPeriod" = "Insert “. ”";
+"settings.keyboard.spaceDoubleTap.dismissKeyboard" = "Hide keyboard";
+"settings.keyboard.spaceDoubleTap.none" = "Do nothing";
+"settings.keyboard.spaceDoubleTapFooter" = "Choose what happens when you tap the space bar twice in quick succession.";
 "settings.favorites.row" = "Favorite emojis";
 "settings.favorites.footer" = "Pinned to the front of the emoji panel for quick access.";
 "settings.favorites.title" = "Favorite emojis";

@@ -68,6 +68,17 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		} footer: {
 			Text(Texts.Keyboard.appearanceFooter)
 		}
+
+		Section {
+			Picker(Texts.Keyboard.spaceDoubleTapAction, selection: $viewModel.spaceDoubleTapAction) {
+				ForEach(SpaceDoubleTapAction.allCases, id: \.self) { action in
+					Text(label(for: action)).tag(action)
+				}
+			}
+			.pickerStyle(.menu)
+		} footer: {
+			Text(Texts.Keyboard.spaceDoubleTapFooter)
+		}
 	}
 
 	private func label(for preference: AppearancePreference) -> String {
@@ -75,6 +86,14 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		case .system: return Texts.Keyboard.Appearance.system
 		case .light:  return Texts.Keyboard.Appearance.light
 		case .dark:   return Texts.Keyboard.Appearance.dark
+		}
+	}
+
+	private func label(for action: SpaceDoubleTapAction) -> String {
+		switch action {
+		case .insertPeriod:    return Texts.Keyboard.SpaceDoubleTap.insertPeriod
+		case .dismissKeyboard: return Texts.Keyboard.SpaceDoubleTap.dismissKeyboard
+		case .none:            return Texts.Keyboard.SpaceDoubleTap.none
 		}
 	}
 

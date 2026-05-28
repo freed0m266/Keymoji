@@ -40,7 +40,7 @@ extension KeyStyle {
 		}
 
 		switch key.action {
-		case .space, .return, .switchPage:
+		case .space, .return, .switchPage, .dismissKeyboard:
 			return functionKey(for: key.action)
 		case .backspace, .deleteWord, .shift, .insertText, .insertRawText, .cursorOffset:
 			return characterKey()

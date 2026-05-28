@@ -104,6 +104,17 @@ public extension AppGroupStore {
 		set { setString(newValue.rawValue, forKey: .appearance) }
 	}
 
+	/// What happens on a double-tap of the space key. Defaults to `.insertPeriod`
+	/// (Apple-stock ". " substitution). Unknown raw values fall back to the default —
+	/// defensive against corrupted defaults or future renames.
+	var spaceDoubleTapAction: SpaceDoubleTapAction {
+		get {
+			guard let raw = string(forKey: .spaceDoubleTapAction) else { return .insertPeriod }
+			return SpaceDoubleTapAction(rawValue: raw) ?? .insertPeriod
+		}
+		set { setString(newValue.rawValue, forKey: .spaceDoubleTapAction) }
+	}
+
 	/// Most-recently-used emojis, newest first. Updated by the keyboard extension after each
 	/// emoji insertion; read by the extension on `viewWillAppear` to seed the recents tab.
 	var recentEmojis: [String] {

@@ -8,6 +8,7 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case keyClickSoundEnabled
 	case onboardingComplete
 	case appearance
+	case spaceDoubleTapAction
 	case recentEmojis
 	case favoriteEmojis
 }

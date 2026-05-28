@@ -1,4 +1,5 @@
 import Foundation
+import KeyboCore
 
 /// Mutable runtime state of the keyboard held by `KeyboardViewController`.
 /// `InputDispatcher` mutates this in-place; the view rebuilds layout from these values.
@@ -6,6 +7,10 @@ public struct KeyboardState: Sendable, Equatable {
 	public var page: KeyboardPage
 	public var returnKeyType: ReturnKeyType
 	public var showNumberRow: Bool
+
+	/// User preference for what a double-tap on space does. Runtime copy of
+	/// `AppGroupStore.spaceDoubleTapAction`, refreshed by `KeyboardViewController.viewWillAppear`.
+	public var spaceDoubleTapAction: SpaceDoubleTapAction
 
 	/// Whether the most recently inserted character was a space. Drives the
 	/// double-tap-space → ". " substitution.
@@ -45,6 +50,7 @@ public struct KeyboardState: Sendable, Equatable {
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
 		showNumberRow: Bool = true,
+		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
 		lastShiftTapAt: Date? = nil,
@@ -56,6 +62,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.page = page
 		self.returnKeyType = returnKeyType
 		self.showNumberRow = showNumberRow
+		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt
 		self.lastShiftTapAt = lastShiftTapAt

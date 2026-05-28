@@ -87,6 +87,11 @@ final class KeyboardViewController: UIInputViewController {
 			state.showNumberRow = showRow
 			changed = true
 		}
+		let doubleTap = store.spaceDoubleTapAction
+		if state.spaceDoubleTapAction != doubleTap {
+			state.spaceDoubleTapAction = doubleTap
+			changed = true
+		}
 		let storedRecents = store.recentEmojis
 		if state.recentEmojis != storedRecents {
 			state.recentEmojis = storedRecents

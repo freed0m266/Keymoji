@@ -17,6 +17,7 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 	public var hapticFeedbackEnabled: Bool
 	public var keyClickSoundEnabled: Bool
 	public var appearance: AppearancePreference
+	public var spaceDoubleTapAction: SpaceDoubleTapAction
 	public var versionString: String
 
 	public init(
@@ -24,12 +25,14 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 		hapticFeedbackEnabled: Bool = true,
 		keyClickSoundEnabled: Bool = false,
 		appearance: AppearancePreference = .system,
+		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		versionString: String = "1.0 (1)"
 	) {
 		self.showNumberRow = showNumberRow
 		self.hapticFeedbackEnabled = hapticFeedbackEnabled
 		self.keyClickSoundEnabled = keyClickSoundEnabled
 		self.appearance = appearance
+		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.versionString = versionString
 	}
 }

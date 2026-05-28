@@ -1,4 +1,5 @@
 import Foundation
+import KeyboCore
 
 /// Pure-logic input dispatcher. Routes `Key` taps to the text proxy and updates `KeyboardState`.
 /// `now` is injectable so the double-tap-space window can be tested deterministically.
@@ -55,7 +56,7 @@ public enum InputDispatcher {
 			ShiftStateMachine.apply(.shiftTapped(at: now()), to: &state)
 
 		case .space:
-			handleSpace(state: &state, proxy: proxy, now: now())
+			handleSpace(state: &state, proxy: proxy, controller: controller, now: now())
 			// After a space on either symbol page, hop back to letters. The user is presumably
 			// starting a new word; SwiftKey/Apple stock behave the same way. Auto-cap (in the
 			// controller's `textDidChange`) will then promote to `.upper` if appropriate.
@@ -99,18 +100,39 @@ public enum InputDispatcher {
 
 	// MARK: - Space
 
-	private static func handleSpace(state: inout KeyboardState, proxy: any TextDocumentProxying, now: Date) {
+	private static func handleSpace(
+		state: inout KeyboardState,
+		proxy: any TextDocumentProxying,
+		controller: any KeyboardControlling,
+		now: Date
+	) {
 		let withinWindow = state.lastSpaceInsertedAt.map { now.timeIntervalSince($0) < doubleSpaceWindow } ?? false
 		let isDoubleTap = state.lastInsertWasSpace && withinWindow
 
-		if isDoubleTap {
+		guard isDoubleTap else {
+			proxy.insertText(" ")
+			state.lastInsertWasSpace = true
+			state.lastSpaceInsertedAt = now
+			return
+		}
+
+		switch state.spaceDoubleTapAction {
+		case .insertPeriod:
 			// Replace the previous space with ". ".
 			proxy.deleteBackward()
 			proxy.insertText(". ")
 			state.lastInsertWasSpace = true
 			// Resetting the timestamp prevents triple-tap from chaining into a second substitution.
 			state.lastSpaceInsertedAt = nil
-		} else {
+		case .dismissKeyboard:
+			// Delete the first space too — the user's intent on a double-tap-to-dismiss is to
+			// hide the keyboard, not to commit a stray trailing space they didn't actually want.
+			proxy.deleteBackward()
+			controller.dismissKeyboard()
+			state.lastInsertWasSpace = false
+			state.lastSpaceInsertedAt = nil
+		case .none:
+			// Double-tap feature disabled — second tap is a regular space.
 			proxy.insertText(" ")
 			state.lastInsertWasSpace = true
 			state.lastSpaceInsertedAt = now

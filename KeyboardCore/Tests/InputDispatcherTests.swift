@@ -278,6 +278,79 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
 
+	// MARK: - Space double-tap configurable action
+
+	func testDoubleSpace_insertPeriodMode_substitutes() {
+		var state = KeyboardState(spaceDoubleTapAction: .insertPeriod)
+		let t0 = Date(timeIntervalSince1970: 1000)
+		let t1 = t0.addingTimeInterval(0.3)
+
+		dispatch(makeKey(.space), &state, now: { t0 })
+		dispatch(makeKey(.space), &state, now: { t1 })
+
+		XCTAssertEqual(proxy.inserted, [" ", ". "])
+		XCTAssertEqual(proxy.deleteCount, 1)
+		XCTAssertEqual(controller.dismissCount, 0)
+	}
+
+	func testDoubleSpace_dismissKeyboardMode_dismissesAndRemovesFirstSpace() {
+		var state = KeyboardState(spaceDoubleTapAction: .dismissKeyboard)
+		let t0 = Date(timeIntervalSince1970: 1000)
+		let t1 = t0.addingTimeInterval(0.3)
+
+		dispatch(makeKey(.space), &state, now: { t0 })
+		dispatch(makeKey(.space), &state, now: { t1 })
+
+		// The first space is committed to the document on tap 1; tap 2 deletes it and dismisses.
+		// Net effect on the document: no inserted space remains.
+		XCTAssertEqual(proxy.inserted, [" "])
+		XCTAssertEqual(proxy.deleteCount, 1)
+		XCTAssertNil(proxy.documentContextBeforeInput)
+		XCTAssertEqual(controller.dismissCount, 1)
+	}
+
+	func testDoubleSpace_noneMode_insertsTwoSpaces() {
+		var state = KeyboardState(spaceDoubleTapAction: .none)
+		let t0 = Date(timeIntervalSince1970: 1000)
+		let t1 = t0.addingTimeInterval(0.3)
+
+		dispatch(makeKey(.space), &state, now: { t0 })
+		dispatch(makeKey(.space), &state, now: { t1 })
+
+		XCTAssertEqual(proxy.inserted, [" ", " "])
+		XCTAssertEqual(proxy.deleteCount, 0)
+		XCTAssertEqual(controller.dismissCount, 0)
+	}
+
+	func testDoubleSpace_dismissKeyboardMode_outsideWindow_doesNotDismiss() {
+		var state = KeyboardState(spaceDoubleTapAction: .dismissKeyboard)
+		let t0 = Date(timeIntervalSince1970: 1000)
+		let t1 = t0.addingTimeInterval(0.6) // outside 0.5s window
+
+		dispatch(makeKey(.space), &state, now: { t0 })
+		dispatch(makeKey(.space), &state, now: { t1 })
+
+		XCTAssertEqual(proxy.inserted, [" ", " "])
+		XCTAssertEqual(controller.dismissCount, 0)
+	}
+
+	func testDoubleSpace_dismissKeyboardMode_onSymbols_dismissesAndSwitchesToLetters() {
+		// On a symbol page, the space-driven auto-switch-to-letters from task 27 runs *after*
+		// `handleSpace` regardless of dismiss — keyboards aren't destroyed by dismiss, just hidden,
+		// so the next presentation lands on letters (the next-word default).
+		var state = KeyboardState(page: .symbols(.primary), spaceDoubleTapAction: .dismissKeyboard)
+		let t0 = Date(timeIntervalSince1970: 1000)
+		let t1 = t0.addingTimeInterval(0.3)
+
+		dispatch(makeKey(.space), &state, now: { t0 })
+		XCTAssertEqual(state.page, .letters(.lower))
+
+		dispatch(makeKey(.space), &state, now: { t1 })
+		XCTAssertEqual(controller.dismissCount, 1)
+		XCTAssertEqual(proxy.deleteCount, 1)
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
 	// MARK: - Emoji page
 
 	func testSwitchToEmojis_setsEmojiPage() {
