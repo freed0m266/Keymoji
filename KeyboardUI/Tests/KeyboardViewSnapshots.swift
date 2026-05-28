@@ -169,4 +169,60 @@ final class KeyboardViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
 	}
+
+	// MARK: - Emoji search page
+
+	/// Search mode stacks ~92 pt of chrome (search bar + horizontal results bar) above the
+	/// regular QWERTY rows. The view's intrinsic keyboardHeight grows accordingly; tests
+	/// have to allocate the matching frame so the bottom space/delete row isn't clipped.
+	private static let emojiSearchSize = CGSize(width: 393, height: 308)
+
+	func testEmojiSearch_emptyQuery_noRecents() {
+		let layout = KeyboardCore.makeLayout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: [],
+			searchQuery: "",
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+	}
+
+	func testEmojiSearch_emptyQuery_withRecents() {
+		let layout = KeyboardCore.makeLayout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: ["😀", "👋", "🎉", "❤️", "🚀", "🍕"],
+			searchQuery: "",
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+	}
+
+	func testEmojiSearch_query_rain() {
+		let layout = KeyboardCore.makeLayout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: [],
+			searchQuery: "rain",
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .light)
+	}
+
+	func testEmojiSearch_noResults() {
+		let layout = KeyboardCore.makeLayout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			recentEmojis: [],
+			searchQuery: "xyz123nope",
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+	}
 }

@@ -21,6 +21,14 @@ public enum InputDispatcher {
 		controller: any KeyboardControlling,
 		now: () -> Date = Date.init
 	) {
+		// Emoji search has its own input pipeline: characters/space/backspace mutate the
+		// in-memory query buffer instead of the host document. Routed here so every action
+		// case can short-circuit cleanly without sprinkling `if state.page == .emojiSearch`
+		// checks across the regular handling branches.
+		if state.page == .emojiSearch, handleEmojiSearchInput(key: key, state: &state) {
+			return
+		}
+
 		switch key.action {
 		case .insertText(let text):
 			let shifted = textWithShiftApplied(text, state: state)
@@ -73,6 +81,12 @@ public enum InputDispatcher {
 			controller.dismissKeyboard()
 
 		case .switchPage(let newPage):
+			// Leaving the search mode (e.g. `×` clears search → `.emojis`) drops the buffer
+			// so a fresh entry into search starts blank. Centralised here so any future
+			// caller that dispatches `.switchPage` automatically gets the cleanup.
+			if state.page == .emojiSearch, newPage != .emojiSearch {
+				state.searchQuery = ""
+			}
 			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
@@ -85,6 +99,63 @@ public enum InputDispatcher {
 			}
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+		}
+	}
+
+	// MARK: - Emoji search mode
+
+	/// Routes a tap in `.emojiSearch` mode. Returns `true` when the action was handled and
+	/// the regular pipeline should be skipped. Returns `false` for actions the search-mode
+	/// path doesn't own (e.g. switching pages back to letters via the view-layer `×`, or
+	/// inserting an emoji glyph from the results bar), so the caller can fall through to
+	/// default handling.
+	private static func handleEmojiSearchInput(key: Key, state: inout KeyboardState) -> Bool {
+		// Emoji glyph taps from the results bar travel as `.insertText` actions on synthetic
+		// keys whose IDs start with `emoji.`. They must reach the host document proxy, not
+		// the query buffer — so fall through to the regular insertion path and let the
+		// controller's `recordRecentEmojiIfNeeded` bump the glyph into recents.
+		if key.id.hasPrefix("emoji.") {
+			return false
+		}
+
+		switch key.action {
+		case .insertText(let text), .insertRawText(let text):
+			// Lowercase so the buffer mirrors what `EmojiSearchIndex` expects after its own
+			// `lowercased()` — and so a future case-toggling shift never desyncs the buffer.
+			state.searchQuery.append(text.lowercased())
+			return true
+
+		case .space:
+			state.searchQuery.append(" ")
+			return true
+
+		case .backspace:
+			// Don't mutate host text from search mode — silently swallow when the buffer
+			// is already empty. Pressing × in the search bar is the proper exit.
+			if !state.searchQuery.isEmpty {
+				state.searchQuery.removeLast()
+			}
+			return true
+
+		case .deleteWord:
+			// v1 simplification (task 39 §6): long-press backspace doesn't escalate in
+			// search mode. Treat it as a single character delete to keep behaviour
+			// predictable if the keyboard ever dispatches a `.deleteWord` through here.
+			if !state.searchQuery.isEmpty {
+				state.searchQuery.removeLast()
+			}
+			return true
+
+		case .switchPage:
+			// Page transitions (e.g. `×` clears search → `.emojis`) flow through the regular
+			// path so `ShiftStateMachine` resets `lastShiftTapAt` consistently. The view
+			// layer is responsible for clearing `searchQuery` when leaving the mode.
+			return false
+
+		case .shift, .return, .dismissKeyboard, .cursorOffset:
+			// None of these are meaningful in search mode; swallow so a stray keypress
+			// can't fire `return` into the host or toggle shift state.
+			return true
 		}
 	}
 

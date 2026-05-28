@@ -28,6 +28,7 @@ struct KeyboardRoot: View {
 			width: state.keyboardWidth,
 			recentEmojis: state.recentEmojis,
 			favoriteEmojis: state.favoriteEmojis,
+			searchQuery: state.searchQuery,
 			slackSuggestions: slackSuggestions,
 			onKey: dispatch,
 			onToggleFavoriteEmoji: toggleFavoriteEmoji,

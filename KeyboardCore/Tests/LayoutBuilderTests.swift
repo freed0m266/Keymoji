@@ -293,6 +293,40 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(row.keys[2].action, .backspace)
 	}
 
+	// MARK: - Emoji search page
+
+	func testEmojiSearchPage_dropsNumberRowEvenWhenPreferenceIsTrue() {
+		// Search bottom row deliberately omits the `123` toggle (task 39 §6) so the user
+		// only exits via the `×` chip — surfacing digits via the number row would put the
+		// number-row keys back on screen with no way to actually use them.
+		let layout = LayoutBuilder.layout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
+		XCTAssertFalse(layout.rows.contains { $0.id == "numberRow" })
+		XCTAssertTrue(layout.showsNumberRow, "preference should still propagate so height stays consistent")
+	}
+
+	func testEmojiSearchPage_lettersRowsAreLowercase() {
+		// Search mode is case-insensitive; the rows must render lowercase so the visible
+		// keys match what's being matched in `EmojiSearchIndex`.
+		let layout = LayoutBuilder.layout(page: .emojiSearch, showNumberRow: false, returnKeyType: .default)
+		let row1 = layout.rows.first { $0.id == "letters.row1" }!
+		let chars = row1.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"])
+	}
+
+	func testEmojiSearchPage_bottomRow_hasOnlySpaceAndDelete() {
+		// Task 39 §6: bottom row keeps only space + delete. No `123`, no smiley — the only
+		// way out of search is the `×` in the search bar.
+		let layout = LayoutBuilder.layout(page: .emojiSearch, showNumberRow: false, returnKeyType: .default)
+		let row = layout.rows.last!
+		XCTAssertEqual(row.id, "bottomRow")
+		XCTAssertEqual(row.keys.count, 2)
+		XCTAssertEqual(row.keys[0].action, .space)
+		XCTAssertEqual(row.keys[1].action, .backspace)
+	}
+
 	// MARK: - Return key type & equality
 
 	func testReturnKeyType_propagatesIntoLayout() {

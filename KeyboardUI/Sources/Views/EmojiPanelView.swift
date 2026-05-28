@@ -12,6 +12,7 @@ public struct EmojiPanelView: View {
 	let onToggleFavorite: (String) -> Void
 	let onSwitchToLetters: () -> Void
 	let onDelete: () -> Void
+	let onEnterSearch: () -> Void
 	let onKeyTapHaptic: () -> Void
 	let onKeyClick: () -> Void
 
@@ -24,6 +25,7 @@ public struct EmojiPanelView: View {
 		onToggleFavorite: @escaping (String) -> Void = { _ in },
 		onSwitchToLetters: @escaping () -> Void = {},
 		onDelete: @escaping () -> Void = {},
+		onEnterSearch: @escaping () -> Void = {},
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {}
 	) {
@@ -33,6 +35,7 @@ public struct EmojiPanelView: View {
 		self.onToggleFavorite = onToggleFavorite
 		self.onSwitchToLetters = onSwitchToLetters
 		self.onDelete = onDelete
+		self.onEnterSearch = onEnterSearch
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
 		// Open priority: favorites > recents > smileys. The most personalized tab wins so
@@ -70,7 +73,7 @@ public struct EmojiPanelView: View {
 		case .recents:
 			recents
 		default:
-			EmojiCatalog.emojis(for: selectedCategory)
+			EmojiCatalog.emojis(for: selectedCategory).map(\.glyph)
 		}
 	}
 
@@ -79,32 +82,69 @@ public struct EmojiPanelView: View {
 	}
 
 	public var body: some View {
-		grid
-			.overlay(alignment: .bottom) {
-				categoryTabs
-					.padding(.top, 52)
-					.background {
-						LinearGradient(
-							// TODO: Replace color
-							colors: [
-								Color(hexString: "171719"),
-								Color(hexString: "171719").opacity(0.8),
-								Color.clear
-							],
-							startPoint: .bottom,
-							endPoint: .top
-						)
-						.allowsHitTesting(false)
-					}
-			}
-			// Snap away from `.favorites`/`.recents` if the user empties the list while it's the
-			// active tab (e.g. long-presses to unfavorite the last entry). Without this the tab
-			// stays selected but its row is gone, leaving an unreachable empty grid.
-			.onChange(of: visibleCategories) { _, newValue in
-				if !newValue.contains(selectedCategory) {
-					selectedCategory = newValue.first ?? .smileys
+		VStack(spacing: 0) {
+			searchBarTrigger
+			grid
+				.overlay(alignment: .bottom) {
+					categoryTabs
+						.padding(.top, 52)
+						.background {
+							LinearGradient(
+								// TODO: Replace color
+								colors: [
+									Color(hexString: "171719"),
+									Color(hexString: "171719").opacity(0.8),
+									Color.clear
+								],
+								startPoint: .bottom,
+								endPoint: .top
+							)
+							.allowsHitTesting(false)
+						}
 				}
+		}
+		// Snap away from `.favorites`/`.recents` if the user empties the list while it's the
+		// active tab (e.g. long-presses to unfavorite the last entry). Without this the tab
+		// stays selected but its row is gone, leaving an unreachable empty grid.
+		.onChange(of: visibleCategories) { _, newValue in
+			if !newValue.contains(selectedCategory) {
+				selectedCategory = newValue.first ?? .smileys
 			}
+		}
+	}
+
+	// MARK: - Search bar trigger
+
+	/// Read-only search affordance pinned above the grid. Tapping it asks the controller to
+	/// switch into `.emojiSearch` mode — it doesn't actually edit any text itself. Mirrors
+	/// the native iOS emoji picker's "Search Emoji" placeholder bar.
+	private var searchBarTrigger: some View {
+		Button {
+			onKeyTapHaptic()
+			onEnterSearch()
+		} label: {
+			HStack(spacing: 6) {
+				Image(systemName: "magnifyingglass")
+					.font(.system(size: 14, weight: .regular))
+				Text("Search Emoji")
+					.font(.system(size: 15))
+				Spacer()
+			}
+			.foregroundStyle(.secondary)
+			.padding(.horizontal, 10)
+			.frame(height: 32)
+			.background(
+				RoundedRectangle(cornerRadius: 8, style: .continuous)
+					.fill(Color(.systemGray3).opacity(0.45))
+			)
+			.padding(.horizontal, 10)
+			.padding(.top, 6)
+			.padding(.bottom, 4)
+			.contentShape(Rectangle())
+		}
+		.buttonStyle(.plain)
+		.accessibilityLabel("Search emoji")
+		.accessibilityAddTraits(.isButton)
 	}
 
 	// MARK: - Category tabs

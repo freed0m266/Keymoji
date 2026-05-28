@@ -12,6 +12,7 @@ public struct KeyboardView: View {
 	public let width: CGFloat
 	public let recentEmojis: [String]
 	public let favoriteEmojis: [String]
+	public let searchQuery: String
 	public let slackSuggestions: [SlackEmojiSuggester.Suggestion]
 	public let onKey: (Key) -> Void
 	public let onToggleFavoriteEmoji: (String) -> Void
@@ -37,6 +38,7 @@ public struct KeyboardView: View {
 		width: CGFloat,
 		recentEmojis: [String] = [],
 		favoriteEmojis: [String] = [],
+		searchQuery: String = "",
 		slackSuggestions: [SlackEmojiSuggester.Suggestion] = [],
 		onKey: @escaping (Key) -> Void,
 		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
@@ -52,6 +54,7 @@ public struct KeyboardView: View {
 		self.width = width
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
+		self.searchQuery = searchQuery
 		self.slackSuggestions = slackSuggestions
 		self.onKey = onKey
 		self.onToggleFavoriteEmoji = onToggleFavoriteEmoji
@@ -70,6 +73,10 @@ public struct KeyboardView: View {
 
 	private var isEmojiKeyboard: Bool {
 		layout.page == .emojis
+	}
+
+	private var isEmojiSearchKeyboard: Bool {
+		layout.page == .emojiSearch
 	}
 
 	/// Suggestion bar appears only on letter pages while the user is composing a shortcode.
@@ -99,6 +106,8 @@ public struct KeyboardView: View {
 
 			if isEmojiKeyboard {
 				emojiKeyboard
+			} else if isEmojiSearchKeyboard {
+				emojiSearchKeyboard
 			} else {
 				defaultKeyboard
 			}
@@ -110,6 +119,42 @@ public struct KeyboardView: View {
 		// where the keys recede so the surface visually becomes a trackpad.
 		.opacity(isInTrackpadMode ? 0.45 : 1.0)
 		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
+	}
+
+	private var emojiSearchKeyboard: some View {
+		VStack(spacing: rowSpacing) {
+			EmojiSearchView(
+				query: searchQuery,
+				recents: recentEmojis,
+				onSelectEmoji: { emoji in
+					let key = Key(
+						id: "emoji.\(emoji)",
+						primary: .text(emoji),
+						alternates: [],
+						action: .insertText(emoji),
+						visualWeight: .standard,
+						role: .character
+					)
+					onKey(key)
+				},
+				onClearSearch: {
+					// `×` always exits search back to the regular emoji panel. The dispatcher's
+					// `.switchPage` handler clears the query buffer in `KeyboardState`.
+					let key = Key(
+						id: "emojiSearch.clear",
+						primary: .symbol(.delete),
+						alternates: [],
+						action: .switchPage(.emojis),
+						visualWeight: .standard,
+						role: .system
+					)
+					onKey(key)
+				},
+				onKeyTapHaptic: onKeyTapHaptic,
+				onKeyClick: onKeyClick
+			)
+			defaultKeyboard
+		}
 	}
 
 	private var emojiKeyboard: some View {
@@ -149,6 +194,17 @@ public struct KeyboardView: View {
 					alternates: [],
 					action: .backspace,
 					visualWeight: .wide,
+					role: .system
+				)
+				onKey(key)
+			},
+			onEnterSearch: {
+				let key = Key(
+					id: "emojiPanel.enterSearch",
+					primary: .symbol(.smiley),
+					alternates: [],
+					action: .switchPage(.emojiSearch),
+					visualWeight: .standard,
 					role: .system
 				)
 				onKey(key)
@@ -197,7 +253,30 @@ public struct KeyboardView: View {
 		if showsSuggestionBar && !layout.showsNumberRow {
 			return base + barFootprint
 		}
+		if isEmojiSearchKeyboard {
+			// Emoji search stacks the search bar (~36 pt) + horizontal results bar (~44 pt) + a
+			// vertical row gap above the full QWERTY layout. The layout builder also drops the
+			// number row in this mode, so we measure off the no-number-row base and add the
+			// chrome footprint. Without this, the bottom space/delete row clipped under the
+			// frame (caught by the Codex review on task 39).
+			return 216 + emojiSearchChromeHeight
+		}
 		return base
+	}
+
+	/// Vertical footprint of the emoji-search chrome (search bar + results bar + intra-row gap)
+	/// stacked above the regular QWERTY rows when `layout.page == .emojiSearch`.
+	private var emojiSearchChromeHeight: CGFloat {
+		let searchBarHeight: CGFloat = 32
+		let resultsBarHeight: CGFloat = 44
+		let interSectionSpacing = rowSpacing
+		let topPaddingInsideSearchView: CGFloat = 4
+		let interBarSpacing: CGFloat = 6
+		return searchBarHeight
+			+ resultsBarHeight
+			+ interSectionSpacing
+			+ topPaddingInsideSearchView
+			+ interBarSpacing
 	}
 }
 

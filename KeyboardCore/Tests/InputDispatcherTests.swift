@@ -387,6 +387,67 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
 
+	// MARK: - Emoji search mode
+
+	func testEmojiSearch_letterTap_appendsToQuery_doesNotInsertIntoHost() {
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "")
+		dispatch(letterKey("r"), &state)
+		dispatch(letterKey("a"), &state)
+		dispatch(letterKey("i"), &state)
+		dispatch(letterKey("n"), &state)
+		XCTAssertEqual(state.searchQuery, "rain")
+		XCTAssertTrue(proxy.inserted.isEmpty, "search mode must never type into the host document")
+	}
+
+	func testEmojiSearch_space_appendsToQuery() {
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "red")
+		dispatch(makeKey(.space), &state)
+		XCTAssertEqual(state.searchQuery, "red ")
+		XCTAssertTrue(proxy.inserted.isEmpty)
+	}
+
+	func testEmojiSearch_backspace_popsQuery() {
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "rains")
+		dispatch(makeKey(.backspace), &state)
+		XCTAssertEqual(state.searchQuery, "rain")
+		XCTAssertEqual(proxy.deleteCount, 0, "search-mode backspace must not touch host document")
+	}
+
+	func testEmojiSearch_backspace_onEmptyQuery_isNoop() {
+		// Critical: pressing delete on an empty search query must NOT destructively edit
+		// the host document. The user's exit path is the `×` chip, not delete.
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "")
+		dispatch(makeKey(.backspace), &state)
+		XCTAssertEqual(state.searchQuery, "")
+		XCTAssertEqual(proxy.deleteCount, 0)
+	}
+
+	func testEmojiSearch_emojiInsertion_fromResultBar_reachesHost_andStaysInSearchMode() {
+		// Emoji selections from the results bar travel as synthetic `emoji.<glyph>` keys.
+		// They must reach the proxy (so the user actually inserts text) while keeping the
+		// page state at `.emojiSearch` for follow-up taps.
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "rain")
+		let key = Key(
+			id: "emoji.🌧️",
+			primary: .text("🌧️"),
+			alternates: [],
+			action: .insertText("🌧️"),
+			visualWeight: .standard,
+			role: .character
+		)
+		dispatch(key, &state)
+		XCTAssertEqual(proxy.inserted, ["🌧️"])
+		XCTAssertEqual(state.page, .emojiSearch)
+		XCTAssertEqual(state.searchQuery, "rain", "query buffer must survive a result-bar tap")
+	}
+
+	func testEmojiSearch_exitViaSwitchPage_clearsBuffer() {
+		var state = KeyboardState(page: .emojiSearch, searchQuery: "rain")
+		dispatch(makeKey(.switchPage(.emojis)), &state)
+		XCTAssertEqual(state.page, .emojis)
+		XCTAssertEqual(state.searchQuery, "", "leaving search must drop the query so re-entry starts fresh")
+	}
+
 	// MARK: - Slack-style emoji substitution
 
 	func testSlackShortcode_completedByClosingColon_replacesWithEmoji() {

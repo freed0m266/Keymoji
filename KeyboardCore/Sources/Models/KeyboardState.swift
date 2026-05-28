@@ -46,6 +46,11 @@ public struct KeyboardState: Sendable, Equatable {
 	/// rows on iPhone portrait — long enough to be useful, short enough that it never scrolls.
 	public static let recentEmojisCapacity = 30
 
+	/// Current emoji-search query buffer. Populated by `InputDispatcher` while
+	/// `page == .emojiSearch` and cleared on exit (`×` tap). Transient — not persisted to
+	/// `AppGroupStore`, so the query never survives an extension restart.
+	public var searchQuery: String
+
 	public init(
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
@@ -57,7 +62,8 @@ public struct KeyboardState: Sendable, Equatable {
 		autoCapitalized: Bool = false,
 		keyboardWidth: CGFloat = 0,
 		recentEmojis: [String] = [],
-		favoriteEmojis: [String] = []
+		favoriteEmojis: [String] = [],
+		searchQuery: String = ""
 	) {
 		self.page = page
 		self.returnKeyType = returnKeyType
@@ -70,5 +76,6 @@ public struct KeyboardState: Sendable, Equatable {
 		self.keyboardWidth = keyboardWidth
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
+		self.searchQuery = searchQuery
 	}
 }

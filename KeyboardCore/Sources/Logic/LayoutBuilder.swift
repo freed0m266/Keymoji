@@ -11,11 +11,12 @@ public enum LayoutBuilder {
 	) -> KeyboardLayout {
 		var rows: [KeyboardRow] = []
 
-		// The emoji page skips the number row entirely — digits would crowd the picker and
-		// have no use while browsing emojis. `KeyboardLayout.showsNumberRow` still propagates
-		// the user's preference so the *overall* keyboard height (260 vs 216) stays consistent
-		// when toggling between pages.
-		let includeNumberRow = showNumberRow && page != .emojis
+		// The emoji pages skip the number row entirely — digits would crowd the picker and
+		// the search results bar, and we deliberately keep the search-mode bottom row free of
+		// the `123` toggle (per task 39 §6) so digits would have no entry point anyway.
+		// `KeyboardLayout.showsNumberRow` still propagates the user's preference so the
+		// *overall* keyboard height (260 vs 216) stays consistent when toggling between pages.
+		let includeNumberRow = showNumberRow && page != .emojis && page != .emojiSearch
 		if includeNumberRow {
 			rows.append(makeNumberRow())
 		}
@@ -29,6 +30,10 @@ public enum LayoutBuilder {
 			// Emoji page renders an `EmojiPanelView` in place of the letter/symbol rows.
 			// No row keys here — only the page-specific bottom row appears below.
 			break
+		case .emojiSearch:
+			// Search mode: full QWERTY for typing the query. Always lowercase — query is
+			// case-insensitive at match time, so a Shift key would only add noise.
+			rows.append(contentsOf: makeLetterRows(shift: .lower))
 		}
 
 		rows.append(makeBottomRow(page: page))
@@ -247,6 +252,8 @@ public enum LayoutBuilder {
 			return makeStandardBottomRow(page: page)
 		case .emojis:
 			return makeEmojiBottomRow()
+		case .emojiSearch:
+			return makeEmojiSearchBottomRow()
 		}
 	}
 
@@ -273,9 +280,9 @@ public enum LayoutBuilder {
 				visualWeight: .small,
 				role: .system
 			)
-		case .emojis:
-			// Unreachable — emojis is handled by `makeEmojiBottomRow`.
-			fatalError("emojis page should not reach makeStandardBottomRow")
+		case .emojis, .emojiSearch:
+			// Unreachable — emoji pages are handled by their own bottom-row builders.
+			fatalError("emoji page should not reach makeStandardBottomRow")
 		}
 
 		// Slot for jumping to the emoji panel — tapping it pushes the page state to `.emojis`.
@@ -341,6 +348,26 @@ public enum LayoutBuilder {
 		return KeyboardRow(
 			id: "bottomRow",
 			keys: [abc, space, delete]
+		)
+	}
+
+	/// Bottom row shown while typing into the emoji search query. Mirrors the standard
+	/// letters bottom row minus the `123` toggle and the emoji switcher — search mode
+	/// deliberately limits the keyboard to letters + space + delete so the only way out
+	/// is the `×` in the search bar (task 39 §6).
+	private static func makeEmojiSearchBottomRow() -> KeyboardRow {
+		let space = Key(
+			id: "space",
+			primary: .text("space"),
+			alternates: [],
+			action: .space,
+			visualWeight: .space,
+			role: .system
+		)
+		let delete = makeDeleteKey()
+		return KeyboardRow(
+			id: "bottomRow",
+			keys: [space, delete]
 		)
 	}
 }

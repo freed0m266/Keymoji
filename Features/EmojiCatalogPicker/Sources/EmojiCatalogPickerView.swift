@@ -45,8 +45,8 @@ public struct EmojiCatalogPickerView: View {
 				ForEach(EmojiCatalog.staticCategories) { category in
 					Section {
 						LazyVGrid(columns: columns, spacing: Self.gridSpacing) {
-							ForEach(EmojiCatalog.emojis(for: category), id: \.self) { emoji in
-								cell(for: emoji)
+							ForEach(EmojiCatalog.emojis(for: category)) { emoji in
+								cell(for: emoji.glyph)
 							}
 						}
 						.padding(.horizontal, 16)
