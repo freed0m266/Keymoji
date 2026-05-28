@@ -203,68 +203,68 @@ public struct KeyboardView: View {
 }
 
 #if DEBUG
-//#Preview("Letters Lower / Dark") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.dark)
-//}
-//
-//#Preview("Letters Upper / Light") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .letters(.upper), showNumberRow: true, returnKeyType: .default),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.light)
-//}
-//
-//#Preview("Caps Lock / Dark") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .letters(.capsLock), showNumberRow: true, returnKeyType: .default),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.dark)
-//}
-//
-//#Preview("Symbols Primary / Dark") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.dark)
-//}
-//
-//#Preview("Symbols Alternate / Dark") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.dark)
-//}
-//
-//#Preview("No Number Row / Dark") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.dark)
-//}
-//
-//#Preview("Return = Search / Dark") {
-//	KeyboardView(
-//		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .search),
-//		width: 393,
-//		onKey: { _ in }
-//	)
-//	.preferredColorScheme(.dark)
-//}
+#Preview("Letters Lower / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Letters Upper / Light") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .letters(.upper), showNumberRow: true, returnKeyType: .default),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.light)
+}
+
+#Preview("Caps Lock / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .letters(.capsLock), showNumberRow: true, returnKeyType: .default),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Symbols Primary / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Symbols Alternate / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("No Number Row / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Return = Search / Dark") {
+	KeyboardView(
+		layout: KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .search),
+		width: 393,
+		onKey: { _ in }
+	)
+	.preferredColorScheme(.dark)
+}
 
 #Preview("Emojis / no recents / Dark") {
 	KeyboardView(
