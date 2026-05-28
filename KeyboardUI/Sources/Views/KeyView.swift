@@ -100,14 +100,15 @@ struct KeyView: View {
 		ZStack {
 			RoundedRectangle(cornerRadius: style.cornerRadius)
 				.fill(keyBackgroundColor)
+
 			content
 				.foregroundStyle(style.foregroundColor)
-				.font(style.font)
+				.font(contentFont)
 				.minimumScaleFactor(0.6)
 				.lineLimit(1)
 				.padding(.horizontal, 4)
 		}
-		.frame(minHeight: 38)
+		.frame(minHeight: 36)
 		.contentShape(Rectangle())
 		.overlay(alignment: popoverOverlayAlignment) {
 			if isShowingPopover, hasTextAlternates {
@@ -444,6 +445,17 @@ struct KeyView: View {
 			Text(text)
 		case .symbol(let symbol):
 			Image(systemName: symbol.systemName)
+		}
+	}
+
+	/// Symbol glyphs (shift / delete / smiley / return) render at a fixed visual size that
+	/// matches Apple's stock keyboard — bigger than the small semibold text labels (123 / ABC /
+	/// Search) the function and system tiers use for their text. Without this override the
+	/// glyphs would inherit `style.font` and shrink to 17pt alongside the labels.
+	private var contentFont: Font? {
+		switch effectiveContent {
+		case .symbol: return .system(size: 20, weight: .regular)
+		case .text:   return style.font
 		}
 	}
 

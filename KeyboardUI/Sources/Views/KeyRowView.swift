@@ -15,7 +15,7 @@ struct KeyRowView: View {
 	let canEscalateBackspace: (() -> Bool)?
 	let onTrackpadModeChanged: (Bool) -> Void
 
-	private let spacing: CGFloat = 4
+	private let spacing: CGFloat = 6
 
 	var body: some View {
 		HStack(spacing: spacing) {

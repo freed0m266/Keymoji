@@ -64,9 +64,9 @@ public struct KeyboardView: View {
 		self.onTrackpadModeEntered = onTrackpadModeEntered
 	}
 
-	private let horizontalPadding: CGFloat = 3
-	private let topPadding: CGFloat = 4
-	private let rowSpacing: CGFloat = 10
+	private let horizontalPadding: CGFloat = 6
+	private let topPadding: CGFloat = 3
+	private let rowSpacing: CGFloat = 11
 
 	private var isEmojiKeyboard: Bool {
 		layout.page == .emojis
@@ -106,7 +106,6 @@ public struct KeyboardView: View {
 		.padding(.horizontal, isEmojiKeyboard ? 0 : horizontalPadding)
 		.padding(.top, topPadding)
 		.frame(width: width, height: keyboardHeight)
-		.background(Color(.systemBackground))
 		// Fade the whole keyboard while the user is scrubbing the cursor — matches stock iOS,
 		// where the keys recede so the surface visually becomes a trackpad.
 		.opacity(isInTrackpadMode ? 0.45 : 1.0)

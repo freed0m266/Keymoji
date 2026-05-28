@@ -289,7 +289,7 @@ public enum LayoutBuilder {
 		)
 		let space = Key(
 			id: "space",
-			primary: .text("space"),
+			primary: .text(""),
 			alternates: [],
 			action: .space,
 			visualWeight: .space,

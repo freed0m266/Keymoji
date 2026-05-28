@@ -1,65 +1,69 @@
 import SwiftUI
 import KeyboardCore
 
-/// Visual style for a single key. Pure system semantic colors — the keyboard inherits
-/// the consuming app's color scheme automatically (light or dark).
+/// Visual style for a single key. Three darkness tiers mirror Apple's stock keyboard:
+/// **character** (a-z, digits, symbols) is the lightest in dark mode, **system** (shift,
+/// delete) sits in the middle, and **function** (space, return, page switches, dismiss)
+/// is the darkest — close to the keyboard surface itself.
 struct KeyStyle: Sendable {
 	let backgroundColor: Color
 	let pressedBackgroundColor: Color
 	let foregroundColor: Color
-	let font: Font
+	let font: Font?
 	let cornerRadius: CGFloat
+
+	init(
+		backgroundColor: Color = Color(uiColor: KeyboardSurfaceColors.characterBackground),
+		pressedBackgroundColor: Color = Color(uiColor: KeyboardSurfaceColors.characterPressed),
+		foregroundColor: Color = Color(.label),
+		font: Font? = nil,
+		cornerRadius: CGFloat = 8
+	) {
+		self.backgroundColor = backgroundColor
+		self.pressedBackgroundColor = pressedBackgroundColor
+		self.foregroundColor = foregroundColor
+		self.font = font
+		self.cornerRadius = cornerRadius
+	}
 }
 
 extension KeyStyle {
-
 	/// Pick a style for a given key, with shift-state awareness for the shift key itself.
+	/// Dispatch is action-driven (not role-driven) because `KeyRole` only distinguishes
+	/// two tiers — character vs. system — while the visual design needs three.
 	static func style(for key: Key, page: KeyboardPage) -> KeyStyle {
 		if case .shift = key.action, case .letters(let shift) = page {
 			switch shift {
-			case .lower:    return systemKey()
-			case .upper:    return shiftActive()
-			case .capsLock: return shiftActive()
+			case .lower:               return characterKey()
+			case .upper, .capsLock:    return shiftActive()
 			}
 		}
 
-		switch key.role {
-		case .character: return characterKey()
-		case .system:    return systemKey()
+		switch key.action {
+		case .space, .return, .switchPage:
+			return functionKey(for: key.action)
+		case .backspace, .deleteWord, .shift, .insertText, .insertRawText, .cursorOffset:
+			return characterKey()
 		}
 	}
+}
 
-	// MARK: - Variants
-
-	private static func characterKey() -> KeyStyle {
-		KeyStyle(
-			backgroundColor: Color(.systemGray4),
-			pressedBackgroundColor: Color(.systemGray3),
-			foregroundColor: Color(.label),
-			font: .system(size: 22, weight: .regular),
-			cornerRadius: 5
-		)
+private extension KeyStyle {
+	static func characterKey() -> KeyStyle {
+		KeyStyle(font: .system(size: 24, weight: .regular))
 	}
 
-	private static func systemKey() -> KeyStyle {
-		KeyStyle(
-			backgroundColor: Color(.systemGray2),
-			pressedBackgroundColor: Color(.systemGray),
-			foregroundColor: Color(.label),
-			font: .system(size: 16, weight: .semibold),
-			cornerRadius: 5
-		)
+	static func functionKey(for action: KeyAction) -> KeyStyle {
+		KeyStyle(font: .system(size: 17, weight: .semibold))
 	}
 
-	private static func shiftActive() -> KeyStyle {
+	static func shiftActive() -> KeyStyle {
 		// Inverted contrast signals active shift / caps lock. The icon (shift.fill vs capslock.fill)
 		// distinguishes the two visually.
 		KeyStyle(
 			backgroundColor: Color(.label),
 			pressedBackgroundColor: Color(.secondaryLabel),
-			foregroundColor: Color(.systemBackground),
-			font: .system(size: 16, weight: .semibold),
-			cornerRadius: 5
+			foregroundColor: Color(.systemBackground)
 		)
 	}
 }
