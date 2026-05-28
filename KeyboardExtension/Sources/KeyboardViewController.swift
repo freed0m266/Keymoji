@@ -13,6 +13,12 @@ final class KeyboardViewController: UIInputViewController {
 
 	private var state = KeyboardState()
 	private var hostingController: UIHostingController<KeyboardRoot>?
+	/// Constraint that drives the keyboard's vertical footprint. Most pages keep it at the
+	/// regular iOS keyboard height (~260 pt); `.emojiSearch` mode bumps it taller so the
+	/// search bar and horizontal results bar above the QWERTY rows aren't clipped by the
+	/// host UIInputView. iOS reads non-required height constraints on the input view as
+	/// the keyboard's desired height.
+	private var keyboardHeightConstraint: NSLayoutConstraint?
 	private lazy var proxyAdapter = TextProxyAdapter(textDocumentProxy)
 	private let store = AppGroupStore.shared
 	private let settingsNotifier = SettingsChangeNotifier.shared
@@ -37,6 +43,7 @@ final class KeyboardViewController: UIInputViewController {
 		super.viewDidLoad()
 		installHostingController()
 		installSettingsObservers()
+		installKeyboardHeightConstraint()
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -201,6 +208,45 @@ final class KeyboardViewController: UIInputViewController {
 
 	private func rebuild() {
 		hostingController?.rootView = makeRoot()
+		updateKeyboardHeightConstraint()
+	}
+
+	// MARK: - Keyboard height
+
+	/// Resting heights for the SwiftUI keyboard. Mirror `KeyboardView.keyboardHeight` so the
+	/// host UIInputView and the SwiftUI content agree on size — if the SwiftUI frame is
+	/// taller than the host, the overflow gets clipped (visible as a missing search bar at
+	/// the top of `.emojiSearch` mode, reported on real device).
+	private static let regularHeightWithNumberRow: CGFloat = 260
+	private static let regularHeightWithoutNumberRow: CGFloat = 216
+	/// Extra footprint for the search bar + horizontal results bar stacked above the QWERTY
+	/// rows in `.emojiSearch`. Matches `KeyboardView.emojiSearchChromeHeight`.
+	private static let emojiSearchChromeFootprint: CGFloat = 97
+
+	private func installKeyboardHeightConstraint() {
+		let constraint = view.heightAnchor.constraint(equalToConstant: desiredKeyboardHeight())
+		// `.required - 1`: high enough for iOS to honour as the keyboard's desired height,
+		// low enough that the system can still override during keyboard-frame animations
+		// (e.g. swipe-down dismiss) without auto-layout exceptions.
+		constraint.priority = UILayoutPriority(rawValue: UILayoutPriority.required.rawValue - 1)
+		constraint.isActive = true
+		keyboardHeightConstraint = constraint
+	}
+
+	private func updateKeyboardHeightConstraint() {
+		guard let constraint = keyboardHeightConstraint else { return }
+		let desired = desiredKeyboardHeight()
+		if constraint.constant != desired {
+			constraint.constant = desired
+			view.setNeedsLayout()
+		}
+	}
+
+	private func desiredKeyboardHeight() -> CGFloat {
+		if state.page.isEmojiSearch {
+			return Self.regularHeightWithoutNumberRow + Self.emojiSearchChromeFootprint
+		}
+		return state.showNumberRow ? Self.regularHeightWithNumberRow : Self.regularHeightWithoutNumberRow
 	}
 
 	/// Build the SwiftUI root with the current state and the live Slack typeahead suggestions.
