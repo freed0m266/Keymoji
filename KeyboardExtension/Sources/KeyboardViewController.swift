@@ -1,3 +1,4 @@
+import AVFoundation
 import UIKit
 import SwiftUI
 import KeyboCore
@@ -41,9 +42,27 @@ final class KeyboardViewController: UIInputViewController {
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
+		configureAudioSession()
 		installHostingController()
 		installSettingsObservers()
 		installKeyboardHeightConstraint()
+	}
+
+	/// Task 41 root cause (hypothesis 1): without an explicit category the extension's audio
+	/// session starts on the system default, and the first few `UIDevice.current.playInputClick()`
+	/// calls after the keyboard appears get routed through a media-level output — audibly loud,
+	/// roughly at the volume of whatever the foreground app (Spotify, YouTube, …) is playing —
+	/// before iOS settles the route down to the quiet system keyboard-click level for the rest of
+	/// the session. Pinning the session to `.ambient` here, before any click can fire, routes the
+	/// very first click through the quiet UI-sound path so we match the native keyboard from the
+	/// first keystroke. `.ambient` is correct for UI sound effects: silenced by the Ring/Silent
+	/// switch and — by category definition — non-interrupting, so it mixes with the host app's
+	/// audio without pausing or ducking it (the `.mixWithOthers` *option* is only valid with the
+	/// playback categories and would make `setCategory` throw here, so it's deliberately omitted).
+	/// A failed set is non-fatal (it only risks the original loud intro, never a crash) and the
+	/// extension has no logging destination, so we swallow it.
+	private func configureAudioSession() {
+		try? AVAudioSession.sharedInstance().setCategory(.ambient)
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
