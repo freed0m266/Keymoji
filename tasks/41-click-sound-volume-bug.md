@@ -1,6 +1,6 @@
 # 41 — Click sound: nepřiměřená hlasitost po startu klávesnice
 
-**Status:** Draft — not started
+**Status:** Done — 2026-05-29
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Medium (otravný daily-use bug, „neovládatelná" klávesnice po prvním stisku)
 
