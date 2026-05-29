@@ -58,6 +58,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 38. [38 — Onboarding feature tour: zmínit všechny zásadní funkce](38-onboarding-feature-tour.md)
 39. [39 — Emoji search v keyboardu (`.emojiSearch` mode)](39-emoji-search.md)
 41. [41 — Click sound: nepřiměřená hlasitost po startu klávesnice](41-click-sound-volume-bug.md)
+42. [42 — Kliknutí do mezery mezi klávesami nesmí propadnout](42-inter-key-gap-hit-areas.md)
 
 ## Pre-App-Store
 
