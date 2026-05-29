@@ -1,6 +1,6 @@
 # 43 — Task dashboard HTML generator
 
-**Status:** Todo
+**Status:** Done — 2026-05-29
 
 **Priorita:** Tech debt · **Úsilí:** S · **Dopad:** Medium (osobní produktivita: s 42+ tasky ztrácím přehled, co je v jakém stavu)
 
