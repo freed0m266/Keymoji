@@ -1,5 +1,7 @@
 # Roadmapa implementace
 
+> Aktuální status snapshot: [dashboard.html](dashboard.html) (regenerate s `python3 scripts/generate_dashboard.py`).
+
 Tasky pro **Keybo v1.0** — jednoduchá custom iOS klávesnice nahrazující SwiftKey pro osobní použití, s plánem na App Store release.
 
 Procházet shora dolů; pořadí respektuje dependency. Plnohodnotně funkční klávesnice je po dokončení tasku 09. Tasky 10–13 dotahují host appku a App Store readiness.

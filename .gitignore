@@ -32,6 +32,10 @@ Package.resolved
 # CocoaPods
 Pods/
 
+# Python (scripts/)
+__pycache__/
+*.pyc
+
 # Misc
 .DS_Store
 *.swp
