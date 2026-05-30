@@ -120,41 +120,60 @@ final class KeyboardViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, colorScheme: .light)
 	}
 
-	// MARK: - Slack suggestion bar
+	// MARK: - Suggestion bar (task 40)
 
-	func testSlackSuggestions_replacesNumberRow() {
+	/// Word chips coexist with the number row as a separate row above it (A2 — no mutex). The
+	/// keyboard grows by the bar footprint, so the snapshot frame is taller than the base 260.
+	private static let withBarAndNumberRowSize = CGSize(width: 393, height: 311)
+
+	func testSuggestionBar_wordChips_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
-		let suggestions: [SlackEmojiSuggester.Suggestion] = [
-			.init(shortcode: "smile", emoji: "😄"),
-			.init(shortcode: "smiley", emoji: "😃"),
-			.init(shortcode: "smirk", emoji: "😏"),
-			.init(shortcode: "smiling_imp", emoji: "😈"),
-			.init(shortcode: "smoking", emoji: "🚬")
+		let suggestions: [Suggestion] = [
+			.plainChip("hello", score: 0.9),
+			.plainChip("help", score: 0.7),
+			.plainChip("helicopter", score: 0.5)
 		]
 		let view = KeyboardView(
 			layout: layout,
 			width: Self.iPhoneWidth,
-			slackSuggestions: suggestions,
+			suggestions: suggestions,
+			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .light)
 	}
 
-	func testSlackSuggestions_withoutNumberRow_growsKeyboard() {
-		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
-		let suggestions: [SlackEmojiSuggester.Suggestion] = [
-			.init(shortcode: "fire", emoji: "🔥"),
-			.init(shortcode: "thumbsup", emoji: "👍")
+	func testSuggestionBar_slackPills_withNumberRow() {
+		// Slack regression: pills now render in the same generic bar, stacked above the number row.
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
+		let suggestions: [Suggestion] = [
+			.pillChip("smile", "😄"),
+			.pillChip("smiley", "😃"),
+			.pillChip("smirk", "😏"),
+			.pillChip("smiling_imp", "😈")
 		]
 		let view = KeyboardView(
 			layout: layout,
 			width: Self.iPhoneWidth,
-			slackSuggestions: suggestions,
+			suggestions: suggestions,
+			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		let size = CGSize(width: 393, height: 260)
-		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .dark)
+	}
+
+	func testSuggestionBar_alwaysShownWhenEmpty_withNumberRow() {
+		// C1: the bar holds its slot even with no chips (visually silent), so height stays stable.
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			suggestions: [],
+			showsSuggestionBar: true,
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .dark)
 	}
 
 	func testEmojis_withFavorites_withNumberRow() {

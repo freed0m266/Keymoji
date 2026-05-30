@@ -13,10 +13,14 @@ public struct KeyboardView: View {
 	public let recentEmojis: [String]
 	public let favoriteEmojis: [String]
 	public let searchQuery: String
-	public let slackSuggestions: [SlackEmojiSuggester.Suggestion]
+	public let suggestions: [Suggestion]
+	/// Whether the suggestion bar may occupy its row. The controller computes this from the
+	/// master toggle + field eligibility; on letter pages an enabled, allowed field shows the bar
+	/// even when `suggestions` is empty (C1 — always-on, visually silent, keeps height constant).
+	public let showsSuggestionBar: Bool
 	public let onKey: (Key) -> Void
 	public let onToggleFavoriteEmoji: (String) -> Void
-	public let onSelectSlackSuggestion: (SlackEmojiSuggester.Suggestion) -> Void
+	public let onSelectSuggestion: (Suggestion) -> Void
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: () -> Void
 	public let onPopoverEntry: () -> Void
@@ -39,10 +43,11 @@ public struct KeyboardView: View {
 		recentEmojis: [String] = [],
 		favoriteEmojis: [String] = [],
 		searchQuery: String = "",
-		slackSuggestions: [SlackEmojiSuggester.Suggestion] = [],
+		suggestions: [Suggestion] = [],
+		showsSuggestionBar: Bool = false,
 		onKey: @escaping (Key) -> Void,
 		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
-		onSelectSlackSuggestion: @escaping (SlackEmojiSuggester.Suggestion) -> Void = { _ in },
+		onSelectSuggestion: @escaping (Suggestion) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {},
 		onPopoverEntry: @escaping () -> Void = {},
@@ -55,10 +60,11 @@ public struct KeyboardView: View {
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
 		self.searchQuery = searchQuery
-		self.slackSuggestions = slackSuggestions
+		self.suggestions = suggestions
+		self.showsSuggestionBar = showsSuggestionBar
 		self.onKey = onKey
 		self.onToggleFavoriteEmoji = onToggleFavoriteEmoji
-		self.onSelectSlackSuggestion = onSelectSlackSuggestion
+		self.onSelectSuggestion = onSelectSuggestion
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
 		self.onPopoverEntry = onPopoverEntry
@@ -68,7 +74,6 @@ public struct KeyboardView: View {
 	}
 
 	private let horizontalPadding: CGFloat = 6
-	private let topPadding: CGFloat = 3
 	private let rowSpacing: CGFloat = 11
 
 	private var isEmojiKeyboard: Bool {
@@ -79,26 +84,22 @@ public struct KeyboardView: View {
 		layout.page.isEmojiSearch
 	}
 
-	/// Suggestion bar appears only on letter pages while the user is composing a shortcode.
-	/// On symbol or emoji pages the bar is suppressed (the user can't be in a shortcode-authoring
-	/// state there anyway), and the controller is expected to pass `slackSuggestions == []`.
-	private var showsSuggestionBar: Bool {
-		guard !isEmojiKeyboard, case .letters = layout.page else { return false }
-		return !slackSuggestions.isEmpty
-	}
-
-	/// When the suggestion bar is up, it *replaces* the number row to keep the keyboard height
-	/// constant. With number row off, the bar stacks on top and the keyboard grows by `barHeight`.
-	private var showsNumberRow: Bool {
-		layout.rows.contains(where: \.isNumberRow) && !showsSuggestionBar
+	/// The suggestion bar is its own row above the number row (A2 — no mutex with the number row),
+	/// shown only on letter pages. The controller gates `showsSuggestionBar` on the master toggle
+	/// and field eligibility; this is the final view-side guard that keeps it off symbol/emoji/search
+	/// pages. Independent of `suggestions.isEmpty` (C1 — always-on when enabled, so height is stable).
+	private var effectiveShowsBar: Bool {
+		guard showsSuggestionBar, !isEmojiKeyboard, !isEmojiSearchKeyboard else { return false }
+		if case .letters = layout.page { return true }
+		return false
 	}
 
 	public var body: some View {
 		VStack(spacing: rowSpacing) {
-			if showsSuggestionBar {
-				SlackSuggestionBarView(
-					suggestions: slackSuggestions,
-					onSelect: onSelectSlackSuggestion,
+			if effectiveShowsBar {
+				SuggestionBarView(
+					suggestions: suggestions,
+					onSelect: onSelectSuggestion,
 					onKeyTapHaptic: onKeyTapHaptic,
 					onKeyClick: onKeyClick
 				)
@@ -113,7 +114,6 @@ public struct KeyboardView: View {
 			}
 		}
 		.padding(.horizontal, isEmojiKeyboard ? 0 : horizontalPadding)
-		.padding(.top, topPadding)
 		.frame(width: width, height: keyboardHeight)
 		// Fade the whole keyboard while the user is scrubbing the cursor — matches stock iOS,
 		// where the keys recede so the surface visually becomes a trackpad.
@@ -240,18 +240,23 @@ public struct KeyboardView: View {
 	}
 
 	private var visibleRows: [KeyboardRow] {
-		// Drop the number row whenever the suggestion bar takes its slot.
-		showsSuggestionBar ? layout.rows.filter { !$0.isNumberRow } : layout.rows
+		// The suggestion bar is now a separate row above the number row (no mutex), so all layout
+		// rows render unconditionally.
+		layout.rows
 	}
 
+	/// Vertical footprint the suggestion bar adds when shown: the bar height plus the inter-row
+	/// gap above the keys below it. Public so `KeyboardViewController` can mirror it in the host
+	/// input view's height constraint — otherwise the SwiftUI content overflows and clips.
+	public static let suggestionBarFootprint: CGFloat = 51
+
 	/// Hardcoded heights for iPhone portrait, v1.0. Adjust after on-device testing.
-	/// When the suggestion bar replaces the number row the total height is unchanged; when it
-	/// stacks on top of a number-row-less keyboard, height grows by the bar (~44 pt incl. spacing).
+	/// The suggestion bar (when shown) adds `suggestionBarFootprint` on top of the base height,
+	/// stacking above the number row rather than replacing it (A2).
 	private var keyboardHeight: CGFloat {
 		let base: CGFloat = layout.showsNumberRow ? 260 : 216
-		let barFootprint: CGFloat = 44
-		if showsSuggestionBar && !layout.showsNumberRow {
-			return base + barFootprint
+		if effectiveShowsBar {
+			return base + Self.suggestionBarFootprint
 		}
 		if isEmojiSearchKeyboard {
 			// Emoji search stacks the search bar (~36 pt) + horizontal results bar (~44 pt) + a

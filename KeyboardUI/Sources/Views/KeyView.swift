@@ -185,7 +185,7 @@ struct KeyView: View {
 	private var firesKeyTapFeedback: Bool {
 		switch key.action {
 		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return,
-		     .shift, .switchPage, .dismissKeyboard:
+		     .shift, .switchPage, .dismissKeyboard, .suggestionAccept:
 			return true
 		case .cursorOffset:
 			return false
@@ -496,6 +496,7 @@ struct KeyView: View {
 		case .dismissKeyboard:        return "Dismiss keyboard"
 		case .switchPage:             return "Switch keyboard layout"
 		case .cursorOffset:           return "Move cursor"
+		case .suggestionAccept(let displayText, _): return displayText
 		}
 	}
 

@@ -42,7 +42,9 @@ extension KeyStyle {
 		switch key.action {
 		case .space, .return, .switchPage, .dismissKeyboard:
 			return functionKey(for: key.action)
-		case .backspace, .deleteWord, .shift, .insertText, .insertRawText, .cursorOffset:
+		case .backspace, .deleteWord, .shift, .insertText, .insertRawText, .cursorOffset, .suggestionAccept:
+			// `.suggestionAccept` is synthesized for the suggestion bar and never rendered as a
+			// physical key, but the switch must stay exhaustive.
 			return characterKey()
 		}
 	}

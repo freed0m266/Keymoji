@@ -1,0 +1,167 @@
+import SwiftUI
+import KeyboardCore
+
+/// The suggestion bar that sits above the keyboard. Renders an arbitrary `[Suggestion]`, drawing
+/// each chip per its `renderStyle`:
+///
+/// - `.plain` (word completion): up to three evenly-spaced text chips with vertical dividers,
+///   matching the stock predictive bar.
+/// - `.pill` (Slack shortcode typeahead): emoji glyph + `:shortcode:` label in a rounded chip,
+///   horizontally scrollable — preserves the pre-refactor Slack bar look.
+///
+/// The coordinator returns a homogeneous list (Slack wins wholesale or word completions only), so
+/// the bar picks one layout based on the first chip. When `suggestions` is empty the bar still
+/// occupies its slot but draws nothing (C1 — always-shown when enabled, visually silent when there's
+/// nothing to suggest, so the keyboard never changes height as chips come and go).
+public struct SuggestionBarView: View {
+	public let suggestions: [Suggestion]
+	public let onSelect: (Suggestion) -> Void
+	public let onKeyTapHaptic: () -> Void
+	public let onKeyClick: () -> Void
+
+	public init(
+		suggestions: [Suggestion],
+		onSelect: @escaping (Suggestion) -> Void,
+		onKeyTapHaptic: @escaping () -> Void = {},
+		onKeyClick: @escaping () -> Void = {}
+	) {
+		self.suggestions = suggestions
+		self.onSelect = onSelect
+		self.onKeyTapHaptic = onKeyTapHaptic
+		self.onKeyClick = onKeyClick
+	}
+
+	private let barHeight: CGFloat = 40
+
+	public var body: some View {
+		Group {
+			if suggestions.first?.renderStyle == .pill {
+				pillBar
+			} else {
+				plainBar
+			}
+		}
+		.frame(height: barHeight)
+		.frame(maxWidth: .infinity)
+	}
+
+	// MARK: - Plain (word completion)
+
+	private var plainBar: some View {
+		HStack(spacing: 0) {
+			ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
+				Button {
+					select(suggestion)
+				} label: {
+					Text(suggestion.displayText)
+						.font(.system(size: 17))
+						.lineLimit(1)
+						.truncationMode(.tail)
+						.foregroundStyle(Color(.label))
+						.padding(.horizontal, 6)
+						.frame(maxWidth: .infinity)
+				}
+				.buttonStyle(.plain)
+
+				if index < suggestions.count - 1 {
+					Divider().frame(height: 20)
+				}
+			}
+		}
+	}
+
+	// MARK: - Pill (Slack shortcodes)
+
+	private let chipSpacing: CGFloat = 6
+	private let horizontalPadding: CGFloat = 6
+
+	private var pillBar: some View {
+		ScrollView(.horizontal, showsIndicators: false) {
+			HStack(spacing: chipSpacing) {
+				ForEach(suggestions) { suggestion in
+					pillChip(for: suggestion)
+				}
+			}
+			.padding(.horizontal, horizontalPadding)
+		}
+	}
+
+	private func pillChip(for suggestion: Suggestion) -> some View {
+		Button {
+			select(suggestion)
+		} label: {
+			HStack(spacing: 4) {
+				Text(suggestion.replacementText)
+					.font(.system(size: 20))
+				Text(":\(suggestion.displayText):")
+					.font(.system(size: 12, weight: .medium))
+					.foregroundStyle(Color(.secondaryLabel))
+					.lineLimit(1)
+					.truncationMode(.tail)
+			}
+			.padding(.horizontal, 8)
+			.background(
+				RoundedRectangle(cornerRadius: 6)
+					.fill(Color(.systemGray5))
+			)
+		}
+		.buttonStyle(.plain)
+		.frame(maxWidth: 140)
+	}
+
+	private func select(_ suggestion: Suggestion) {
+		onKeyTapHaptic()
+		onKeyClick()
+		onSelect(suggestion)
+	}
+}
+
+#if DEBUG
+private func wordSuggestion(_ text: String, score: Double) -> Suggestion {
+	Suggestion(
+		id: "word:\(text)",
+		displayText: text,
+		replacementText: text,
+		renderStyle: .plain,
+		score: score,
+		source: .wordCompletion
+	)
+}
+
+private func pillSuggestion(_ shortcode: String, _ emoji: String) -> Suggestion {
+	Suggestion(
+		id: "slack:\(shortcode)",
+		displayText: shortcode,
+		replacementText: emoji,
+		renderStyle: .pill,
+		score: 1.0,
+		source: .slack
+	)
+}
+
+#Preview("Word chips / dark") {
+	SuggestionBarView(
+		suggestions: [
+			wordSuggestion("hello", score: 0.9),
+			wordSuggestion("help", score: 0.7),
+			wordSuggestion("helicopter", score: 0.5)
+		],
+		onSelect: { _ in }
+	)
+	.frame(width: 393, height: 40)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Pill chips / light") {
+	SuggestionBarView(
+		suggestions: [
+			pillSuggestion("smile", "😄"),
+			pillSuggestion("smiley", "😃"),
+			pillSuggestion("smirk", "😏")
+		],
+		onSelect: { _ in }
+	)
+	.frame(width: 393, height: 40)
+	.preferredColorScheme(.light)
+}
+#endif
