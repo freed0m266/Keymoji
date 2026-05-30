@@ -54,12 +54,7 @@ let project = Project(
 				targets: ["Keybo", "KeyboardExtension"]
 			),
 			runAction: .runAction(
-				executable: .executable("Keybo"),
-				arguments: .arguments(
-					environmentVariables: [
-						"OS_ACTIVITY_MODE": "disable",
-					]
-				)
+				executable: .executable("Keybo")
 			),
 			archiveAction: .archiveAction(
 				configuration: "Release"
