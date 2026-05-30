@@ -15,7 +15,7 @@
 
 "onboarding.step2.title" = "Enable Full Access";
 "onboarding.step2.description" = "In Settings → General → Keyboard → Keyboards → Keybo, turn on Allow Full Access.";
-"onboarding.step2.privacy" = "Required by iOS for haptic feedback. Keybo does not access the internet, doesn't sync, and doesn't collect typing data.";
+"onboarding.step2.privacy" = "Required by iOS for haptic feedback. Keybo does not access the internet and doesn't sync — nothing you type ever leaves your iPhone.";
 "onboarding.step2.cta" = "Open Settings";
 "onboarding.step2.confirm" = "I've done this";
 
@@ -50,6 +50,9 @@
 "onboarding.tour.customize.title" = "Tune it to your taste";
 "onboarding.tour.customize.description" = "Sound, haptics, light/dark, and the double-tap-space action are all toggles in Settings.";
 
+"onboarding.tour.suggestions.title" = "Private word suggestions";
+"onboarding.tour.suggestions.description" = "Keybo suggests words as you type and learns from your typing — all on this iPhone. Nothing is sent online, not even to Apple. You can clear what Keybo has learned anytime in Settings.";
+
 "settings.featureTour" = "What Keybo can do";
 
 "settings.title" = "Keybo";
@@ -83,6 +86,16 @@
 "settings.emojiCodes.row" = "Emoji codes reference";
 "settings.emojiCodes.footer" = "Browse all Slack-style shortcodes the keyboard recognises.";
 
+"settings.suggestions.sectionHeader" = "Suggestions";
+"settings.suggestions.toggleTitle" = "Word suggestions";
+"settings.suggestions.toggleFooter" = "Suggests words as you type. Keybo learns from your typing to improve suggestions — all learning stays on this iPhone.";
+"settings.suggestions.learnedWordsLabel" = "Learned words";
+"settings.suggestions.clearButton" = "Clear learned words";
+"settings.suggestions.clearFooter" = "Removes all learned words. Apple's built-in suggestions are not affected.";
+"settings.suggestions.clearAlertTitle" = "Clear learned words?";
+"settings.suggestions.clearAlertMessage" = "This permanently removes all words Keybo has learned from your typing. This cannot be undone.";
+"settings.suggestions.clearAlertConfirm" = "Clear";
+
 "emojiCodes.title" = "Emoji codes";
 "emojiCodes.searchPrompt" = "Search shortcodes";
 "emojiCodes.emptyTitle" = "No matches";
@@ -93,7 +106,7 @@
 "about.title" = "About Keybo";
 "about.versionLabel" = "Version %@";
 "about.privacy.header" = "Privacy";
-"about.privacy.statement" = "Keybo does not collect, transmit, or store any of your typing data. The keyboard runs entirely on-device with no network access, no analytics, and no third-party SDKs. Allow Full Access is required only for haptic feedback.";
+"about.privacy.statement" = "Keybo runs entirely on-device with no network access, no analytics, and no third-party SDKs — nothing you type is ever sent off your iPhone. To improve word suggestions, Keybo remembers words you frequently type, stored only on this device; clear them anytime in Settings → Suggestions. Allow Full Access is required only for haptic feedback.";
 "about.legal.header" = "Legal";
 "about.legal.privacyPolicyLink" = "Full privacy policy";
 "about.legal.sourceCodeLink" = "Source code on GitHub";
