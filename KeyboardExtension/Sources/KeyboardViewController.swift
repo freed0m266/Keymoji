@@ -24,6 +24,24 @@ final class KeyboardViewController: UIInputViewController {
 	private let store = AppGroupStore.shared
 	private let settingsNotifier = SettingsChangeNotifier.shared
 	private var settingsObservers: [SettingsObservationToken] = []
+
+	/// Eagerly created in `viewDidLoad` (LX2) so the first `.completions(...)` call doesn't pay the
+	/// lazy-init hitch on the user's first keystroke.
+	private lazy var textChecker = UITextChecker()
+	/// Snapshot of Apple's supplementary lexicon (text-replacement shortcuts, contact names) as
+	/// Sendable string pairs. Empty until `requestSupplementaryLexicon` delivers — the word
+	/// completion provider degrades gracefully (just skips that source).
+	private var lexiconEntries: [(trigger: String, expansion: String)] = []
+	/// Personal word-completion recents pool, backed by the same App Group store as everything else.
+	private lazy var recentsStore = PersonalRecentsStore(store: store)
+	/// Hook the dispatcher calls to learn a word at each word boundary (prose fields only).
+	private lazy var learningHook = LearningHook { [weak self] word, context in
+		self?.recentsStore.learn(word, fromContextType: context)
+	}
+	/// Latest complete-looking email staged from the focused email field, learned only when the
+	/// field is done (focus moves away, or the keyboard disappears). Staging a single value rather
+	/// than learning on every edit means we never persist progressive partials ("foo@x.c", …).
+	private var pendingEmail: String?
 	private lazy var haptics: any HapticFeedbackProviding = UIKitHaptics(isEnabled: { [weak self] in
 		self?.store.hapticFeedbackEnabled ?? true
 	})
@@ -46,6 +64,24 @@ final class KeyboardViewController: UIInputViewController {
 		installHostingController()
 		installSettingsObservers()
 		installKeyboardHeightConstraint()
+		// Eager-touch the text checker so its first real query (the user's first keystroke) doesn't
+		// pay the init hitch (LX2), and pull in Apple's supplementary lexicon when it's ready.
+		_ = textChecker
+		// iOS invokes this completion on a background queue (`com.apple.TextInput.lexicon-request`),
+		// NOT the main actor. `requestSupplementaryLexicon` is imported with a non-`@Sendable`
+		// `(UILexicon) -> Void` completion, and `UIInputViewController` is `@MainActor`, so a normal
+		// closure formed here is *inferred* `@MainActor` (closure isolation inheritance). When UIKit
+		// then calls it off-main, the Swift-6 executor check traps (EXC_BREAKPOINT), silently killing
+		// the extension. `@Sendable` forbids that inheritance, making the closure nonisolated so no
+		// check is inserted. We then hop onto the main actor before touching anything — including
+		// reading `UILexicon`, which is itself `@MainActor`. (Do NOT use `MainActor.assumeIsolated`
+		// here: we are genuinely off-main, so it would just trap again.)
+		requestSupplementaryLexicon { @Sendable [weak self] lexicon in
+			Task { @MainActor in
+				self?.lexiconEntries = lexicon.entries.map { (trigger: $0.userInput, expansion: $0.documentText) }
+				self?.rebuild()
+			}
+		}
 	}
 
 	/// Task 41 root cause (hypothesis 1): without an explicit category the extension's audio
@@ -70,6 +106,14 @@ final class KeyboardViewController: UIInputViewController {
 		refreshFromStore()
 		refreshAppearance()
 		refreshReturnKeyType()
+		refreshEligibility()
+		refreshLanguage()
+	}
+
+	override func viewWillDisappear(_ animated: Bool) {
+		super.viewWillDisappear(animated)
+		// Last chance to learn a freshly-typed email before the field goes away.
+		commitPendingEmail()
 	}
 
 	override func viewDidLayoutSubviews() {
@@ -99,6 +143,9 @@ final class KeyboardViewController: UIInputViewController {
 			},
 			settingsNotifier.addObserver(for: .appearance) { [weak self] in
 				self?.refreshAppearance()
+			},
+			settingsNotifier.addObserver(for: .suggestionsEnabled) { [weak self] in
+				self?.refreshFromStore()
 			}
 		]
 	}
@@ -128,6 +175,13 @@ final class KeyboardViewController: UIInputViewController {
 			state.favoriteEmojis = storedFavorites
 			changed = true
 		}
+		let suggestionsOn = store.suggestionsEnabled
+		if state.suggestionsEnabled != suggestionsOn {
+			state.suggestionsEnabled = suggestionsOn
+			// Turning suggestions off drops any staged email so it's never learned later.
+			if !suggestionsOn { pendingEmail = nil }
+			changed = true
+		}
 		if changed { rebuild() }
 	}
 
@@ -153,6 +207,68 @@ final class KeyboardViewController: UIInputViewController {
 	override func textDidChange(_ textInput: UITextInput?) {
 		refreshReturnKeyType()
 		refreshAutoCapitalization()
+		refreshEligibility()
+		refreshLanguage()
+		updatePendingEmailIfNeeded()
+	}
+
+	// MARK: - Suggestion eligibility & language
+
+	/// Re-evaluates whether the focused field may show the bar / be learned from. Drives the bar's
+	/// visibility (via `showsSuggestionBar`) and the dispatcher's learning context.
+	private func refreshEligibility() {
+		let eligibility = SuggestionEligibility.evaluate(
+			isSecureTextEntry: textDocumentProxy.isSecureTextEntry == true,
+			keyboardType: SuggestionFieldTraitsMapping.keyboardKind(textDocumentProxy.keyboardType ?? .default),
+			textContentType: SuggestionFieldTraitsMapping.contentKind(textDocumentProxy.textContentType)
+		)
+		if state.currentEligibility != eligibility {
+			// Focus is leaving the previous field — learn any whole email staged from it before
+			// the staged value is overwritten by (or reset for) the new field.
+			commitPendingEmail()
+			state.currentEligibility = eligibility
+			rebuild()
+		}
+	}
+
+	/// Tracks the focused field's primary language so `UITextChecker` queries the right dictionary.
+	private func refreshLanguage() {
+		let language = textInputMode?.primaryLanguage
+		if state.currentLanguage != language {
+			state.currentLanguage = language
+			rebuild()
+		}
+	}
+
+	/// Whole-field email learning (§3/§7d). In an email field, stage the latest complete-looking
+	/// address (`@` + a dotted domain, within the sanity cap) on each edit — but don't learn yet.
+	/// Overwriting a single pending value means we keep only the *finished* address, never the
+	/// progressive partials the user typed on the way ("foo@x.c", "foo@x.co", …).
+	private func updatePendingEmailIfNeeded() {
+		guard state.suggestionsEnabled, state.currentEligibility.learningContext == .emailAddress else { return }
+		let before = textDocumentProxy.documentContextBeforeInput ?? ""
+		let after = textDocumentProxy.documentContextAfterInput ?? ""
+		let content = (before + after).trimmingCharacters(in: .whitespacesAndNewlines)
+		// Stage only a *currently* valid whole address. Clearing the stage otherwise means we never
+		// commit an address the user has since deleted or broken (e.g. backspaced past the domain).
+		pendingEmail = isLearnableEmail(content) ? content : nil
+	}
+
+	/// A complete-looking, in-bounds email worth learning: contains `@` with a dotted domain after it.
+	private func isLearnableEmail(_ content: String) -> Bool {
+		guard !content.isEmpty, content.count <= PersonalRecentsStore.maxEmailLength else { return false }
+		guard let atIndex = content.firstIndex(of: "@") else { return false }
+		return content[content.index(after: atIndex)...].contains(".")
+	}
+
+	/// Learn the staged whole-field email, if any, when the field is done — focus moving to another
+	/// field (detected in `refreshEligibility`) or the keyboard disappearing. Cleared (not learned)
+	/// when suggestions are disabled.
+	private func commitPendingEmail() {
+		guard let email = pendingEmail else { return }
+		pendingEmail = nil
+		guard state.suggestionsEnabled else { return }
+		recentsStore.learn(email, fromContextType: .emailAddress)
 	}
 
 	// MARK: - Hosting
@@ -265,21 +381,27 @@ final class KeyboardViewController: UIInputViewController {
 		if state.page.isEmojiSearch {
 			return Self.regularHeightWithoutNumberRow + Self.emojiSearchChromeFootprint
 		}
-		return state.showNumberRow ? Self.regularHeightWithNumberRow : Self.regularHeightWithoutNumberRow
+		let base = state.showNumberRow ? Self.regularHeightWithNumberRow : Self.regularHeightWithoutNumberRow
+		// The suggestion bar is a separate row (A2); the host input view must grow to fit it or it
+		// clips. Mirrors `KeyboardView.keyboardHeight`. `showsSuggestionBar` is false off letter
+		// pages, so symbol/emoji pages keep the base height.
+		return base + (showsSuggestionBar ? KeyboardView.suggestionBarFootprint : 0)
 	}
 
-	/// Build the SwiftUI root with the current state and the live Slack typeahead suggestions.
-	/// Suggestions are derived from `documentContextBeforeInput` here (not stored in `KeyboardState`)
-	/// so the view always reflects what the proxy sees right now — including transient cases where
-	/// the dispatcher and the proxy disagree by a frame.
+	/// Build the SwiftUI root with the current state and the live suggestion list. Suggestions are
+	/// derived from `documentContextBeforeInput` here (not stored in `KeyboardState`) so the view
+	/// always reflects what the proxy sees right now — including transient cases where the
+	/// dispatcher and the proxy disagree by a frame.
 	private func makeRoot() -> KeyboardRoot {
-		let suggestions = currentSlackSuggestions()
+		let showsBar = showsSuggestionBar
+		let suggestions = showsBar ? currentSuggestions() : []
 		return KeyboardRoot(
 			state: state,
-			slackSuggestions: suggestions,
+			suggestions: suggestions,
+			showsSuggestionBar: showsBar,
 			dispatch: { [weak self] key in self?.handle(key) },
 			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
-			selectSlackSuggestion: { [weak self] suggestion in self?.selectSlackSuggestion(suggestion) },
+			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onKeyClick: { [weak self] in self?.clickSound.play() },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
@@ -294,17 +416,61 @@ final class KeyboardViewController: UIInputViewController {
 		)
 	}
 
-	/// Compute Slack-style shortcode suggestions from the current document context.
-	/// Only fires on letter pages — the bar is suppressed on symbol/emoji pages since the user
-	/// can't reasonably be authoring a shortcode there.
-	private func currentSlackSuggestions() -> [SlackEmojiSuggester.Suggestion] {
-		guard case .letters = state.page else { return [] }
-		return SlackEmojiSuggester.suggestions(forContext: textDocumentProxy.documentContextBeforeInput)
+	/// Whether the suggestion bar may occupy its row right now: master toggle on, the field allows
+	/// display, and we're on a letter page (the bar is suppressed on symbol/emoji/search pages).
+	private var showsSuggestionBar: Bool {
+		guard state.suggestionsEnabled, state.currentEligibility.allowDisplay else { return false }
+		if case .letters = state.page { return true }
+		return false
 	}
 
-	/// User tapped a suggestion chip. Delete the in-progress `:prefix` from the document,
-	/// insert the emoji, mirror the same recents/shift handling as the closing-colon path.
-	private func selectSlackSuggestion(_ suggestion: SlackEmojiSuggester.Suggestion) {
+	/// Run the coordinator over the current document context. Slack shortcodes win wholesale when
+	/// present (pill chips); otherwise word completions are merged from recents + `UITextChecker` +
+	/// `UILexicon`. Providers are cheap value types, rebuilt per call so they always see fresh state.
+	private func currentSuggestions() -> [Suggestion] {
+		let context = SuggestionContext(
+			documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
+			documentContextAfterInput: textDocumentProxy.documentContextAfterInput,
+			page: state.page,
+			primaryLanguage: state.currentLanguage,
+			eligibility: state.currentEligibility
+		)
+		let coordinator = SuggestionCoordinator(providers: [
+			SlackSuggestionProvider(),
+			WordCompletionProvider(
+				textChecker: UITextCheckerAdapter(textChecker),
+				systemLexicon: UILexiconAdapter(entries: lexiconEntries),
+				recents: recentsStore
+			)
+		])
+		return coordinator.suggestions(for: context)
+	}
+
+	/// User tapped a chip. Slack pills run the emoji-substitution path; word chips route through
+	/// the dispatcher's `.suggestionAccept` (delete prefix → insert + space) like any other key.
+	private func selectSuggestion(_ suggestion: Suggestion) {
+		switch suggestion.source {
+		case .slack:
+			applySlackSuggestion(emoji: suggestion.replacementText)
+		case .wordCompletion:
+			let key = Key(
+				id: "suggestion.\(suggestion.id)",
+				primary: .text(suggestion.displayText),
+				alternates: [],
+				action: .suggestionAccept(
+					displayText: suggestion.displayText,
+					replacementText: suggestion.replacementText
+				),
+				visualWeight: .standard,
+				role: .system
+			)
+			handle(key)
+		}
+	}
+
+	/// Delete the in-progress `:prefix` from the document, insert the emoji, and mirror the same
+	/// recents/shift handling as the closing-colon substitution path.
+	private func applySlackSuggestion(emoji: String) {
 		guard let context = textDocumentProxy.documentContextBeforeInput else { return }
 		guard let prefix = SlackEmojiSuggester.activeShortcodePrefix(
 			in: context,
@@ -316,13 +482,13 @@ final class KeyboardViewController: UIInputViewController {
 		for _ in 0..<charsToDelete {
 			textDocumentProxy.deleteBackward()
 		}
-		textDocumentProxy.insertText(suggestion.emoji)
+		textDocumentProxy.insertText(emoji)
 
 		// Mirror dispatcher behavior: bump emoji to head of recents (deduped, capped), persist,
 		// and downshift caps lock so the next character isn't accidentally uppercased.
 		var updatedRecents = state.recentEmojis
-		updatedRecents.removeAll { $0 == suggestion.emoji }
-		updatedRecents.insert(suggestion.emoji, at: 0)
+		updatedRecents.removeAll { $0 == emoji }
+		updatedRecents.insert(emoji, at: 0)
 		if updatedRecents.count > KeyboardState.recentEmojisCapacity {
 			updatedRecents = Array(updatedRecents.prefix(KeyboardState.recentEmojisCapacity))
 		}
@@ -342,11 +508,14 @@ final class KeyboardViewController: UIInputViewController {
 		// is concerned with state + text proxy only.
 		let pageBefore = state.page
 		let recentsBefore = state.recentEmojis
+		// Disabling word suggestions stops learning too (not just the bar) — the Settings footer and
+		// privacy policy both promise the opt-out halts on-device learning.
 		InputDispatcher.dispatch(
 			key: key,
 			state: &state,
 			proxy: proxyAdapter,
-			controller: self
+			controller: self,
+			learning: state.suggestionsEnabled ? learningHook : nil
 		)
 		recordRecentEmojiIfNeeded(key: key)
 		// The dispatcher updates `state.recentEmojis` directly when a Slack-style shortcode
