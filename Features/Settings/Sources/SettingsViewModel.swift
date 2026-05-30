@@ -8,6 +8,7 @@
 
 import Foundation
 import KeyboCore
+import KeyboardCore
 
 @MainActor
 public protocol SettingsViewModeling: Observable, AnyObject {
@@ -16,7 +17,16 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var keyClickSoundEnabled: Bool { get set }
 	var appearance: AppearancePreference { get set }
 	var spaceDoubleTapAction: SpaceDoubleTapAction { get set }
+	var suggestionsEnabled: Bool { get set }
+	/// Number of words Keybo has learned for completion. Read-only; refresh on view appear.
+	var learnedWordCount: Int { get }
 	var versionString: String { get }
+
+	/// Recompute `learnedWordCount` from the store (the keyboard mutates it out-of-process).
+	func refreshLearnedWordCount()
+	/// Wipe the personal recents pool and reset the counter. The keyboard reads recents live, so
+	/// the change takes effect on its next keystroke without an explicit cross-process ping.
+	func clearLearnedWords()
 }
 
 @MainActor
@@ -62,8 +72,18 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		}
 	}
 
+	var suggestionsEnabled: Bool {
+		didSet {
+			store.suggestionsEnabled = suggestionsEnabled
+			notifier.post(.suggestionsEnabled)
+		}
+	}
+
+	private(set) var learnedWordCount: Int = 0
+
 	private let store: AppGroupStore
 	private let notifier: SettingsChangeNotifier
+	private let recentsStore: PersonalRecentsStore
 
 	// MARK: - Init
 
@@ -73,11 +93,25 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 	) {
 		self.store = store
 		self.notifier = notifier
+		self.recentsStore = PersonalRecentsStore(store: store)
 		self.showNumberRow = store.showNumberRow
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
 		self.keyClickSoundEnabled = store.keyClickSoundEnabled
 		self.appearance = store.appearance
 		self.spaceDoubleTapAction = store.spaceDoubleTapAction
+		self.suggestionsEnabled = store.suggestionsEnabled
 		super.init()
+		self.learnedWordCount = recentsStore.count
+	}
+
+	// MARK: - Learned words
+
+	func refreshLearnedWordCount() {
+		learnedWordCount = recentsStore.count
+	}
+
+	func clearLearnedWords() {
+		recentsStore.clear()
+		learnedWordCount = 0
 	}
 }

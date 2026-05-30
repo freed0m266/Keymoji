@@ -17,6 +17,7 @@ import Onboarding
 public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	@Bindable private var viewModel: ViewModel
 	@State private var sheet: SheetKind?
+	@State private var showClearLearnedWordsAlert = false
 
 	typealias Texts = L10n.Settings
 
@@ -28,10 +29,20 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		NavigationStack {
 			Form {
 				keyboardSection
+				suggestionsSection
 				favoritesSection
 				emojiCodesSection
 				supportSection
 				aboutSection
+			}
+			.onAppear { viewModel.refreshLearnedWordCount() }
+			.alert(Texts.Suggestions.clearAlertTitle, isPresented: $showClearLearnedWordsAlert) {
+				Button(Texts.Suggestions.clearAlertConfirm, role: .destructive) {
+					viewModel.clearLearnedWords()
+				}
+				Button(L10n.General.cancel, role: .cancel) {}
+			} message: {
+				Text(Texts.Suggestions.clearAlertMessage)
 			}
 			.navigationTitle(Texts.title)
 			.sheet(item: $sheet) { kind in
@@ -86,6 +97,35 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			.pickerStyle(.menu)
 		} footer: {
 			Text(Texts.Keyboard.spaceDoubleTapFooter)
+		}
+	}
+
+	@ViewBuilder
+	private var suggestionsSection: some View {
+		Section {
+			Toggle(Texts.Suggestions.toggleTitle, isOn: $viewModel.suggestionsEnabled)
+		} header: {
+			Text(Texts.Suggestions.sectionHeader)
+		} footer: {
+			Text(Texts.Suggestions.toggleFooter)
+		}
+
+		if viewModel.suggestionsEnabled {
+			Section {
+				HStack {
+					Text(Texts.Suggestions.learnedWordsLabel)
+					Spacer()
+					Text("\(viewModel.learnedWordCount)")
+						.foregroundStyle(.secondary)
+				}
+				Button(role: .destructive) {
+					showClearLearnedWordsAlert = true
+				} label: {
+					Text(Texts.Suggestions.clearButton)
+				}
+			} footer: {
+				Text(Texts.Suggestions.clearFooter)
+			}
 		}
 	}
 
