@@ -93,12 +93,14 @@ public struct SuggestionBarView: View {
 			HStack(spacing: 4) {
 				Text(suggestion.replacementText)
 					.font(.system(size: 20))
+
 				Text(":\(suggestion.displayText):")
 					.font(.system(size: 12, weight: .medium))
 					.foregroundStyle(Color(.secondaryLabel))
 					.lineLimit(1)
 					.truncationMode(.tail)
 			}
+			.padding(.vertical, 4)
 			.padding(.horizontal, 8)
 			.background(
 				RoundedRectangle(cornerRadius: 6)
