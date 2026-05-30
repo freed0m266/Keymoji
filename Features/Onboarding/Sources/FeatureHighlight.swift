@@ -36,6 +36,13 @@ public extension FeatureHighlight {
 			title: Texts.Diacritics.title,
 			description: Texts.Diacritics.description
 		),
+		// Placed second so the privacy angle ("learns on this iPhone") is visible early (task 40).
+		FeatureHighlight(
+			id: "suggestions",
+			symbol: "text.cursor",
+			title: Texts.Suggestions.title,
+			description: Texts.Suggestions.description
+		),
 		FeatureHighlight(
 			id: "slack",
 			symbol: "face.smiling",
@@ -65,12 +72,10 @@ public extension FeatureHighlight {
 			symbol: "delete.left",
 			title: Texts.DeleteWord.title,
 			description: Texts.DeleteWord.description
-		),
-		FeatureHighlight(
-			id: "customize",
-			symbol: "slider.horizontal.3",
-			title: Texts.Customize.title,
-			description: Texts.Customize.description
 		)
+		// `customize` was dropped to keep the tour at 7 items (task 38 cap) when `suggestions` was
+		// added (task 40). It was the most self-discoverable entry — Settings toggles, unlike the
+		// other tour items, are easy to stumble on — so it was the least valuable in a tour of
+		// non-obvious features. Its `Onboarding.Tour.Customize.*` strings are left in place.
 	]
 }
