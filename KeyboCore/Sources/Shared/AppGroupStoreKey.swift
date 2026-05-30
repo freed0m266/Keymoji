@@ -11,4 +11,9 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case spaceDoubleTapAction
 	case recentEmojis
 	case favoriteEmojis
+	case suggestionsEnabled
+	/// JSON `{ "word": count }` of the personal word-completion recents pool.
+	case wordCompletionRecents
+	/// JSON `{ "word": unixTimestamp }` mirroring `wordCompletionRecents`, used for LRU eviction.
+	case wordCompletionRecentsLastUsed
 }

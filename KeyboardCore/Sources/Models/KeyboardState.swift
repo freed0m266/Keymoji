@@ -51,6 +51,18 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `AppGroupStore`, so the query never survives an extension restart.
 	public var searchQuery: String
 
+	/// Master toggle for the word-suggestion bar. Runtime mirror of `AppGroupStore.suggestionsEnabled`,
+	/// refreshed on `viewWillAppear` and on the `.suggestionsEnabled` Darwin notification.
+	public var suggestionsEnabled: Bool
+
+	/// Eligibility of the focused field — whether the bar may show and how (if at all) typing
+	/// feeds the personal recents pool. Re-evaluated by `KeyboardViewController.textDidChange`.
+	public var currentEligibility: SuggestionEligibility
+
+	/// Primary language of the focused field (`UITextInputMode.primaryLanguage`, e.g. "en-US"), or
+	/// nil when unavailable. Passed to `UITextChecker`; providers fall back to "en".
+	public var currentLanguage: String?
+
 	public init(
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
@@ -63,7 +75,10 @@ public struct KeyboardState: Sendable, Equatable {
 		keyboardWidth: CGFloat = 0,
 		recentEmojis: [String] = [],
 		favoriteEmojis: [String] = [],
-		searchQuery: String = ""
+		searchQuery: String = "",
+		suggestionsEnabled: Bool = true,
+		currentEligibility: SuggestionEligibility = .denied,
+		currentLanguage: String? = nil
 	) {
 		self.page = page
 		self.returnKeyType = returnKeyType
@@ -77,5 +92,8 @@ public struct KeyboardState: Sendable, Equatable {
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
 		self.searchQuery = searchQuery
+		self.suggestionsEnabled = suggestionsEnabled
+		self.currentEligibility = currentEligibility
+		self.currentLanguage = currentLanguage
 	}
 }

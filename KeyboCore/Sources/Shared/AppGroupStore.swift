@@ -129,4 +129,25 @@ public extension AppGroupStore {
 		get { stringArray(forKey: .favoriteEmojis) }
 		set { setStringArray(newValue, forKey: .favoriteEmojis) }
 	}
+
+	/// Master toggle for the word-suggestion bar. Defaults to `true` (DEF-ON) — word completion is
+	/// the headline feature; users who don't want it turn it off in Settings → Suggestions.
+	var suggestionsEnabled: Bool {
+		get { bool(forKey: .suggestionsEnabled, default: true) }
+		set { setBool(newValue, forKey: .suggestionsEnabled) }
+	}
+
+	/// JSON `{ "word": count }` of the personal word-completion recents pool. Read/decoded on
+	/// demand and re-encoded per learned word by `PersonalRecentsStore`.
+	var wordCompletionRecentsJSON: String? {
+		get { string(forKey: .wordCompletionRecents) }
+		set { setString(newValue, forKey: .wordCompletionRecents) }
+	}
+
+	/// JSON `{ "word": unixTimestamp }` mirroring `wordCompletionRecentsJSON`. Lets LRU eviction
+	/// break ties on least-recently-used so a stale-but-frequent word doesn't evict a fresh one.
+	var wordCompletionRecentsLastUsedJSON: String? {
+		get { string(forKey: .wordCompletionRecentsLastUsed) }
+		set { setString(newValue, forKey: .wordCompletionRecentsLastUsed) }
+	}
 }

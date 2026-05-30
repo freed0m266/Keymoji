@@ -19,6 +19,7 @@ public enum InputDispatcher {
 		state: inout KeyboardState,
 		proxy: any TextDocumentProxying,
 		controller: any KeyboardControlling,
+		learning: LearningHook? = nil,
 		now: () -> Date = Date.init
 	) {
 		// Emoji search has its own input pipeline: characters/space/backspace mutate the
@@ -37,6 +38,7 @@ public enum InputDispatcher {
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: shifted, state: &state)
 			applySlackEmojiSubstitutionIfNeeded(justInserted: shifted, state: &state, proxy: proxy)
+			learnIfWordBoundary(insertedText: shifted, state: state, proxy: proxy, learning: learning)
 
 		case .insertRawText(let text):
 			// Long-press alternates ship already-cased text; skip shift apply.
@@ -44,6 +46,7 @@ public enum InputDispatcher {
 			ShiftStateMachine.apply(.characterInserted, to: &state)
 			updateSpaceTracking(insertedText: text, state: &state)
 			applySlackEmojiSubstitutionIfNeeded(justInserted: text, state: &state, proxy: proxy)
+			learnIfWordBoundary(insertedText: text, state: state, proxy: proxy, learning: learning)
 
 		case .backspace:
 			proxy.deleteBackward()
@@ -66,6 +69,8 @@ public enum InputDispatcher {
 
 		case .space:
 			handleSpace(state: &state, proxy: proxy, controller: controller, now: now())
+			// A space commits the preceding word — learn it before the page may hop below.
+			learnIfWordBoundary(insertedText: " ", state: state, proxy: proxy, learning: learning)
 			// After a space on either symbol page, hop back to letters. The user is presumably
 			// starting a new word; SwiftKey/Apple stock behave the same way. Auto-cap (in the
 			// controller's `textDidChange`) will then promote to `.upper` if appropriate.
@@ -101,6 +106,24 @@ public enum InputDispatcher {
 			}
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+
+		case .suggestionAccept(_, let replacementText):
+			// Replace the in-progress word with the chosen completion + a trailing space (SH3).
+			if let prefix = WordPrefixExtractor.activeWordPrefix(
+				before: proxy.documentContextBeforeInput,
+				after: proxy.documentContextAfterInput
+			) {
+				for _ in 0..<prefix.count {
+					proxy.deleteBackward()
+				}
+			}
+			// `replacementText` is already WYSIWYG-cased by the provider — insert verbatim, no
+			// shift-apply. The trailing space matches stock predictive-bar behavior.
+			proxy.insertText(replacementText + " ")
+			ShiftStateMachine.apply(.characterInserted, to: &state)
+			// Mirror a normal space insertion so double-tap-space → ". " still works afterward.
+			state.lastInsertWasSpace = true
+			state.lastSpaceInsertedAt = now()
 		}
 	}
 
@@ -154,9 +177,10 @@ public enum InputDispatcher {
 			// layer is responsible for clearing `searchQuery` when leaving the mode.
 			return false
 
-		case .shift, .return, .dismissKeyboard, .cursorOffset:
+		case .shift, .return, .dismissKeyboard, .cursorOffset, .suggestionAccept:
 			// None of these are meaningful in search mode; swallow so a stray keypress
-			// can't fire `return` into the host or toggle shift state.
+			// can't fire `return` into the host or toggle shift state. (The suggestion bar is
+			// suppressed in search mode anyway, so `.suggestionAccept` shouldn't arrive here.)
 			return true
 		}
 	}
@@ -246,6 +270,35 @@ public enum InputDispatcher {
 		return count
 	}
 
+	// MARK: - Personal recents learning
+
+	/// Word-boundary characters that commit the preceding word into the recents pool: a space or
+	/// sentence punctuation. Hyphen/colon/etc. are intentionally excluded (they don't end a word
+	/// for learning purposes any more than they do for completion).
+	private static let learningBoundaries: Set<String> = [" ", ".", ",", "!", "?"]
+
+	/// After a word-boundary keystroke, learn the just-completed word — but only in prose fields.
+	/// Email fields learn the whole field elsewhere (`KeyboardViewController`), and `.denied`
+	/// fields never learn. No-op when `learning` is absent (tests, previews).
+	private static func learnIfWordBoundary(
+		insertedText: String,
+		state: KeyboardState,
+		proxy: any TextDocumentProxying,
+		learning: LearningHook?
+	) {
+		guard let learning, state.currentEligibility.learningContext == .prose else { return }
+		guard learningBoundaries.contains(insertedText) else { return }
+		let context = proxy.documentContextBeforeInput ?? ""
+		// Learn only when this boundary directly terminates a word — i.e. the character right before
+		// the just-typed trailing boundary is itself a word character. Without this, a *second*
+		// boundary re-learns the same word: double-space → ". " (default action), "word  ", or
+		// "word. " would each count the word twice and skew ranking.
+		let chars = Array(context)
+		guard chars.count >= 2, WordPrefixExtractor.isWordCharacter(chars[chars.count - 2]) else { return }
+		guard let word = WordPrefixExtractor.lastCompletedWord(in: context) else { return }
+		learning.learn(word, .prose)
+	}
+
 	// MARK: - Slack-style emoji shortcodes
 
 	/// After a text insert, check whether the document now ends with a `:shortcode:` we recognize
@@ -280,5 +333,21 @@ public enum InputDispatcher {
 			updated = Array(updated.prefix(KeyboardState.recentEmojisCapacity))
 		}
 		state.recentEmojis = updated
+	}
+}
+
+/// Side-effecting hook the dispatcher invokes to learn a word into the personal recents pool.
+/// Wrapping the closure in a named type keeps the learning dependency explicit (and injectable for
+/// tests) instead of leaking `PersonalRecentsStore` into the pure dispatcher signature.
+public struct LearningHook: Sendable {
+	private let handler: @MainActor (String, TextContextType) -> Void
+
+	public init(_ handler: @escaping @MainActor (String, TextContextType) -> Void) {
+		self.handler = handler
+	}
+
+	@MainActor
+	func learn(_ word: String, _ context: TextContextType) {
+		handler(word, context)
 	}
 }

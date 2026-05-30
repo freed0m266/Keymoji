@@ -70,6 +70,10 @@ public enum KeyAction: Sendable, Equatable {
 	/// Move the cursor by `offset` characters (negative = left). Emitted by `KeyView` while
 	/// the user drags inside trackpad-mode (long-press on space). Does not insert/delete text.
 	case cursorOffset(Int)
+	/// Accept a word-completion chip: delete the in-progress word prefix and insert
+	/// `replacementText` followed by a space. `displayText` is carried for parity/analytics; the
+	/// committed text is `replacementText` (they're equal for plain word chips).
+	case suggestionAccept(displayText: String, replacementText: String)
 }
 
 public enum KeyRole: Sendable, Equatable {
