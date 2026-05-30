@@ -1,6 +1,6 @@
 # 40 — Word completion suggestions
 
-**Status:** Draft — not started
+**Status:** Done — 2026-05-29
 
 **Priorita:** v1.2 · **Úsilí:** L · **Dopad:** High (daily-use feature, marketing differentiator přes privacy claim)
 

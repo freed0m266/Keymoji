@@ -62,6 +62,10 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 41. [41 — Click sound: nepřiměřená hlasitost po startu klávesnice](41-click-sound-volume-bug.md)
 42. [42 — Kliknutí do mezery mezi klávesami nesmí propadnout](42-inter-key-gap-hit-areas.md)
 
+## v1.2 — Word suggestions
+
+40. [40 — Word completion suggestions (UILexicon + UITextChecker + personal recents)](40-word-completion-suggestions.md)
+
 ## Pre-App-Store
 
 28. [28 — Real app icon](28-app-icon.md)
@@ -74,7 +78,12 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 
 - **iPad support.** iPad keyboard má vlastní layout (split, floating, mini), to je celý vlastní projekt. Keybo zůstává iPhone only minimálně do v1.5.
 - **Více jazyků klávesnice.** v1.0 i dohledný Future jsou English QWERTY only. Diakritika dostupná přes long-press popover, ne přes layout switch.
-- **Word prediction / autocorrect.** SwiftKey-style ML prediction je full project. Mimo Keybo scope.
+- **SwiftKey-style next-word prediction (bigram model nad personal corpus).**
+  Prefix-match completion z UILexicon + UITextChecker + personal recents je
+  v scope (v1.2, task 40). Plnotučná next-word prediction (predikce dalšího
+  slova bez prefixu) zůstává out of scope.
+- **Autocorrect.** Bar nikdy nenabízí překlepy a nikdy ticho nepřepisuje text
+  po space. Selection je vždy explicitní (tap na chip). Out of scope permanentně.
 - **Voice typing, swipe typing, GIF picker, sticker picker.** Vše out.
 - **Reklamy, analytics, telemetry, crash reporting.** Záměrná absence — privacy claim je „nesbíráme nic" a držíme to.
 
