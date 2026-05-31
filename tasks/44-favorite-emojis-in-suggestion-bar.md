@@ -1,6 +1,6 @@
 # 44 — Favorite emojis scrollview v SuggestionBarView
 
-**Status:** Todo
+**Status:** Done — 2026-05-31
 
 **Priorita:** v1.1 · **Úsilí:** S · **Dopad:** Medium (daily-use: oblíbené emoji na jedno tapnutí přímo nad klávesnicí, bez přepínání na emoji panel)
 
