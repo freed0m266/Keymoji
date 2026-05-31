@@ -10,23 +10,36 @@ import KeyboardCore
 ///   horizontally scrollable — preserves the pre-refactor Slack bar look.
 ///
 /// The coordinator returns a homogeneous list (Slack wins wholesale or word completions only), so
-/// the bar picks one layout based on the first chip. When `suggestions` is empty the bar still
-/// occupies its slot but draws nothing (C1 — always-shown when enabled, visually silent when there's
-/// nothing to suggest, so the keyboard never changes height as chips come and go).
+/// the bar picks one layout based on the first chip. When `suggestions` is empty it falls back to a
+/// third mode — a horizontal scroll of `favoriteEmojis` (bare glyphs, tap-to-insert) — filling the
+/// slot that would otherwise be blank. With no suggestions *and* no favorites the bar still occupies
+/// its slot but draws nothing (C1 — always-shown when enabled, visually silent when there's nothing
+/// to offer, so the keyboard never changes height as content comes and goes).
 public struct SuggestionBarView: View {
 	public let suggestions: [Suggestion]
+	/// Favorite emoji glyphs, rendered as a horizontal scroll row in the otherwise-empty bar — shown
+	/// only when there are no `suggestions` (never alongside them; see `body`). Empty by default so
+	/// existing call sites and snapshots keep their behavior.
+	public let favoriteEmojis: [String]
 	public let onSelect: (Suggestion) -> Void
+	/// Tap handler for a favorite emoji glyph. The host routes it through the same emoji-insert
+	/// dispatch path as the emoji panel (text insertion + haptics/sound + recents update).
+	public let onSelectEmoji: (String) -> Void
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: () -> Void
 
 	public init(
 		suggestions: [Suggestion],
+		favoriteEmojis: [String] = [],
 		onSelect: @escaping (Suggestion) -> Void,
+		onSelectEmoji: @escaping (String) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping () -> Void = {}
 	) {
 		self.suggestions = suggestions
+		self.favoriteEmojis = favoriteEmojis
 		self.onSelect = onSelect
+		self.onSelectEmoji = onSelectEmoji
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
 	}
@@ -35,9 +48,17 @@ public struct SuggestionBarView: View {
 
 	public var body: some View {
 		Group {
-			if suggestions.first?.renderStyle == .pill {
-				pillBar
+			if !suggestions.isEmpty {
+				if suggestions.first?.renderStyle == .pill {
+					pillBar
+				} else {
+					plainBar
+				}
+			} else if !favoriteEmojis.isEmpty {
+				favoritesBar
 			} else {
+				// Nothing to suggest and no favorites → visually silent bar that still holds its
+				// slot (C1). `plainBar` with empty `suggestions` draws nothing.
 				plainBar
 			}
 		}
@@ -116,6 +137,35 @@ public struct SuggestionBarView: View {
 		onKeyClick()
 		onSelect(suggestion)
 	}
+
+	// MARK: - Favorites (emoji quick-access)
+
+	/// Horizontal scroll of favorite emoji glyphs, filling the bar's otherwise-empty state. Same
+	/// scroll skeleton as `pillBar`, but each cell is a bare glyph — no rounded chip background.
+	private var favoritesBar: some View {
+		ScrollView(.horizontal, showsIndicators: false) {
+			HStack(spacing: chipSpacing) {
+				ForEach(favoriteEmojis, id: \.self) { emoji in
+					Button {
+						selectEmoji(emoji)
+					} label: {
+						Text(emoji)
+							.font(.system(size: 24))
+							.frame(minWidth: 36)
+							.frame(maxHeight: .infinity)
+					}
+					.buttonStyle(.plain)
+				}
+			}
+			.padding(.horizontal, horizontalPadding)
+		}
+	}
+
+	private func selectEmoji(_ emoji: String) {
+		onKeyTapHaptic()
+		onKeyClick()
+		onSelectEmoji(emoji)
+	}
 }
 
 #if DEBUG
@@ -165,5 +215,16 @@ private func pillSuggestion(_ shortcode: String, _ emoji: String) -> Suggestion 
 	)
 	.frame(width: 393, height: 40)
 	.preferredColorScheme(.light)
+}
+
+#Preview("Favorite emojis / dark") {
+	SuggestionBarView(
+		suggestions: [],
+		favoriteEmojis: ["❤️", "😀", "🚀", "🎉", "🐶", "🍕", "👍"],
+		onSelect: { _ in },
+		onSelectEmoji: { _ in }
+	)
+	.frame(width: 393, height: 40)
+	.preferredColorScheme(.dark)
 }
 #endif

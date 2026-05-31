@@ -99,7 +99,9 @@ public struct KeyboardView: View {
 			if effectiveShowsBar {
 				SuggestionBarView(
 					suggestions: suggestions,
+					favoriteEmojis: favoriteEmojis,
 					onSelect: onSelectSuggestion,
+					onSelectEmoji: { emoji in insertEmojiKey(emoji) },
 					onKeyTapHaptic: onKeyTapHaptic,
 					onKeyClick: onKeyClick
 				)
@@ -121,22 +123,28 @@ public struct KeyboardView: View {
 		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
 	}
 
+	/// Builds the transient emoji-insert `Key` and routes it through `onKey`, so emoji taps from the
+	/// emoji panel, emoji search, and the suggestion-bar favorites all share one dispatch path —
+	/// getting text insertion, haptics/sound, and the recents update (`recordRecentEmojiIfNeeded`)
+	/// for free. `role: .character` keeps `KeyView`-style feedback semantics downstream.
+	private func insertEmojiKey(_ emoji: String) {
+		let key = Key(
+			id: "emoji.\(emoji)",
+			primary: .text(emoji),
+			alternates: [],
+			action: .insertText(emoji),
+			visualWeight: .standard,
+			role: .character
+		)
+		onKey(key)
+	}
+
 	private var emojiSearchKeyboard: some View {
 		VStack(spacing: rowSpacing) {
 			EmojiSearchView(
 				query: searchQuery,
 				recents: recentEmojis,
-				onSelectEmoji: { emoji in
-					let key = Key(
-						id: "emoji.\(emoji)",
-						primary: .text(emoji),
-						alternates: [],
-						action: .insertText(emoji),
-						visualWeight: .standard,
-						role: .character
-					)
-					onKey(key)
-				},
+				onSelectEmoji: { emoji in insertEmojiKey(emoji) },
 				onClearSearch: {
 					// `×` always exits search back to the regular emoji panel. The dispatcher's
 					// `.switchPage` handler clears the query buffer in `KeyboardState`.
@@ -161,20 +169,7 @@ public struct KeyboardView: View {
 		EmojiPanelView(
 			recents: recentEmojis,
 			favorites: favoriteEmojis,
-			onSelectEmoji: { emoji in
-				// Synthesize a transient `Key` for emoji insertion so it flows through the
-				// existing dispatch path. `role: .character` keeps `KeyView`-style feedback
-				// semantics in any downstream consumers.
-				let key = Key(
-					id: "emoji.\(emoji)",
-					primary: .text(emoji),
-					alternates: [],
-					action: .insertText(emoji),
-					visualWeight: .standard,
-					role: .character
-				)
-				onKey(key)
-			},
+			onSelectEmoji: { emoji in insertEmojiKey(emoji) },
 			onToggleFavorite: onToggleFavoriteEmoji,
 			onSwitchToLetters: {
 				let key = Key(
