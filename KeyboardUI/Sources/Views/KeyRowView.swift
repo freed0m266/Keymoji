@@ -15,10 +15,8 @@ struct KeyRowView: View {
 	let canEscalateBackspace: (() -> Bool)?
 	let onTrackpadModeChanged: (Bool) -> Void
 
-	private let spacing: CGFloat = 6
-
 	var body: some View {
-		HStack(spacing: spacing) {
+		HStack(spacing: 0) {
 			if insetWidth > 0 { Spacer().frame(width: insetWidth) }
 			ForEach(Array(row.keys.enumerated()), id: \.element.id) { index, key in
 				let keyWidth = width(for: key)
@@ -50,9 +48,7 @@ struct KeyRowView: View {
 	/// summed key weights. Keeps per-key width equal to a fuller row's per-key width.
 	private var insetWidth: CGFloat {
 		guard let ref = row.referenceWeight, ref > actualTotalWeight else { return 0 }
-		let totalSpacing = spacing * CGFloat(max(0, row.keys.count - 1))
-		let effectiveAvailable = max(0, totalWidth - totalSpacing)
-		let unitWidth = effectiveAvailable / CGFloat(ref)
+		let unitWidth = totalWidth / CGFloat(ref)
 		let missingWeight = ref - actualTotalWeight
 		return unitWidth * CGFloat(missingWeight) / 2.0
 	}
@@ -67,7 +63,7 @@ struct KeyRowView: View {
 
 		var leadingX: CGFloat = 0
 		for i in 0..<index {
-			leadingX += width(for: row.keys[i]) + spacing
+			leadingX += width(for: row.keys[i])
 		}
 		let keyMidX = leadingX + keyWidth / 2
 
@@ -83,8 +79,7 @@ struct KeyRowView: View {
 
 	private func width(for key: Key) -> CGFloat {
 		guard !row.keys.isEmpty, actualTotalWeight > 0 else { return 0 }
-		let totalSpacing = spacing * CGFloat(max(0, row.keys.count - 1))
-		let available = max(0, totalWidth - totalSpacing - insetWidth * 2)
+		let available = max(0, totalWidth - insetWidth * 2)
 		return available * CGFloat(key.visualWeight.value / actualTotalWeight)
 	}
 }

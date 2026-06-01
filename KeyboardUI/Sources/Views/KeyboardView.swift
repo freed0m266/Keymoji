@@ -73,8 +73,8 @@ public struct KeyboardView: View {
 		self.onTrackpadModeEntered = onTrackpadModeEntered
 	}
 
-	private let horizontalPadding: CGFloat = 6
-	private let rowSpacing: CGFloat = 11
+	private let topPadding: CGFloat = 6
+	private let horizontalPadding: CGFloat = 3
 
 	private var isEmojiKeyboard: Bool {
 		layout.page == .emojis
@@ -95,7 +95,7 @@ public struct KeyboardView: View {
 	}
 
 	public var body: some View {
-		VStack(spacing: rowSpacing) {
+		VStack(spacing: 0) {
 			if effectiveShowsBar {
 				SuggestionBarView(
 					suggestions: suggestions,
@@ -115,6 +115,7 @@ public struct KeyboardView: View {
 				defaultKeyboard
 			}
 		}
+		.padding(.top, isEmojiKeyboard ? 0 : topPadding)
 		.padding(.horizontal, isEmojiKeyboard ? 0 : horizontalPadding)
 		.frame(width: width, height: keyboardHeight)
 		// Fade the whole keyboard while the user is scrubbing the cursor — matches stock iOS,
@@ -140,7 +141,7 @@ public struct KeyboardView: View {
 	}
 
 	private var emojiSearchKeyboard: some View {
-		VStack(spacing: rowSpacing) {
+		VStack(spacing: 0) {
 			EmojiSearchView(
 				query: searchQuery,
 				recents: recentEmojis,
@@ -225,7 +226,7 @@ public struct KeyboardView: View {
 				canEscalateBackspace: canEscalateBackspace,
 				onTrackpadModeChanged: handleTrackpadModeChanged
 			)
-			.frame(maxHeight: row.isNumberRow ? 36 : nil)
+			.frame(maxHeight: row.isNumberRow ? 48 : nil)
 		}
 	}
 
@@ -269,12 +270,10 @@ public struct KeyboardView: View {
 	private var emojiSearchChromeHeight: CGFloat {
 		let searchBarHeight: CGFloat = 32
 		let resultsBarHeight: CGFloat = 44
-		let interSectionSpacing = rowSpacing
 		let topPaddingInsideSearchView: CGFloat = 4
 		let interBarSpacing: CGFloat = 6
 		return searchBarHeight
 			+ resultsBarHeight
-			+ interSectionSpacing
 			+ topPaddingInsideSearchView
 			+ interBarSpacing
 	}
