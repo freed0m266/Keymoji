@@ -1,4 +1,5 @@
 import XCTest
+import KeyboCore
 @testable import KeyboardCore
 
 final class LayoutBuilderTests: XCTestCase {
@@ -417,10 +418,100 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(alternateRow.referenceWeight, 10)
 	}
 
+	// MARK: - QWERTZ letter layout
+
+	func testQwerty_isTheDefaultLetterLayout() {
+		// Every other test in this file omits `letterLayout`, relying on the `.qwerty` default —
+		// this pins that contract so a default change can't silently flip the whole suite.
+		let explicit = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwerty)
+		let defaulted = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
+		XCTAssertEqual(explicit, defaulted)
+	}
+
+	func testQwertz_row1_hasZBetweenTAndU() {
+		let row = letterRow(at: "letters.row1", page: .letters(.lower), letterLayout: .qwertz)
+		let chars = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"])
+		XCTAssertFalse(chars.contains("y"), "y must not appear on row 1 in QWERTZ")
+	}
+
+	func testQwertz_row3_startsWithY() {
+		let row = letterRow(at: "letters.row3", page: .letters(.lower), letterLayout: .qwertz)
+		XCTAssertEqual(row.keys.first?.action, .shift)
+		XCTAssertEqual(row.keys.last?.action, .backspace)
+		let middle = row.keys.dropFirst().dropLast().compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(middle, ["y", "x", "c", "v", "b", "n", "m"])
+		XCTAssertFalse(middle.contains("z"), "z must not appear on row 3 in QWERTZ")
+	}
+
+	func testQwertzUpper_positionsSwappedAndUppercased() {
+		let row1 = letterRow(at: "letters.row1", page: .letters(.upper), letterLayout: .qwertz)
+		let row1Chars = row1.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(row1Chars, ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P"])
+
+		let row3 = letterRow(at: "letters.row3", page: .letters(.upper), letterLayout: .qwertz)
+		let row3Middle = row3.keys.dropFirst().dropLast().compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(row3Middle, ["Y", "X", "C", "V", "B", "N", "M"])
+	}
+
+	func testQwertz_yAndZKeepTheirAccentAlternates() {
+		// Alternates are keyed by `Character`, so they travel with the letter regardless of position.
+		let row1 = letterRow(at: "letters.row1", page: .letters(.lower), letterLayout: .qwertz)
+		let zKey = row1.keys.first { $0.id == "letter.z" }!
+		let zAlternates = zKey.alternates.compactMap { content -> String? in
+			if case .text(let t) = content { return t }
+			return nil
+		}
+		XCTAssertEqual(zAlternates, ["ž", "ź", "ż"])
+
+		let row3 = letterRow(at: "letters.row3", page: .letters(.lower), letterLayout: .qwertz)
+		let yKey = row3.keys.first { $0.id == "letter.y" }!
+		let yAlternates = yKey.alternates.compactMap { content -> String? in
+			if case .text(let t) = content { return t }
+			return nil
+		}
+		XCTAssertEqual(yAlternates, ["ý", "ÿ"])
+	}
+
+	func testQwertz_emojiSearchHonorsLetterLayout() {
+		// Search mode reuses the letter rows, so it must respect the QWERTZ choice too.
+		let layout = LayoutBuilder.layout(page: .emojiSearch, showNumberRow: false, returnKeyType: .default, letterLayout: .qwertz)
+		let row1 = layout.rows.first { $0.id == "letters.row1" }!
+		let chars = row1.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"])
+	}
+
+	func testLayout_differsByLetterLayout() {
+		let qwerty = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwerty)
+		let qwertz = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwertz)
+		XCTAssertNotEqual(qwerty, qwertz)
+	}
+
+	func testLayout_isEquatableForIdenticalLetterLayout() {
+		let a = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwertz)
+		let b = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwertz)
+		XCTAssertEqual(a, b)
+	}
+
 	// MARK: - Helpers
 
-	private func letterRow(at id: String, page: KeyboardPage) -> KeyboardRow {
-		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default)
+	private func letterRow(at id: String, page: KeyboardPage, letterLayout: LetterLayout = .qwerty) -> KeyboardRow {
+		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default, letterLayout: letterLayout)
 		return layout.rows.first { $0.id == id }!
 	}
 

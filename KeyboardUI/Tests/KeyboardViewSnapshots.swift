@@ -1,6 +1,7 @@
 import XCTest
 import SwiftUI
 @testable import KeyboardUI
+import KeyboCore
 import KeyboardCore
 
 final class KeyboardViewSnapshots: XCTestCase {
@@ -33,6 +34,15 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 		assertKeyboardSnapshot(view, colorScheme: .dark)
 		assertKeyboardSnapshot(view, colorScheme: .light)
+	}
+
+	// MARK: - QWERTZ letter layout
+
+	func testLettersLower_qwertz_withNumberRow() {
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwertz)
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
+
+		assertKeyboardSnapshot(view, colorScheme: .dark)
 	}
 
 	// MARK: - Symbols
