@@ -1,6 +1,6 @@
 # 42 — Kliknutí do mezery mezi klávesami nesmí propadnout
 
-**Status:** Todo
+**Status:** Done — 2026-06-01
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** High (daily-use: každý stisk co trefí 6pt/11pt gap propadne a nic se nestane — působí jako „nereagující" klávesnice)
 
