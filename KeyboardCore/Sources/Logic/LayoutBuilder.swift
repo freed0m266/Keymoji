@@ -178,6 +178,14 @@ public enum LayoutBuilder {
 	/// Punctuation row C (shared between primary and alternate).
 	private static let symbolsRowCPunctuation: [String] = [".", ",", "?", "!", "'"]
 
+	/// Breathing room (≈ a third of a key) between the edge-hugging toggle / delete keys and the
+	/// punctuation cluster, mirroring the native symbols keyboard.
+	private static let symbolEdgeGapWeight: Double = 0.3
+
+	/// Punctuation keys in row C render wider than a standard key — the space freed up by pinning
+	/// toggle / delete to the edges is handed to them. See `makeSymbolRows` for the budget.
+	private static let symbolRowCPunctuationWeight = KeyWeight(1.5)
+
 	private static func makeSymbolRows(_ page: SymbolPage, inEmojiSearch: Bool) -> [KeyboardRow] {
 		let (rowAContent, rowBContent, rowCToggle) = symbolPageContent(page, inEmojiSearch: inEmojiSearch)
 		let idPrefix = inEmojiSearch ? "emojiSearchSymbols" : "symbols"
@@ -190,13 +198,17 @@ public enum LayoutBuilder {
 			id: "\(idPrefix).\(page.id).rowB",
 			keys: rowBContent.map(makeSymbolKey)
 		)
-		let rowCPunctuation = symbolsRowCPunctuation.map(makeSymbolKey)
-		// Row C totals 1.5 (toggle) + 5×1.0 (punctuation) + 1.5 (delete) = 8 weight units.
-		// `referenceWeight: 10` keeps the per-key width aligned with rows A and B (which both have 10).
+		let rowCPunctuation = symbolsRowCPunctuation.map(makeSymbolPunctuationKey)
+		// Native parity: the toggle hugs the left edge and delete the right edge, each separated from
+		// the punctuation cluster by a sliver of breathing room. No `referenceWeight` — the row fills
+		// the full width proportionally, with the punctuation keys widened so the cluster stays
+		// centered between the edge keys:
+		//   1.5 (toggle) + 0.3 gap + 5×1.5 (punctuation) + 0.3 gap + 1.5 (delete) = 11.1 weight units.
 		let rowC = KeyboardRow(
 			id: "\(idPrefix).\(page.id).rowC",
-			keys: [rowCToggle] + rowCPunctuation + [makeDeleteKey()],
-			referenceWeight: 10
+			keys: [rowCToggle.addingGaps(trailing: symbolEdgeGapWeight)]
+				+ rowCPunctuation
+				+ [makeDeleteKey().addingGaps(leading: symbolEdgeGapWeight)]
 		)
 		return [rowA, rowB, rowC]
 	}
@@ -242,6 +254,18 @@ public enum LayoutBuilder {
 			alternates: [],
 			action: .insertText(symbol),
 			visualWeight: .standard,
+			role: .character
+		)
+	}
+
+	/// Row C punctuation key — identical to `makeSymbolKey` but carries the wider row-C weight.
+	private static func makeSymbolPunctuationKey(_ symbol: String) -> Key {
+		Key(
+			id: "sym.\(symbol)",
+			primary: .text(symbol),
+			alternates: [],
+			action: .insertText(symbol),
+			visualWeight: symbolRowCPunctuationWeight,
 			role: .character
 		)
 	}
