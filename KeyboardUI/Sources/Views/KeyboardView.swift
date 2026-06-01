@@ -73,7 +73,6 @@ public struct KeyboardView: View {
 		self.onTrackpadModeEntered = onTrackpadModeEntered
 	}
 
-	private let topPadding: CGFloat = 6
 	private let horizontalPadding: CGFloat = 3
 
 	private var isEmojiKeyboard: Bool {
@@ -115,7 +114,6 @@ public struct KeyboardView: View {
 				defaultKeyboard
 			}
 		}
-		.padding(.top, isEmojiKeyboard ? 0 : topPadding)
 		.padding(.horizontal, isEmojiKeyboard ? 0 : horizontalPadding)
 		.frame(width: width, height: keyboardHeight)
 		// Fade the whole keyboard while the user is scrubbing the cursor — matches stock iOS,
