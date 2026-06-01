@@ -22,7 +22,7 @@ public struct KeyboardView: View {
 	public let onToggleFavoriteEmoji: (String) -> Void
 	public let onSelectSuggestion: (Suggestion) -> Void
 	public let onKeyTapHaptic: () -> Void
-	public let onKeyClick: () -> Void
+	public let onKeyClick: (ClickSoundKind) -> Void
 	public let onPopoverEntry: () -> Void
 	public let onHighlightChanged: () -> Void
 	/// Returns true when the underlying document proxy currently exposes
@@ -49,7 +49,7 @@ public struct KeyboardView: View {
 		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
 		onSelectSuggestion: @escaping (Suggestion) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
-		onKeyClick: @escaping () -> Void = {},
+		onKeyClick: @escaping (ClickSoundKind) -> Void = { _ in },
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {},
 		canEscalateBackspace: (() -> Bool)? = nil,
@@ -103,7 +103,7 @@ public struct KeyboardView: View {
 					onSelect: onSelectSuggestion,
 					onSelectEmoji: { emoji in insertEmojiKey(emoji) },
 					onKeyTapHaptic: onKeyTapHaptic,
-					onKeyClick: onKeyClick
+					onKeyClick: { onKeyClick(.character) }
 				)
 			}
 
@@ -159,7 +159,7 @@ public struct KeyboardView: View {
 					onKey(key)
 				},
 				onKeyTapHaptic: onKeyTapHaptic,
-				onKeyClick: onKeyClick
+				onKeyClick: { onKeyClick(.character) }
 			)
 			defaultKeyboard
 		}

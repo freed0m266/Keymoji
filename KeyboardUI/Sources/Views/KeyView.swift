@@ -11,7 +11,7 @@ struct KeyView: View {
 	let popoverAlignment: HorizontalAlignment
 	let onTap: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
-	let onKeyClick: () -> Void
+	let onKeyClick: (ClickSoundKind) -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 	/// Returns true iff the document proxy currently exposes enough context for a
@@ -76,7 +76,7 @@ struct KeyView: View {
 		popoverAlignment: HorizontalAlignment = .center,
 		onTap: @escaping (Key) -> Void,
 		onKeyTapHaptic: @escaping () -> Void = {},
-		onKeyClick: @escaping () -> Void = {},
+		onKeyClick: @escaping (ClickSoundKind) -> Void = { _ in },
 		onPopoverEntry: @escaping () -> Void = {},
 		onHighlightChanged: @escaping () -> Void = {},
 		canEscalateBackspace: (() -> Bool)? = nil,
@@ -167,7 +167,7 @@ struct KeyView: View {
 		// scrubbing, which emits cursor-offset events 60×/s and would drown the user in vibration.
 		if firesKeyTapFeedback {
 			onKeyTapHaptic()
-			onKeyClick()
+			onKeyClick(clickSoundKind)
 		}
 
 		if case .backspace = key.action {
@@ -189,6 +189,17 @@ struct KeyView: View {
 			return true
 		case .cursorOffset:
 			return false
+		}
+	}
+
+	/// Maps this key's action onto the native click flavor to play (task 46): space gets the deeper
+	/// modifier click, delete (incl. word-delete repeat, which keeps this key's `.backspace` action)
+	/// gets the delete click, everything else keeps the standard character click.
+	private var clickSoundKind: ClickSoundKind {
+		switch key.action {
+		case .space:                  return .space
+		case .backspace, .deleteWord: return .delete
+		default:                      return .character
 		}
 	}
 
@@ -339,7 +350,7 @@ struct KeyView: View {
 	private func fireBackspaceRepeat() {
 		onTap(key)
 		onKeyTapHaptic()
-		onKeyClick()
+		onKeyClick(.delete)
 	}
 
 	private func fireWordDeleteRepeat() {
@@ -353,7 +364,7 @@ struct KeyView: View {
 		)
 		onTap(synthesized)
 		onKeyTapHaptic()
-		onKeyClick()
+		onKeyClick(.delete)
 	}
 
 	private func startLongPressTimer() {

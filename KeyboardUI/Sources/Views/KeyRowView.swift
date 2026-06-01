@@ -9,7 +9,7 @@ struct KeyRowView: View {
 	let totalWidth: CGFloat
 	let onKey: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
-	let onKeyClick: () -> Void
+	let onKeyClick: (ClickSoundKind) -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 	let canEscalateBackspace: (() -> Bool)?
@@ -104,7 +104,7 @@ private struct KeyRowPreview: View {
 			totalWidth: totalWidth,
 			onKey: { _ in },
 			onKeyTapHaptic: {},
-			onKeyClick: {},
+			onKeyClick: { _ in },
 			onPopoverEntry: {},
 			onHighlightChanged: {},
 			canEscalateBackspace: nil,

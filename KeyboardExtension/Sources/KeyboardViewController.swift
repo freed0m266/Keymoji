@@ -411,7 +411,7 @@ final class KeyboardViewController: UIInputViewController {
 			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
-			onKeyClick: { [weak self] in self?.clickSound.play() },
+			onKeyClick: { [weak self] kind in self?.clickSound.play(for: kind) },
 			onPopoverEntry: { [weak self] in self?.haptics.popoverEntry() },
 			onHighlightChanged: { [weak self] in self?.haptics.popoverHighlightChanged() },
 			// Word-delete needs visible context. Password fields and other hidden inputs

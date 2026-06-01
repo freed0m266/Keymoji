@@ -14,7 +14,7 @@ public struct EmojiPanelView: View {
 	let onDelete: () -> Void
 	let onEnterSearch: () -> Void
 	let onKeyTapHaptic: () -> Void
-	let onKeyClick: () -> Void
+	let onKeyClick: (ClickSoundKind) -> Void
 
 	@State private var selectedCategory: EmojiCategory
 
@@ -27,7 +27,7 @@ public struct EmojiPanelView: View {
 		onDelete: @escaping () -> Void = {},
 		onEnterSearch: @escaping () -> Void = {},
 		onKeyTapHaptic: @escaping () -> Void = {},
-		onKeyClick: @escaping () -> Void = {}
+		onKeyClick: @escaping (ClickSoundKind) -> Void = { _ in }
 	) {
 		self.recents = recents
 		self.favorites = favorites
@@ -153,8 +153,9 @@ public struct EmojiPanelView: View {
 		HStack(spacing: 0) {
 			cornerButton(iconName: "characters.uppercase") {
 				// Mirror `KeyView.firesKeyTapFeedback`: fire haptic + click on page switch.
+				// A page switch is not a text mutation — character click, like KeyView's `.switchPage`.
 				onKeyTapHaptic()
-				onKeyClick()
+				onKeyClick(.character)
 				onSwitchToLetters()
 			}
 			.padding(.leading, 4)
@@ -167,8 +168,9 @@ public struct EmojiPanelView: View {
 
 			cornerButton(iconName: "delete.left") {
 				// Backspace is a character-mutating action — fire haptic + click like KeyView does.
+				// Use the delete click so it matches the QWERTY delete key's native sound (task 46).
 				onKeyTapHaptic()
-				onKeyClick()
+				onKeyClick(.delete)
 				onDelete()
 			}
 			.padding(.trailing, 4)
@@ -252,7 +254,7 @@ public struct EmojiPanelView: View {
 							height: Self.cellHeight,
 							onTap: {
 								onKeyTapHaptic()
-								onKeyClick()
+								onKeyClick(.character)
 								onSelectEmoji(emoji)
 							},
 							onLongPress: {

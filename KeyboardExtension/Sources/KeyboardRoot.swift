@@ -12,7 +12,7 @@ struct KeyboardRoot: View {
 	let toggleFavoriteEmoji: (String) -> Void
 	let selectSuggestion: (Suggestion) -> Void
 	let onKeyTapHaptic: () -> Void
-	let onKeyClick: () -> Void
+	let onKeyClick: (ClickSoundKind) -> Void
 	let onPopoverEntry: () -> Void
 	let onHighlightChanged: () -> Void
 	let canEscalateBackspace: () -> Bool
