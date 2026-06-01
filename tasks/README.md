@@ -61,6 +61,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 39. [39 — Emoji search v keyboardu (`.emojiSearch` mode)](39-emoji-search.md)
 41. [41 — Click sound: nepřiměřená hlasitost po startu klávesnice](41-click-sound-volume-bug.md)
 42. [42 — Kliknutí do mezery mezi klávesami nesmí propadnout](42-inter-key-gap-hit-areas.md)
+45. [45 — Přepínání QWERTY / QWERTZ layoutu](45-qwerty-qwertz-switch.md)
 
 ## v1.2 — Word suggestions
 
