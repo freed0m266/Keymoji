@@ -8,6 +8,10 @@ public struct KeyboardState: Sendable, Equatable {
 	public var returnKeyType: ReturnKeyType
 	public var showNumberRow: Bool
 
+	/// User preference for the QWERTY/QWERTZ position of the Y and Z keys. Runtime copy of
+	/// `AppGroupStore.letterLayout`, refreshed by `KeyboardViewController.viewWillAppear`.
+	public var letterLayout: LetterLayout
+
 	/// User preference for what a double-tap on space does. Runtime copy of
 	/// `AppGroupStore.spaceDoubleTapAction`, refreshed by `KeyboardViewController.viewWillAppear`.
 	public var spaceDoubleTapAction: SpaceDoubleTapAction
@@ -67,6 +71,7 @@ public struct KeyboardState: Sendable, Equatable {
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
 		showNumberRow: Bool = true,
+		letterLayout: LetterLayout = .qwerty,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
@@ -83,6 +88,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.page = page
 		self.returnKeyType = returnKeyType
 		self.showNumberRow = showNumberRow
+		self.letterLayout = letterLayout
 		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt

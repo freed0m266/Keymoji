@@ -138,6 +138,9 @@ final class KeyboardViewController: UIInputViewController {
 			settingsNotifier.addObserver(for: .showNumberRow) { [weak self] in
 				self?.refreshFromStore()
 			},
+			settingsNotifier.addObserver(for: .letterLayout) { [weak self] in
+				self?.refreshFromStore()
+			},
 			settingsNotifier.addObserver(for: .favoriteEmojis) { [weak self] in
 				self?.refreshFromStore()
 			},
@@ -163,6 +166,11 @@ final class KeyboardViewController: UIInputViewController {
 		let doubleTap = store.spaceDoubleTapAction
 		if state.spaceDoubleTapAction != doubleTap {
 			state.spaceDoubleTapAction = doubleTap
+			changed = true
+		}
+		let layout = store.letterLayout
+		if state.letterLayout != layout {
+			state.letterLayout = layout
 			changed = true
 		}
 		let storedRecents = store.recentEmojis

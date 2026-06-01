@@ -69,6 +69,10 @@
 "settings.keyboard.appearance.light" = "Light";
 "settings.keyboard.appearance.dark" = "Dark";
 "settings.keyboard.appearanceFooter" = "Override the keyboard's color scheme. System follows the app that's showing the keyboard.";
+"settings.keyboard.letterLayout" = "Letter layout";
+"settings.keyboard.letterLayout.qwerty" = "QWERTY";
+"settings.keyboard.letterLayout.qwertz" = "QWERTZ";
+"settings.keyboard.letterLayoutFooter" = "QWERTZ swaps the Y and Z keys, matching Central-European keyboards.";
 "settings.keyboard.spaceDoubleTapAction" = "Double-tap space";
 "settings.keyboard.spaceDoubleTap.insertPeriod" = "Insert “. ”";
 "settings.keyboard.spaceDoubleTap.dismissKeyboard" = "Hide keyboard";

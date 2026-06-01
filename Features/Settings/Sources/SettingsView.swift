@@ -89,6 +89,17 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 
 		Section {
+			Picker(Texts.Keyboard.letterLayout, selection: $viewModel.letterLayout) {
+				ForEach(LetterLayout.allCases, id: \.self) { layout in
+					Text(label(for: layout)).tag(layout)
+				}
+			}
+			.pickerStyle(.segmented)
+		} footer: {
+			Text(Texts.Keyboard.letterLayoutFooter)
+		}
+
+		Section {
 			Picker(Texts.Keyboard.spaceDoubleTapAction, selection: $viewModel.spaceDoubleTapAction) {
 				ForEach(SpaceDoubleTapAction.allCases, id: \.self) { action in
 					Text(label(for: action)).tag(action)
@@ -142,6 +153,13 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		case .insertPeriod:    return Texts.Keyboard.SpaceDoubleTap.insertPeriod
 		case .dismissKeyboard: return Texts.Keyboard.SpaceDoubleTap.dismissKeyboard
 		case .none:            return Texts.Keyboard.SpaceDoubleTap.none
+		}
+	}
+
+	private func label(for layout: LetterLayout) -> String {
+		switch layout {
+		case .qwerty: return Texts.Keyboard.LetterLayout.qwerty
+		case .qwertz: return Texts.Keyboard.LetterLayout.qwertz
 		}
 	}
 

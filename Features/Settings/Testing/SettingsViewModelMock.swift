@@ -18,6 +18,7 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 	public var keyClickSoundEnabled: Bool
 	public var appearance: AppearancePreference
 	public var spaceDoubleTapAction: SpaceDoubleTapAction
+	public var letterLayout: LetterLayout
 	public var suggestionsEnabled: Bool
 	public private(set) var learnedWordCount: Int
 	public var versionString: String
@@ -28,6 +29,7 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 		keyClickSoundEnabled: Bool = false,
 		appearance: AppearancePreference = .system,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
+		letterLayout: LetterLayout = .qwerty,
 		suggestionsEnabled: Bool = true,
 		learnedWordCount: Int = 128,
 		versionString: String = "1.0 (1)"
@@ -37,6 +39,7 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 		self.keyClickSoundEnabled = keyClickSoundEnabled
 		self.appearance = appearance
 		self.spaceDoubleTapAction = spaceDoubleTapAction
+		self.letterLayout = letterLayout
 		self.suggestionsEnabled = suggestionsEnabled
 		self.learnedWordCount = learnedWordCount
 		self.versionString = versionString

@@ -17,6 +17,7 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var keyClickSoundEnabled: Bool { get set }
 	var appearance: AppearancePreference { get set }
 	var spaceDoubleTapAction: SpaceDoubleTapAction { get set }
+	var letterLayout: LetterLayout { get set }
 	var suggestionsEnabled: Bool { get set }
 	/// Number of words Keybo has learned for completion. Read-only; refresh on view appear.
 	var learnedWordCount: Int { get }
@@ -72,6 +73,13 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		}
 	}
 
+	var letterLayout: LetterLayout {
+		didSet {
+			store.letterLayout = letterLayout
+			notifier.post(.letterLayout)
+		}
+	}
+
 	var suggestionsEnabled: Bool {
 		didSet {
 			store.suggestionsEnabled = suggestionsEnabled
@@ -99,6 +107,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.keyClickSoundEnabled = store.keyClickSoundEnabled
 		self.appearance = store.appearance
 		self.spaceDoubleTapAction = store.spaceDoubleTapAction
+		self.letterLayout = store.letterLayout
 		self.suggestionsEnabled = store.suggestionsEnabled
 		super.init()
 		self.learnedWordCount = recentsStore.count

@@ -115,6 +115,16 @@ public extension AppGroupStore {
 		set { setString(newValue.rawValue, forKey: .spaceDoubleTapAction) }
 	}
 
+	/// Positional layout of the alphabetic keys. Defaults to `.qwerty`. Unknown raw values
+	/// fall back to the default — defensive against corrupted defaults or future renames.
+	var letterLayout: LetterLayout {
+		get {
+			guard let raw = string(forKey: .letterLayout) else { return .qwerty }
+			return LetterLayout(rawValue: raw) ?? .qwerty
+		}
+		set { setString(newValue.rawValue, forKey: .letterLayout) }
+	}
+
 	/// Most-recently-used emojis, newest first. Updated by the keyboard extension after each
 	/// emoji insertion; read by the extension on `viewWillAppear` to seed the recents tab.
 	var recentEmojis: [String] {

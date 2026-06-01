@@ -22,7 +22,8 @@ struct KeyboardRoot: View {
 		let layout = KeyboardCore.makeLayout(
 			page: state.page,
 			showNumberRow: state.showNumberRow,
-			returnKeyType: state.returnKeyType
+			returnKeyType: state.returnKeyType,
+			letterLayout: state.letterLayout
 		)
 		KeyboardView(
 			layout: layout,

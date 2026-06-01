@@ -1,13 +1,15 @@
 import Foundation
+import KeyboCore
 
-/// Pure factory that builds a `KeyboardLayout` from `(page, showNumberRow, returnKeyType)`.
+/// Pure factory that builds a `KeyboardLayout` from `(page, showNumberRow, returnKeyType, letterLayout)`.
 /// All keyboard layout shape decisions live here — view layer just renders the output.
 public enum LayoutBuilder {
 
 	public static func layout(
 		page: KeyboardPage,
 		showNumberRow: Bool,
-		returnKeyType: ReturnKeyType
+		returnKeyType: ReturnKeyType,
+		letterLayout: LetterLayout = .qwerty
 	) -> KeyboardLayout {
 		var rows: [KeyboardRow] = []
 
@@ -23,7 +25,7 @@ public enum LayoutBuilder {
 
 		switch page {
 		case .letters(let shift):
-			rows.append(contentsOf: makeLetterRows(shift: shift))
+			rows.append(contentsOf: makeLetterRows(shift: shift, letterLayout: letterLayout))
 		case .symbols(let symbolPage):
 			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: false))
 		case .emojis:
@@ -31,9 +33,10 @@ public enum LayoutBuilder {
 			// No row keys here — only the page-specific bottom row appears below.
 			break
 		case .emojiSearch:
-			// Search mode: full QWERTY for typing the query. Always lowercase — query is
-			// case-insensitive at match time, so a Shift key would only add noise.
-			rows.append(contentsOf: makeLetterRows(shift: .lower))
+			// Search mode: full QWERTY/QWERTZ for typing the query. Always lowercase — query is
+			// case-insensitive at match time, so a Shift key would only add noise. Honors the
+			// user's letter-layout choice so the search keyboard matches the typing keyboard.
+			rows.append(contentsOf: makeLetterRows(shift: .lower, letterLayout: letterLayout))
 		case .emojiSearchSymbols(let symbolPage):
 			// Symbols variant of search mode — same row content as the regular `.symbols`
 			// layout, but the in-row `#+=` / `123` toggle keeps the user in the search-mode
@@ -93,14 +96,29 @@ public enum LayoutBuilder {
 		"z": ["ž", "ź", "ż"]
 	]
 
-	private static let letterRow1: [Character] = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"]
-	private static let letterRow2: [Character] = ["a", "s", "d", "f", "g", "h", "j", "k", "l"]
-	private static let letterRow3Letters: [Character] = ["z", "x", "c", "v", "b", "n", "m"]
+	// Row 1 and row 3 differ between QWERTY and QWERTZ only in the position of Y and Z;
+	// row 2 is identical across variants. The inserted characters and per-letter accent
+	// alternates travel with the letter (keyed by `Character`), so only the order changes.
+	private static func letterRow1(_ layout: LetterLayout) -> [Character] {
+		switch layout {
+		case .qwerty: return ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"]
+		case .qwertz: return ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"]
+		}
+	}
 
-	private static func makeLetterRows(shift: ShiftState) -> [KeyboardRow] {
+	private static let letterRow2: [Character] = ["a", "s", "d", "f", "g", "h", "j", "k", "l"]
+
+	private static func letterRow3Letters(_ layout: LetterLayout) -> [Character] {
+		switch layout {
+		case .qwerty: return ["z", "x", "c", "v", "b", "n", "m"]
+		case .qwertz: return ["y", "x", "c", "v", "b", "n", "m"]
+		}
+	}
+
+	private static func makeLetterRows(shift: ShiftState, letterLayout: LetterLayout) -> [KeyboardRow] {
 		let row1 = KeyboardRow(
 			id: "letters.row1",
-			keys: letterRow1.map { makeLetterKey($0, shift: shift) }
+			keys: letterRow1(letterLayout).map { makeLetterKey($0, shift: shift) }
 		)
 		// Row 2 has 9 letters (asdf…l). To keep each key the same width as row 1's 10 keys,
 		// we reserve half-a-key of inset on each side via `referenceWeight: 10`.
@@ -109,7 +127,7 @@ public enum LayoutBuilder {
 			keys: letterRow2.map { makeLetterKey($0, shift: shift) },
 			referenceWeight: 10
 		)
-		let row3Letters = letterRow3Letters.map { makeLetterKey($0, shift: shift) }
+		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift) }
 		let row3 = KeyboardRow(
 			id: "letters.row3",
 			keys: [makeShiftKey(shift: shift)] + row3Letters + [makeDeleteKey()]
