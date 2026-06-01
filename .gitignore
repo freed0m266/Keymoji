@@ -42,3 +42,4 @@ __pycache__/
 *.lock
 profile
 *.orig
+tasks/dashboard.html
