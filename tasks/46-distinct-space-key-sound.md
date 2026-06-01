@@ -1,6 +1,6 @@
 # 46 — Odlišný zvuk mezerníku a delete (parita s nativní klávesnicí)
 
-**Status:** Todo
+**Status:** Done — 2026-06-01
 
 **Priorita:** v1.1 · **Úsilí:** S–M · **Dopad:** Low–Medium (jemný detail, ale znatelný „native feel")
 
