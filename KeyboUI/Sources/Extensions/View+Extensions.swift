@@ -9,5 +9,31 @@
 import SwiftUI
 
 public extension View {
-	
+	func mainBackground() -> some View {
+		self
+			.scrollContentBackground(.hidden)
+			.background {
+				RadialGradient(
+					colors: [
+						.blue.opacity(0.2),
+						.clear
+					],
+					center: .topLeading,
+					startRadius: 0,
+					endRadius: 500
+				)
+				.ignoresSafeArea()
+
+				RadialGradient(
+					colors: [
+						.orange.opacity(0.1),
+						.clear
+					],
+					center: .trailing,
+					startRadius: 0,
+					endRadius: 400
+				)
+				.ignoresSafeArea()
+			}
+	}
 }

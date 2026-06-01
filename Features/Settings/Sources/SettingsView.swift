@@ -7,11 +7,13 @@
 //
 
 import SwiftUI
+import KeyboCore
+import KeyboResources
+import KeyboUI
+
 import About
 import EmojiCodes
 import FavoriteEmojisEditor
-import KeyboCore
-import KeyboResources
 import Onboarding
 
 public struct SettingsView<ViewModel: SettingsViewModeling>: View {
@@ -35,6 +37,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				supportSection
 				aboutSection
 			}
+			.mainBackground()
 			.onAppear { viewModel.refreshLearnedWordCount() }
 			.alert(Texts.Suggestions.clearAlertTitle, isPresented: $showClearLearnedWordsAlert) {
 				Button(Texts.Suggestions.clearAlertConfirm, role: .destructive) {
