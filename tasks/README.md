@@ -78,7 +78,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## Mimo scope úplně
 
 - **iPad support.** iPad keyboard má vlastní layout (split, floating, mini), to je celý vlastní projekt. Keybo zůstává iPhone only minimálně do v1.5.
-- **Více jazyků klávesnice.** v1.0 i dohledný Future jsou English QWERTY only. Diakritika dostupná přes long-press popover, ne přes layout switch.
+- **Více jazyků klávesnice.** v1.0 i dohledný Future jsou English only. Diakritika dostupná přes long-press popover, ne přes layout switch. Pozn.: positional **QWERTY/QWERTZ** varianta je v scope (task 45) — není to další jazyk, jen prohození pozic Y/Z; písmena zůstávají English-only.
 - **SwiftKey-style next-word prediction (bigram model nad personal corpus).**
   Prefix-match completion z UILexicon + UITextChecker + personal recents je
   v scope (v1.2, task 40). Plnotučná next-word prediction (predikce dalšího

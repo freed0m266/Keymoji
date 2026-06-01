@@ -1,6 +1,6 @@
 # 45 — Přepínání QWERTY / QWERTZ layoutu
 
-**Status:** Todo
+**Status:** Done — 2026-06-01
 
 **Priorita:** v1.1 · **Úsilí:** S–M · **Dopad:** Medium
 
