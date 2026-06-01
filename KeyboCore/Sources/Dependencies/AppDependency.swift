@@ -10,9 +10,6 @@ import Foundation
 
 public final class AppDependency {
 
-	// MARK: - Services
-
-	let networkService: NetworkServicing = NetworkService()
 }
 
 public nonisolated(unsafe) let dependencies = AppDependency()
