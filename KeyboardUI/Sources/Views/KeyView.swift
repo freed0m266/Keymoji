@@ -8,6 +8,11 @@ struct KeyView: View {
 	let style: KeyStyle
 	let returnKeyType: ReturnKeyType
 	let keyWidth: CGFloat
+	/// Extra tappable / filled space owned by this key on its leading / trailing side, in points.
+	/// The visible cap stays `keyWidth` wide and is pushed away from the gap; the gap area still
+	/// carries this key's background and hit-testing (e.g. the symbols toggle / delete edge gaps).
+	let leadingGapWidth: CGFloat
+	let trailingGapWidth: CGFloat
 	let popoverAlignment: HorizontalAlignment
 	let onTap: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
@@ -73,6 +78,8 @@ struct KeyView: View {
 		style: KeyStyle,
 		returnKeyType: ReturnKeyType,
 		keyWidth: CGFloat = 0,
+		leadingGapWidth: CGFloat = 0,
+		trailingGapWidth: CGFloat = 0,
 		popoverAlignment: HorizontalAlignment = .center,
 		onTap: @escaping (Key) -> Void,
 		onKeyTapHaptic: @escaping () -> Void = {},
@@ -86,6 +93,8 @@ struct KeyView: View {
 		self.style = style
 		self.returnKeyType = returnKeyType
 		self.keyWidth = keyWidth
+		self.leadingGapWidth = leadingGapWidth
+		self.trailingGapWidth = trailingGapWidth
 		self.popoverAlignment = popoverAlignment
 		self.onTap = onTap
 		self.onKeyTapHaptic = onKeyTapHaptic
@@ -110,6 +119,11 @@ struct KeyView: View {
 		}
 		.padding(.horizontal, 3)
 		.padding(.vertical, 6)
+		// Edge gaps are padded in here — *before* the background and hit shape — so the cap stays
+		// `keyWidth` wide and pushed away from the gap, while the gap area inherits this key's
+		// background fill and tap target. A tap in the gap therefore dispatches this key's action.
+		.padding(.leading, leadingGapWidth)
+		.padding(.trailing, trailingGapWidth)
 		.frame(minHeight: 48)
 		.background {
 			Color.black.opacity(0.001)

@@ -20,11 +20,15 @@ struct KeyRowView: View {
 			if insetWidth > 0 { Spacer().frame(width: insetWidth) }
 			ForEach(Array(row.keys.enumerated()), id: \.element.id) { index, key in
 				let keyWidth = width(for: key)
+				let leadingGap = unitWidth * CGFloat(key.leadingGapWeight)
+				let trailingGap = unitWidth * CGFloat(key.trailingGapWeight)
 				KeyView(
 					key: key,
 					style: KeyStyle.style(for: key, page: page),
 					returnKeyType: returnKeyType,
 					keyWidth: keyWidth,
+					leadingGapWidth: leadingGap,
+					trailingGapWidth: trailingGap,
 					popoverAlignment: popoverAlignment(forKeyAt: index, keyWidth: keyWidth),
 					onTap: onKey,
 					onKeyTapHaptic: onKeyTapHaptic,
@@ -34,14 +38,18 @@ struct KeyRowView: View {
 					canEscalateBackspace: canEscalateBackspace,
 					onTrackpadModeChanged: onTrackpadModeChanged
 				)
-				.frame(width: keyWidth)
+				// The key owns its edge gaps: its frame spans cap + gaps, so the gap area carries the
+				// key's background and tap target instead of being a dead transparent strip.
+				.frame(width: keyWidth + leadingGap + trailingGap)
 			}
 			if insetWidth > 0 { Spacer().frame(width: insetWidth) }
 		}
 	}
 
+	/// Summed width budget for the row, including per-key edge gaps. Each gap consumes the same
+	/// proportional share as a key of equal weight, so neighbors don't expand into it.
 	private var actualTotalWeight: Double {
-		row.keys.reduce(0) { $0 + $1.visualWeight.value }
+		row.keys.reduce(0) { $0 + $1.leadingGapWeight + $1.visualWeight.value + $1.trailingGapWeight }
 	}
 
 	/// Symmetric per-side inset for rows that declare a `referenceWeight` higher than their
@@ -63,8 +71,10 @@ struct KeyRowView: View {
 
 		var leadingX: CGFloat = 0
 		for i in 0..<index {
-			leadingX += width(for: row.keys[i])
+			let k = row.keys[i]
+			leadingX += unitWidth * CGFloat(k.leadingGapWeight + k.visualWeight.value + k.trailingGapWeight)
 		}
+		leadingX += unitWidth * CGFloat(row.keys[index].leadingGapWeight)
 		let keyMidX = leadingX + keyWidth / 2
 
 		// Popover width estimate — must match LongPressPopoverView geometry: cell pitch + horizontal padding.
@@ -77,10 +87,15 @@ struct KeyRowView: View {
 		return .center
 	}
 
-	private func width(for key: Key) -> CGFloat {
+	/// Width of one weight unit after subtracting symmetric insets. Keys and gaps both bill against it.
+	private var unitWidth: CGFloat {
 		guard !row.keys.isEmpty, actualTotalWeight > 0 else { return 0 }
 		let available = max(0, totalWidth - insetWidth * 2)
-		return available * CGFloat(key.visualWeight.value / actualTotalWeight)
+		return available / CGFloat(actualTotalWeight)
+	}
+
+	private func width(for key: Key) -> CGFloat {
+		unitWidth * CGFloat(key.visualWeight.value)
 	}
 }
 

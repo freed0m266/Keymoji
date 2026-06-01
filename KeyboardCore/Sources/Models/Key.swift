@@ -9,6 +9,11 @@ public struct Key: Identifiable, Sendable, Equatable {
 	public let action: KeyAction
 	public let visualWeight: KeyWeight
 	public let role: KeyRole
+	/// Empty space rendered immediately before / after this key, in the same weight units as
+	/// `visualWeight`. Lets a key sit flush against a row edge while keeping breathing room from
+	/// its neighbor (e.g. the symbols row's toggle / delete). `0` for ordinary keys.
+	public let leadingGapWeight: Double
+	public let trailingGapWeight: Double
 
 	public init(
 		id: String,
@@ -16,7 +21,9 @@ public struct Key: Identifiable, Sendable, Equatable {
 		alternates: [KeyContent],
 		action: KeyAction,
 		visualWeight: KeyWeight,
-		role: KeyRole
+		role: KeyRole,
+		leadingGapWeight: Double = 0,
+		trailingGapWeight: Double = 0
 	) {
 		self.id = id
 		self.primary = primary
@@ -24,6 +31,23 @@ public struct Key: Identifiable, Sendable, Equatable {
 		self.action = action
 		self.visualWeight = visualWeight
 		self.role = role
+		self.leadingGapWeight = leadingGapWeight
+		self.trailingGapWeight = trailingGapWeight
+	}
+
+	/// Returns a copy with adjacent gap weights set — lets the layout builder add edge breathing
+	/// room to an already-constructed key without rebuilding it from scratch.
+	public func addingGaps(leading: Double = 0, trailing: Double = 0) -> Key {
+		Key(
+			id: id,
+			primary: primary,
+			alternates: alternates,
+			action: action,
+			visualWeight: visualWeight,
+			role: role,
+			leadingGapWeight: leading,
+			trailingGapWeight: trailing
+		)
 	}
 }
 
