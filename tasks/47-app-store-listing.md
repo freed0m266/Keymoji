@@ -1,6 +1,6 @@
 # 47 — App Store listing & ASO
 
-**Status:** Todo
+**Status:** Done — 2026-06-02 (listing copy EN+CZ + submission checklist prepared in `marketing/app-store/`; screenshots + App Store Connect upload still manual)
 
 **Priorita:** Pre-App-Store (souběžně s task 28) · **Úsilí:** S · **Dopad:** High (acquisition)
 
