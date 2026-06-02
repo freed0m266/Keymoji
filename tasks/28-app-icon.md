@@ -1,6 +1,6 @@
 # 28 — Real app icon (před App Store releasem)
 
-**Status:** Todo
+**Status:** Done — 2026-06-01
 
 **Priorita:** Pre-App-Store · **Úsilí:** S (designerská práce externí) · **Dopad:** High pro App Store
 
