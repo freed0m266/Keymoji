@@ -16,7 +16,7 @@
 </head>
 <body>
 	<h1>Keybo — Privacy Policy</h1>
-	<p class="meta">Last updated: 29 May 2026</p>
+	<p class="meta">Last updated: 2 June 2026</p>
 
 	<h2>1. What we collect</h2>
 	<p>Nothing leaves your device. Keybo is a custom iOS keyboard that runs entirely on your iPhone with no network access, so we — the developers — never receive, transmit, or have any way to see:</p>
@@ -29,12 +29,12 @@
 	<p>To make typing faster, Keybo does remember some words you type, stored in a private container on your iPhone so it can suggest completions. This data never leaves your device and we never see it — see <a href="#word-suggestions">Word suggestions</a> below.</p>
 
 	<h2>2. Why does Keybo ask for "Allow Full Access"?</h2>
-	<p>iOS requires custom keyboards to enable "Allow Full Access" in order to use the haptic feedback API. This is an iOS sandbox restriction, not a data-collection mechanism. Keybo uses Full Access exclusively for:</p>
+	<p>iOS requires custom keyboards to enable "Allow Full Access" before they can use the haptic feedback and key click sound APIs. This is an iOS sandbox restriction, not a data-collection mechanism. Keybo uses Full Access exclusively for:</p>
 	<ul>
-		<li>Haptic feedback on key taps</li>
-		<li>Reading/writing keyboard preferences (e.g. "Always show number row") in a shared container between the host app and the keyboard extension</li>
+		<li>Haptic feedback (vibration) on key taps</li>
+		<li>Key click sounds when you type</li>
 	</ul>
-	<p>Keybo does not use Full Access for network access, keychain access, or any other purpose.</p>
+	<p>Keybo does not use Full Access for network access, keychain access, or any other purpose. Your keyboard preferences are stored in a shared container between the host app and the keyboard extension using an App Group — that works regardless of Full Access and never involves the network.</p>
 
 	<h2>3. Third-party services</h2>
 	<p>Keybo uses no third-party services, SDKs, or analytics frameworks.</p>

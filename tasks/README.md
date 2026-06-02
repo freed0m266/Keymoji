@@ -70,6 +70,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## Pre-App-Store
 
 28. [28 — Real app icon](28-app-icon.md)
+47. [47 — App Store listing & ASO](47-app-store-listing.md)
 
 ## Tech debt / Refactoring
 
