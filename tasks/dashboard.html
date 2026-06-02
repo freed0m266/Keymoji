@@ -135,10 +135,10 @@ main.board {
   <header class="site">
     <h1>Keybo tasks</h1>
     <div class="stats">
-      <span class="mono">43</span> total ·
-      <span class="mono">38</span> done ·
-      <span class="mono">4</span> todo ·
-      <span class="mono">1</span> draft
+      <span class="mono">47</span> total ·
+      <span class="mono">44</span> done ·
+      <span class="mono">3</span> todo ·
+      <span class="mono">0</span> draft
     </div>
     <div class="progress-grid">
         <div class="progress-row">
@@ -146,20 +146,24 @@ main.board {
           <span class="progress-label">v1.0 — 15/15 (100%)</span>
         </div>
         <div class="progress-row">
-          <div class="progress-track"><div class="progress-fill" style="width:88%;background:#6abf69"></div></div>
-          <span class="progress-label">v1.1 — 21/24 (88%)</span>
+          <div class="progress-track"><div class="progress-fill" style="width:93%;background:#6abf69"></div></div>
+          <span class="progress-label">v1.1 — 25/27 (93%)</span>
         </div>
         <div class="progress-row">
-          <div class="progress-track"><div class="progress-fill" style="width:0%;background:#6abf69"></div></div>
-          <span class="progress-label">v1.2 — 0/1 (0%)</span>
+          <div class="progress-track"><div class="progress-fill" style="width:100%;background:#6abf69"></div></div>
+          <span class="progress-label">v1.2 — 1/1 (100%)</span>
         </div>
         <div class="progress-row">
           <div class="progress-track"><div class="progress-fill" style="width:100%;background:#888"></div></div>
           <span class="progress-label">Tech debt — 2/2 (100%)</span>
         </div>
         <div class="progress-row">
+          <div class="progress-track"><div class="progress-fill" style="width:100%;background:#888"></div></div>
+          <span class="progress-label">Pre-App-Store — 1/1 (100%)</span>
+        </div>
+        <div class="progress-row">
           <div class="progress-track"><div class="progress-fill" style="width:0%;background:#888"></div></div>
-          <span class="progress-label">Pre-App-Store — 0/1 (0%)</span>
+          <span class="progress-label">Pre-App-Store (souběžně s task 28) — 0/1 (0%)</span>
         </div>
     </div>
     <div class="controls">
@@ -171,27 +175,16 @@ main.board {
         <button data-filter="v1.2">v1.2</button>
         <button data-filter="Tech debt">Tech debt</button>
         <button data-filter="Pre-App-Store">Pre-App-Store</button>
+        <button data-filter="Pre-App-Store (souběžně s task 28)">Pre-App-Store (souběžně s task 28)</button>
       </div>
     </div>
   </header>
   <main class="board">
       <section class="column" data-status="draft">
-        <h2>Draft <span class="count">1</span></h2>
-        <article class="card" data-priority="v1.2" data-impact="high" data-search="word completion suggestions přidat prefix-match word completion nad existujícím slack suggestion bar: zatímco user píše slovo, bar nad klávesnicí nabízí 3 kandidáty na dokončení. klepnutí na chip vloží…">
-          <header>
-            <span class="num">#40</span>
-            <h3>Word completion suggestions</h3>
-          </header>
-          <div class="badges">
-            <span class="badge priority">v1.2</span>
-            <span class="badge effort">L</span>
-            <span class="badge impact impact-high">High</span>
-          </div>
-          <p class="summary">Přidat prefix-match word completion nad existujícím Slack suggestion bar: zatímco user píše slovo, bar nad klávesnicí nabízí 3 kandidáty na dokončení. Klepnutí na chip vloží…</p>
-        </article>
+        <h2>Draft <span class="count">0</span></h2>
       </section>
       <section class="column" data-status="todo">
-        <h2>Todo <span class="count">4</span></h2>
+        <h2>Todo <span class="count">3</span></h2>
         <article class="card" data-priority="v1.1" data-impact="medium" data-search="top-row long-press popover clipping při long-press na klávesy v top row klávesnice (number row pokud zapnutý, jinak qwerty row), popover renderovaný -52 pt nad klávesou skončí mimo uiinputview bounds a ios ho ořeže.…">
           <header>
             <span class="num">#21</span>
@@ -216,6 +209,47 @@ main.board {
           </div>
           <p class="summary">Apple iOS klávesnice zobrazuje malou „popup bublinu&quot; se zvětšeným znakem nad prstem při tapu. Pomáhá při psaní velkými palci, kdy prst zakrývá klávesu. V SwiftKey je toto…</p>
         </article>
+        <article class="card" data-priority="Pre-App-Store (souběžně s task 28)" data-impact="high" data-search="app store listing &amp; aso mít připravený app store listing, screenshoty a klíčová slova před první submission. keybo je privacy-first klávesnice — to je hlavní marketingový hook a musí prosakovat celým…">
+          <header>
+            <span class="num">#47</span>
+            <h3>App Store listing &amp; ASO</h3>
+          </header>
+          <div class="badges">
+            <span class="badge priority">Pre-App-Store (souběžně s task 28)</span>
+            <span class="badge effort">S</span>
+            <span class="badge impact impact-high">High</span>
+          </div>
+          <p class="summary">Mít připravený App Store listing, screenshoty a klíčová slova před první submission. Keybo je privacy-first klávesnice — to je hlavní marketingový hook a musí prosakovat celým…</p>
+        </article>
+      </section>
+      <section class="column" data-status="done">
+        <h2>Done <span class="count">44</span></h2>
+        <article class="card" data-priority="v1.1" data-impact="none" data-search="odlišný zvuk mezerníku a delete (parita s nativní klávesnicí) nativní ios klávesnice přehrává jiný zvuk pro mezerník i pro delete než pro běžné znakové klávesy — mezerník/modifikátory mají hlubší, „dutější&quot; cvak, delete má vlastní zvuk,…">
+          <header>
+            <span class="num">#46</span>
+            <h3>Odlišný zvuk mezerníku a delete (parita s nativní klávesnicí)</h3>
+          </header>
+          <div class="badges">
+            <span class="badge priority">v1.1</span>
+            <span class="badge effort">S–M</span>
+            <span class="badge impact impact-none">Low–Medium</span>
+          </div>
+          <p class="summary">Nativní iOS klávesnice přehrává jiný zvuk pro mezerník i pro delete než pro běžné znakové klávesy — mezerník/modifikátory mají hlubší, „dutější&quot; cvak, delete má vlastní zvuk,…</p>
+          <footer class="done">Done 2026-06-01</footer>
+        </article>
+        <article class="card" data-priority="v1.1" data-impact="medium" data-search="přepínání qwerty / qwertz layoutu umožnit uživateli zvolit pozici písmen y a z — buď anglický qwerty (default), nebo středoevropský qwertz (y a z prohozené). volba žije v settings, persistuje v appgroupstore a…">
+          <header>
+            <span class="num">#45</span>
+            <h3>Přepínání QWERTY / QWERTZ layoutu</h3>
+          </header>
+          <div class="badges">
+            <span class="badge priority">v1.1</span>
+            <span class="badge effort">S–M</span>
+            <span class="badge impact impact-medium">Medium</span>
+          </div>
+          <p class="summary">Umožnit uživateli zvolit pozici písmen Y a Z — buď anglický QWERTY (default), nebo středoevropský QWERTZ (Y a Z prohozené). Volba žije v Settings, persistuje v AppGroupStore a…</p>
+          <footer class="done">Done 2026-06-01</footer>
+        </article>
         <article class="card" data-priority="v1.1" data-impact="high" data-search="kliknutí do mezery mezi klávesami nesmí propadnout mezery mezi klávesami jsou aktuálně mrtvé zóny. když prst dopadne do horizontální mezery mezi dvěma klávesami (hstack(spacing: 6) v keyrowview) nebo do vertikální mezery mezi…">
           <header>
             <span class="num">#42</span>
@@ -227,6 +261,7 @@ main.board {
             <span class="badge impact impact-high">High</span>
           </div>
           <p class="summary">Mezery mezi klávesami jsou aktuálně mrtvé zóny. Když prst dopadne do horizontální mezery mezi dvěma klávesami (HStack(spacing: 6) v KeyRowView) nebo do vertikální mezery mezi…</p>
+          <footer class="done">Done 2026-06-01</footer>
         </article>
         <article class="card" data-priority="Pre-App-Store" data-impact="high" data-search="real app icon (před app store releasem) v1.0 má placeholder ikonu (z template scaffoldu nebo trivial generation). před app store submission potřeba reálnou.">
           <header>
@@ -239,10 +274,21 @@ main.board {
             <span class="badge impact impact-high">High</span>
           </div>
           <p class="summary">V1.0 má placeholder ikonu (z Template scaffoldu nebo trivial generation). Před App Store submission potřeba reálnou.</p>
+          <footer class="done">Done 2026-06-01</footer>
         </article>
-      </section>
-      <section class="column" data-status="done">
-        <h2>Done <span class="count">38</span></h2>
+        <article class="card" data-priority="v1.1" data-impact="medium" data-search="favorite emojis scrollview v suggestionbarview suggestionbarview dnes umí dva režimy podle prvního chipu: .plain (word completion, suggestionbarview.swift:50) a .pill (slack shortcode typeahead, suggestionbarview.swift:78).…">
+          <header>
+            <span class="num">#44</span>
+            <h3>Favorite emojis scrollview v SuggestionBarView</h3>
+          </header>
+          <div class="badges">
+            <span class="badge priority">v1.1</span>
+            <span class="badge effort">S</span>
+            <span class="badge impact impact-medium">Medium</span>
+          </div>
+          <p class="summary">SuggestionBarView dnes umí dva režimy podle prvního chipu: .plain (word completion, SuggestionBarView.swift:50) a .pill (Slack shortcode typeahead, SuggestionBarView.swift:78).…</p>
+          <footer class="done">Done 2026-05-31</footer>
+        </article>
         <article class="card" data-priority="Tech debt" data-impact="medium" data-search="task dashboard html generator skript scripts/generate_dashboard.py, který vyparsuje task soubory v tasks/[0-9]*.md a vyplivne statický tasks/dashboard.html — minimalistický dark-mode kanban přehled. tři…">
           <header>
             <span class="num">#43</span>
@@ -267,6 +313,19 @@ main.board {
             <span class="badge impact impact-medium">Medium</span>
           </div>
           <p class="summary">Key click sound (task 26, UIKitClickSound přes UIDevice.current.playInputClick()) funguje — zvuk se přehrává. Ale hlasitost je při startu klávesnice často neúměrně nahlas…</p>
+          <footer class="done">Done 2026-05-29</footer>
+        </article>
+        <article class="card" data-priority="v1.2" data-impact="high" data-search="word completion suggestions přidat prefix-match word completion nad existujícím slack suggestion bar: zatímco user píše slovo, bar nad klávesnicí nabízí 3 kandidáty na dokončení. klepnutí na chip vloží…">
+          <header>
+            <span class="num">#40</span>
+            <h3>Word completion suggestions</h3>
+          </header>
+          <div class="badges">
+            <span class="badge priority">v1.2</span>
+            <span class="badge effort">L</span>
+            <span class="badge impact impact-high">High</span>
+          </div>
+          <p class="summary">Přidat prefix-match word completion nad existujícím Slack suggestion bar: zatímco user píše slovo, bar nad klávesnicí nabízí 3 kandidáty na dokončení. Klepnutí na chip vloží…</p>
           <footer class="done">Done 2026-05-29</footer>
         </article>
         <article class="card" data-priority="v1.1" data-impact="high" data-search="emoji search v keyboardu (`.emojisearch` mode) native ios emoji picker má v horní části search input („search emoji&quot;). tap aktivuje qwerty layout + horizontal scrollable bar s matching emoji a vrátí se po × zpět do gridu. po…">
