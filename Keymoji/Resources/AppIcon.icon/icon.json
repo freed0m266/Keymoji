@@ -1,26 +1,42 @@
 {
-  "fill" : "automatic",
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.37193,0.49315,1.00000,1.00000",
+      "display-p3:0.35356,0.22459,0.67689,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
+  },
   "groups" : [
     {
       "layers" : [
         {
-          "fill-specializations" : [
-            {
-              "value" : {
-                "solid" : "srgb:0.00000,0.58980,1.00000,1.00000"
-              }
-            },
-            {
-              "appearance" : "dark",
-              "value" : {
-                "solid" : "srgb:1.00000,1.00000,1.00000,1.00000"
-              }
-            }
-          ],
-          "image-name" : "keyboard.fill.png",
-          "name" : "keyboard.fill",
+          "glass" : true,
+          "hidden" : false,
+          "image-name" : "keymoji.png",
+          "name" : "keymoji",
           "position" : {
-            "scale" : 0.48,
+            "scale" : 0.8,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "hidden" : true,
+          "image-name" : "background.svg",
+          "name" : "background",
+          "position" : {
+            "scale" : 1.1,
             "translation-in-points" : [
               0,
               0
