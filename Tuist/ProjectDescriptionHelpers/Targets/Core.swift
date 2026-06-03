@@ -10,7 +10,6 @@ public let core: Target = .target(
 	sources: "\(targetName)/Sources/**",
 	dependencies: [
 		.target(name: resources.name),
-		.external(name: "ACKategories"),
 		.external(name: "BaseKitX"),
 		.external(name: "SwiftyBeaver")
 	]
