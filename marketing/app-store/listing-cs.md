@@ -3,72 +3,81 @@
 > Zdroj pravdy pro českou metadata v App Store Connect. Pole zkopírovat doslova.
 > Diakritika se počítá jako 1 znak. Délky ověřit přes
 > `marketing/app-store/check-lengths.sh`.
+>
+> Pozicování: **emoji-first**. Hrdinou jsou personalizované emoji (oblíbené,
+> vlastní pořadí, emoji řada, hledání podle názvu / `:zkratky:`) plus to nejlepší
+> z nativní klávesnice a SwiftKey. Soukromí je podpůrný argument, ne headline.
 
 ## Název aplikace (max 30)
 
+> Pozn.: „Emoji" jako popis je skvělé na ASO, ale slovo má ochrannou známku
+> Emoji Company GmbH. Popisné použití v metadatech je běžné a méně rizikové než
+> brand use; konzervativní varianta je „Keymoji – Vlastní klávesnice".
+
 ```
-Keybo – Soukromá klávesnice
+Keymoji – Emoji klávesnice
 ```
 
 ## Podtitul (max 30)
 
 ```
-Klávesnice, co nešpehuje
+Oblíbené, hledání, zkratky
 ```
 
 ## Klíčová slova (max 100, oddělená čárkou, bez mezer)
 
-Slova z názvu (Keybo, Soukromá, klávesnice) a podtitulu (špehuje) se indexují
-automaticky — neopakovat je.
+Slova z názvu (Keymoji, Emoji, klávesnice) a podtitulu (oblíbené, hledání,
+zkratky) se indexují automaticky — neopakovat je.
 
 ```
-soukromí,emoji,haptika,qwertz,offline,bezpečná,zkratky,symboly,vibrace,rychlá,psaní,unicode
+smajlíky,qwerty,qwertz,unicode,symboly,haptika,nativní,rychlá,psaní,soukromá,offline,návrhy,vlastní
 ```
 
 ## Propagační text (max 170, měnitelný bez review)
 
 ```
-Klávesnice by tě neměla špehovat. Keybo běží celé na tvém iPhonu — žádné analytics, žádná síť, žádné sledování. Jen rychlé a soukromé psaní.
+Tvé emoji po tvém: připni oblíbené, nastav jejich pořadí a ťukej je z emoji řady nad klávesami. Hledej emoji podle názvu nebo :zkratky:. Rychlá, nativní, bez sledování.
 ```
 
 ## Popis (max 4000)
 
 ```
-Keybo je vlastní klávesnice pro iPhone postavená na jednom principu: co píšeš, je jen tvoje věc.
+Keymoji je klávesnice pro iPhone pro lidi, kteří žijí v emoji. Tvé oblíbené emoji máš jeden tap daleko — v pořadí, které si určíš TY — a přitom si drží rychlý, známý pocit nativní klávesnice, kterou znáš.
 
-Většina klávesnic posílá data domů. Keybo ne. Neposílá žádné síťové požadavky — neobsahuje žádný síťový kód, takže tvá slova nikdy neopustí zařízení. Žádné analytics, žádné crash reporty, žádné SDK třetích stran, nic, z čeho by ses musel odhlašovat.
+Ber to jako to nejlepší z obou světů: přesnost a nativní pocit klávesnice od Applu plus sílu, kterou bys čekal od SwiftKey — bez balastu a bez sledování.
 
-PROČ KEYBO
+EMOJI PO TVÉM
 
-• 100 % na zařízení — Keybo záměrně neposílá žádné síťové požadavky. Nikdy nic z toho, co napíšeš, nedostaneme ani neukládáme.
-• Žádné sledování — žádné analytics, žádná telemetrie, žádné reklamní SDK.
-• Rychlá a nativní — navržená tak, aby působila jako klávesnice iOS, kterou znáš.
-• Otevřená a ověřitelná — zdrojový kód je veřejný na GitHubu.
-
-FUNKCE
-
-• Rozložení QWERTY i QWERTZ, přepnutí jedním tapem
-• Emoji po tvém — rychlá emoji klávesa, oblíbené, vyhledávání a kompletní katalog jednoznakových emoji
+• Vyber si oblíbené emoji a seřaď je ve vlastním pořadí
+• Emoji řada sedí přímo nad klávesami — tvá top emoji vždy jeden tap daleko
+• Hledej jakékoli emoji podle názvu — prostě napiš, co myslíš
 • Zkratky ve stylu Slacku — napiš :smile: a dostaneš emoji
-• Chytré návrhy slov, které se učí slova, jež používáš — vše uložené soukromě na zařízení, nikdy nahrané
-• Haptická odezva a zvuky kláves, plně nastavitelné
-• Vlastní přepínání světlého/tmavého vzhledu nezávisle na systému
+• Kompletní katalog jednoznakových emoji, vestavěný
+
+KLÁVESNICE, CO SEDÍ
+
+• Nativní vzhled a pocit — navržená tak, aby působila jako iOS, žádný rušivý redesign
+• Stálá číselná řada — číslice bez přepínání rozložení
+• QWERTY i QWERTZ, přepnutí jedním tapem
+• Chytré návrhy slov, které se učí slova, jež opravdu používáš
 • Dlouhý stisk klávesy pro diakritiku a akcenty
 • Trackpad kurzor — dlouhým stiskem mezerníku přesně posouváš kurzor
 • Mazání po slovech při delším podržení
+• Haptická odezva a zvuky kláves, plně nastavitelné
+• Vlastní přepínání světlého/tmavého vzhledu nezávisle na systému
+
+SOUKROMÁ VE VÝCHOZÍM STAVU
+
+Keymoji je k tomu příjemně soukromá — ne jako trik, ale protože je jednoduchá. Neposílá žádné síťové požadavky: neobsahuje žádný síťový kód, takže co píšeš, nikdy neopustí tvůj iPhone. Žádné analytics, žádné sledování, žádné účty, žádné SDK třetích stran. Slova, která se naučí pro zrychlení psaní, zůstávají v soukromém kontejneru, ke kterému má přístup jen Keymoji — nikdy se nenahrávají, ani k Applu. Zdrojový kód je veřejný na GitHubu.
 
 O „POVOLIT PLNÝ PŘÍSTUP"
 
-iOS vyžaduje, aby vlastní klávesnice měly zapnutý „Povolit plný přístup", než mohou používat API pro haptickou odezvu a zvuky kláves. To je pravidlo sandboxu iOS, ne přepínač sběru dat. Keybo používá plný přístup výhradně pro:
+iOS vyžaduje, aby vlastní klávesnice měly zapnutý „Povolit plný přístup", než mohou používat API pro haptickou odezvu a zvuky kláves. To je pravidlo sandboxu iOS, ne přepínač sběru dat. Keymoji používá plný přístup výhradně pro:
 
 • Haptickou odezvu (vibrace) při psaní
 • Zvuky kláves
 
-Keybo nikdy nepoužívá plný přístup pro síť, kontakty, polohu ani cokoli jiného — neobsahuje vůbec žádný síťový kód. Pokud nechceš haptiku ani zvuk, můžeš plný přístup nechat vypnutý a zbytek klávesnice funguje úplně stejně.
-
-SOUKROMÍ
-
-Keybo nesbírá žádná data. Vůbec žádná. Žádný účet, žádné přihlašování, žádný server. Aby bylo psaní rychlejší, Keybo si pamatuje některá slova, která píšeš, ale ukládá je do soukromého kontejneru na tvém iPhonu, ke kterému má přístup jen Keybo — nikdy se nenahrávají, ani k Applu. Naučená slova můžeš kdykoli smazat v Nastavení a návrhy úplně vypnout.
+Keymoji nikdy nepoužívá plný přístup pro síť, kontakty, polohu ani cokoli jiného — neobsahuje vůbec žádný síťový kód. Pokud nechceš haptiku ani zvuk, můžeš plný přístup nechat vypnutý a zbytek klávesnice funguje úplně stejně.
 
 Pouze iPhone. Anglická klávesnice.
 ```
@@ -76,17 +85,17 @@ Pouze iPhone. Anglická klávesnice.
 ## URL podpory
 
 ```
-https://github.com/freed0m266/Keybo
+https://github.com/freed0m266/Keymoji
 ```
 
 ## Marketingové URL (volitelné)
 
 ```
-https://freedommartin.cz/keybo
+https://freedommartin.cz/keymoji
 ```
 
 ## URL zásad ochrany soukromí
 
 ```
-https://freedommartin.cz/keybo/privacy.html
+https://freedommartin.cz/keymoji/privacy.html
 ```

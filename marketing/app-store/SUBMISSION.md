@@ -1,6 +1,6 @@
 # App Store Connect — submission checklist
 
-Manual steps for the first Keybo submission. The text fields live in
+Manual steps for the first Keymoji submission. The text fields live in
 [`listing-en.md`](listing-en.md) (primary) and [`listing-cs.md`](listing-cs.md)
 (secondary). Run [`check-lengths.sh`](check-lengths.sh) before pasting to confirm
 every field still fits its character limit.
@@ -8,9 +8,9 @@ every field still fits its character limit.
 ## Before you start
 
 - [ ] Real app icon shipped (task 28) — ASC and screenshots both need it.
-- [ ] Privacy policy live at `https://freedommartin.cz/keybo/privacy.html` (upload the
+- [ ] Privacy policy live at `https://freedommartin.cz/keymoji/privacy.html` (upload the
       current [`../privacy-policy.html`](../privacy-policy.html) — the in-app
-      `KeyboURLs.privacyPolicy` already points here).
+      `KeymojiURLs.privacyPolicy` already points here).
 - [ ] UI is final for screenshots (tasks 35 redesign, 40 suggestions, 18/32 favorites).
 
 ## App information
@@ -18,14 +18,14 @@ every field still fits its character limit.
 - [ ] **Name / Subtitle / Keywords / Promotional text / Description** — paste from the
       listing files, EN and CZ.
 - [ ] **Primary category:** Utilities · **Secondary:** Productivity
-- [ ] **Support URL:** `https://github.com/freed0m266/Keybo`
-- [ ] **Marketing URL** (optional): `https://freedommartin.cz/keybo`
-- [ ] **Privacy Policy URL:** `https://freedommartin.cz/keybo/privacy.html`
+- [ ] **Support URL:** `https://github.com/freed0m266/Keymoji`
+- [ ] **Marketing URL** (optional): `https://freedommartin.cz/keymoji`
+- [ ] **Privacy Policy URL:** `https://freedommartin.cz/keymoji/privacy.html`
 - [ ] Localizations: **English (primary)**, **Czech**.
 
 ## App Privacy ("nutrition label")
 
-Keybo collects nothing — set every section to **Data Not Collected**.
+Keymoji collects nothing — set every section to **Data Not Collected**.
 
 - [ ] "Data Collection" → **No, we do not collect data from this app.**
 - [ ] This must match [`../privacy-policy.html`](../privacy-policy.html) **exactly**.
@@ -49,7 +49,7 @@ Required device sizes: **6.9" (iPhone 16 Pro Max)** and **6.5" (iPhone 11 Pro Ma
 
 Recommended note to pre-empt the custom-keyboard Full Access question:
 
-> Keybo requests "Allow Full Access" solely to use the haptic feedback and key
+> Keymoji requests "Allow Full Access" solely to use the haptic feedback and key
 > click sound APIs, which iOS gates behind Full Access for keyboard extensions.
 > The app contains no networking code, makes no network requests, and collects
 > no data. Full Access is optional — all typing features work without it.
