@@ -13,25 +13,15 @@ public extension View {
 		self
 			.scrollContentBackground(.hidden)
 			.background {
-				RadialGradient(
+				LinearGradient(
 					colors: [
-						.blue.opacity(0.2),
-						.clear
+						Color(hexString: "5F7EFF").opacity(0.4),
+						Color(hexString: "5A39AD").opacity(0.2),
+						Color.black,
+						Color.black
 					],
-					center: .topLeading,
-					startRadius: 0,
-					endRadius: 500
-				)
-				.ignoresSafeArea()
-
-				RadialGradient(
-					colors: [
-						.orange.opacity(0.1),
-						.clear
-					],
-					center: .trailing,
-					startRadius: 0,
-					endRadius: 400
+					startPoint: .top,
+					endPoint: .bottom
 				)
 				.ignoresSafeArea()
 			}
