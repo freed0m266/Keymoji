@@ -62,4 +62,4 @@ Místo ní zobrazit **shortcode** daného emoji (`:smile:`, `:rocket:`, …), st
 - [FavoritesEditorView.swift:70-90](Features/Settings/Sources/FavoritesEditor/FavoritesEditorView.swift:70) — aktuální `favoritesList` k přepsání
 - [EmojiCodesView.swift:64-78](Features/EmojiCodes/Sources/EmojiCodesView.swift:64) — referenční styl řádku (emoji + monospace shortcode)
 - [SlackEmojiTable.swift](KeyboardCore/Sources/Logic/SlackEmojiTable.swift) — zdrojová tabulka, sem přidat `shortcode(for:)`
-- [Localizable.strings:41-48](KeyboResources/Resources/en.lproj/Localizable.strings:41) — existující `settings.favorites.*` klíče, přidat `noShortcode`
+- [Localizable.strings:41-48](KeymojiResources/Resources/en.lproj/Localizable.strings:41) — existující `settings.favorites.*` klíče, přidat `noShortcode`

@@ -6,14 +6,14 @@
 
 ## Cíl
 
-Plain About screen s app name, version, copyright, a linkem na privacy policy. Privacy policy je HTML soubor v `marketing/` (mimo aplikační bundle, ne v `KeyboResources`), který se hostuje na webu — link v About screen jen otevírá `URL` v Safari.
+Plain About screen s app name, version, copyright, a linkem na privacy policy. Privacy policy je HTML soubor v `marketing/` (mimo aplikační bundle, ne v `KeymojiResources`), který se hostuje na webu — link v About screen jen otevírá `URL` v Safari.
 
 Toto je posledník v1.0 task. Po něm má App Store-ready bundle vše, co potřebuje (kromě skutečné ikony — Future task).
 
 ## Kontext
 
 - Apple App Store **vyžaduje** privacy policy URL při submission přes App Store Connect.
-- Pro Keybo, kde fakticky nesbíráme žádná data, je policy text krátký — 5–10 odstavců.
+- Pro Keymoji, kde fakticky nesbíráme žádná data, je policy text krátký — 5–10 odstavců.
 - Hosting policy: na osobním webu uživatele. Repo obsahuje HTML zdroj v `marketing/privacy-policy.html`, ten se ručně nahraje.
 
 ## Scope
@@ -77,13 +77,13 @@ public final class AboutViewModel: AboutViewModeling {
 
 ### 4. Constants
 
-V `KeyboCore/Sources/Shared/Constants.swift` (nový soubor nebo extension existujícího):
+V `KeymojiCore/Sources/Shared/Constants.swift` (nový soubor nebo extension existujícího):
 
 ```swift
 public enum Constants {
     public enum URLs {
-        public static let privacyPolicy = "https://freedommartin.example.com/keybo/privacy"
-        public static let sourceCode = "https://github.com/freed0m266/Keybo"
+        public static let privacyPolicy = "https://freedommartin.example.com/keymoji/privacy"
+        public static let sourceCode = "https://github.com/freed0m266/Keymoji"
     }
 }
 ```
@@ -163,28 +163,28 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 }
 ```
 
-`ChevronLinkRow` reusable z `KeyboUI` (analogicky WidgetCoin má `WidgetCoinUI/Sources/Components/ChevronLinkRow.swift` — ověřit, jestli scaffold ho má, jinak vytvořit).
+`ChevronLinkRow` reusable z `KeymojiUI` (analogicky WidgetCoin má `WidgetCoinUI/Sources/Components/ChevronLinkRow.swift` — ověřit, jestli scaffold ho má, jinak vytvořit).
 
 ### 6. Lokalizace
 
 ```strings
-"about.title" = "About Keybo";
+"about.title" = "About Keymoji";
 "about.versionLabel" = "Version %@";
 
 "about.privacy.header" = "Privacy";
-"about.privacy.statement" = "Keybo does not collect, transmit, or store any of your typing data. The keyboard runs entirely on-device. We don't use analytics, crash reporting, or any third-party SDKs that could exfiltrate data. Allow Full Access is required only for haptic feedback — it does not enable any data collection.";
+"about.privacy.statement" = "Keymoji does not collect, transmit, or store any of your typing data. The keyboard runs entirely on-device. We don't use analytics, crash reporting, or any third-party SDKs that could exfiltrate data. Allow Full Access is required only for haptic feedback — it does not enable any data collection.";
 
 "about.legal.header" = "Legal";
 "about.legal.privacyPolicyLink" = "Full privacy policy";
 "about.legal.sourceCodeLink" = "Source code on GitHub";
 "about.legal.copyright" = "© %@ Freedom Martin, s.r.o.";
 
-"general.title" = "Keybo";
+"general.title" = "Keymoji";
 ```
 
 ### 7. Privacy policy HTML
 
-`marketing/privacy-policy.html` (mimo `KeyboResources` — to není app bundle resource):
+`marketing/privacy-policy.html` (mimo `KeymojiResources` — to není app bundle resource):
 
 ```html
 <!DOCTYPE html>
@@ -192,7 +192,7 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Keybo — Privacy Policy</title>
+    <title>Keymoji — Privacy Policy</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #222; }
         h1, h2 { color: #111; }
@@ -203,37 +203,37 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
     </style>
 </head>
 <body>
-    <h1>Keybo — Privacy Policy</h1>
+    <h1>Keymoji — Privacy Policy</h1>
     <p class="meta">Last updated: [DATE]</p>
 
     <h2>1. What we collect</h2>
-    <p>Nothing. Keybo is a custom iOS keyboard that runs entirely on your device. We do not collect, transmit, store, or share any data, including but not limited to:</p>
+    <p>Nothing. Keymoji is a custom iOS keyboard that runs entirely on your device. We do not collect, transmit, store, or share any data, including but not limited to:</p>
     <ul>
         <li>Text you type or have typed</li>
         <li>Words, phrases, or any patterns from your input</li>
         <li>Personal information, device identifiers, or usage analytics</li>
-        <li>Network requests of any kind — Keybo has no internet access by design</li>
+        <li>Network requests of any kind — Keymoji has no internet access by design</li>
     </ul>
 
-    <h2>2. Why does Keybo ask for "Allow Full Access"?</h2>
-    <p>iOS requires custom keyboards to enable "Allow Full Access" in order to use the haptic feedback (vibration) API. This is an iOS sandbox restriction, not a data collection mechanism. Keybo uses Full Access exclusively for the following:</p>
+    <h2>2. Why does Keymoji ask for "Allow Full Access"?</h2>
+    <p>iOS requires custom keyboards to enable "Allow Full Access" in order to use the haptic feedback (vibration) API. This is an iOS sandbox restriction, not a data collection mechanism. Keymoji uses Full Access exclusively for the following:</p>
     <ul>
         <li>Haptic feedback on key taps</li>
         <li>Reading/writing keyboard preferences (e.g. "Always show number row") in a shared container between the host app and the keyboard extension</li>
     </ul>
-    <p>Keybo does not use Full Access for network access, keychain access, or any other purpose. The source code is open and verifiable.</p>
+    <p>Keymoji does not use Full Access for network access, keychain access, or any other purpose. The source code is open and verifiable.</p>
 
     <h2>3. Third-party services</h2>
-    <p>Keybo uses no third-party services, SDKs, or analytics frameworks.</p>
+    <p>Keymoji uses no third-party services, SDKs, or analytics frameworks.</p>
 
     <h2>4. Data sharing</h2>
-    <p>Keybo does not share any data with any party because there is no data to share.</p>
+    <p>Keymoji does not share any data with any party because there is no data to share.</p>
 
     <h2>5. Children's privacy</h2>
-    <p>Keybo does not collect data from any user, including children under 13.</p>
+    <p>Keymoji does not collect data from any user, including children under 13.</p>
 
     <h2>6. Changes to this policy</h2>
-    <p>If we ever change Keybo's behavior in a way that affects privacy (e.g., adding optional cloud sync in a future version), this policy will be updated, and the change will be highlighted in the app update changelog.</p>
+    <p>If we ever change Keymoji's behavior in a way that affects privacy (e.g., adding optional cloud sync in a future version), this policy will be updated, and the change will be highlighted in the app update changelog.</p>
 
     <h2>7. Contact</h2>
     <p>For questions about privacy, contact: <a href="mailto:martin.svoboda026@gmail.com">martin.svoboda026@gmail.com</a></p>
@@ -284,8 +284,8 @@ Settings sheet `.about` (task 12) ukáže `AboutView(viewModel: dependencies.abo
 ## Mimo scope
 
 - In-app webview pro privacy policy. Otevřeme v Safari místo. Jednodušší, méně review friction.
-- „Acknowledgements" / třetí strany licence. Keybo v v1.0 nemá runtime third-party deps (SwiftyBeaver/BaseKitX/ACKategories jsou v Template scaffoldu ale pro Keybo bychom je mohli vynechat — to je task pro v1.1 cleanup).
-- „Rate Keybo" prompt. Future polish.
+- „Acknowledgements" / třetí strany licence. Keymoji v v1.0 nemá runtime third-party deps (SwiftyBeaver/BaseKitX/ACKategories jsou v Template scaffoldu ale pro Keymoji bychom je mohli vynechat — to je task pro v1.1 cleanup).
+- „Rate Keymoji" prompt. Future polish.
 - Multi-language (en, cs separately). v1.0 jen en.
 
 ## Hotovo když
@@ -301,7 +301,7 @@ Settings sheet `.about` (task 12) ukáže `AboutView(viewModel: dependencies.abo
 ## Rizika
 
 - **`Constants.URLs.privacyPolicy` placeholder** — pokud zapomeneš updatovat před App Store submission, URL bude nefunkční. Doplnit do release checklist (mimo scope tohoto tasku, ale flag).
-- **Privacy statement copy precision** — App Store review může protestovat pokud kopíruje něco nepřesně. „Keybo does not collect any data" musí být doslova pravda — žádný analytics/crash reporting/feature flag SDK ve výsledné aplikaci.
+- **Privacy statement copy precision** — App Store review může protestovat pokud kopíruje něco nepřesně. „Keymoji does not collect any data" musí být doslova pravda — žádný analytics/crash reporting/feature flag SDK ve výsledné aplikaci.
 
 ## Reference
 

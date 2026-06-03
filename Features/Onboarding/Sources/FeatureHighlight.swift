@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import KeyboResources
+import KeymojiResources
 
 /// One item shown in the post-activation feature tour.
 public struct FeatureHighlight: Sendable, Hashable, Identifiable {

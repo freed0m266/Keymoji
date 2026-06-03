@@ -3,7 +3,7 @@ import SwiftUI
 import XCTest
 
 /// Snapshot helper specialized for keyboard renders. Lets each test pick its own
-/// `colorScheme` so we cover light + dark without relying on KeyboTesting's helper
+/// `colorScheme` so we cover light + dark without relying on KeymojiTesting's helper
 /// (which is currently `.light`-only).
 extension XCTestCase {
 	func assertKeyboardSnapshot<V: View>(

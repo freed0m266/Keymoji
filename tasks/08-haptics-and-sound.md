@@ -6,7 +6,7 @@
 
 ## Cíl
 
-Přidat haptický feedback na každý key tap a klávesnicový klikací zvuk. Haptika vyžaduje Full Access (uživatel musí povolit v iOS Settings → General → Keyboards → Keybo → Allow Full Access — host onboarding to vysvětlí v tasku 11). Toggle `hapticFeedback` v Settings (task 12) umožní haptiku vypnout. Zvuk je přes `UIInputViewAudioFeedback` protocol + `playInputClick()` — funguje *bez* Full Access.
+Přidat haptický feedback na každý key tap a klávesnicový klikací zvuk. Haptika vyžaduje Full Access (uživatel musí povolit v iOS Settings → General → Keyboards → Keymoji → Allow Full Access — host onboarding to vysvětlí v tasku 11). Toggle `hapticFeedback` v Settings (task 12) umožní haptiku vypnout. Zvuk je přes `UIInputViewAudioFeedback` protocol + `playInputClick()` — funguje *bez* Full Access.
 
 ## Kontext
 
@@ -203,7 +203,7 @@ func testNoHaptic_onNextKeyboard() { ... }
 
 Zařízení (NE simulátor — haptika v simulátoru nefunguje, je to hardware feature):
 
-1. Zapnout Full Access pro Keybo v Settings.
+1. Zapnout Full Access pro Keymoji v Settings.
 2. Napsat v Notes několik písmen → cítit `.light` impact na každém.
 3. Long-press na `e` → cítit `.soft` impact na entry.
 4. Slide přes alternates → cítit selection feedback při změně highlighted.

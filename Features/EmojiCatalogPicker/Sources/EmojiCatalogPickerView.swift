@@ -8,7 +8,7 @@
 
 import SwiftUI
 import KeyboardCore
-import KeyboResources
+import KeymojiResources
 
 /// Categorized emoji grid presented as a sheet from the Favorites editor. Tapping a cell
 /// toggles the emoji's membership in the user's favorites; the checkmark badge reflects

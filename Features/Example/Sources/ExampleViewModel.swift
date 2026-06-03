@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import KeyboCore
+import KeymojiCore
 
 @MainActor
 public protocol ExampleViewModeling: Observable {

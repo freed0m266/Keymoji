@@ -6,15 +6,15 @@
 
 ## Cíl
 
-Rozšířit onboarding flow tak, aby po dokončení tří aktivačních kroků (přidat klávesnici, povolit Full Access, vybrat Keybo) uživatel uviděl krátký **feature tour** se všemi zásadními funkcionalitami, které Keybo má a které Apple stock klávesnice neumí nebo dělá jinak. Cílem je discovery — uživatel jinak fíčury sám nenajde, protože nejsou viditelné z layoutu (long-press, double-tap, Slack typing, trackpad mode atd.).
+Rozšířit onboarding flow tak, aby po dokončení tří aktivačních kroků (přidat klávesnici, povolit Full Access, vybrat Keymoji) uživatel uviděl krátký **feature tour** se všemi zásadními funkcionalitami, které Keymoji má a které Apple stock klávesnice neumí nebo dělá jinak. Cílem je discovery — uživatel jinak fíčury sám nenajde, protože nejsou viditelné z layoutu (long-press, double-tap, Slack typing, trackpad mode atd.).
 
 Zdroj pravdy o tom, co je „zásadní funkce", je [tasks/README.md](README.md). Před implementací projít aktuální stav a vybrat položky, které jsou (a) **Done**, (b) **user-facing** (uživatel je při psaní reálně potká) a (c) **non-obvious** (neuhádne je z UI).
 
 ## Kontext
 
-- Onboarding dnes končí krokem 3 (Select Keybo). Po `didFinishOnboarding()` se schová a uživatel padá do main Settings screenu. Nikde se nedozví, že existují fíčury jako Slack-style `:smile:` typing, trackpad-on-space, double-tap-space dismiss nebo emoji favorites.
+- Onboarding dnes končí krokem 3 (Select Keymoji). Po `didFinishOnboarding()` se schová a uživatel padá do main Settings screenu. Nikde se nedozví, že existují fíčury jako Slack-style `:smile:` typing, trackpad-on-space, double-tap-space dismiss nebo emoji favorites.
 - Settings screen některé fíčury vystavuje jako toggle (sound, haptic, appearance, double-tap space action), ale to je „configuration view", ne „discovery". Uživatel který nikdy nesjede do Settings o nich neví.
-- Existující onboarding bydlí v [Features/Onboarding/](Features/Onboarding/Sources/), 3-step `TabView` s `.page` style, `OnboardingStep` enum [Features/Onboarding/Sources/OnboardingStep.swift](Features/Onboarding/Sources/OnboardingStep.swift), strings v [KeyboResources/Resources/en.lproj/Localizable.strings](KeyboResources/Resources/en.lproj/Localizable.strings) pod prefixem `onboarding.*`.
+- Existující onboarding bydlí v [Features/Onboarding/](Features/Onboarding/Sources/), 3-step `TabView` s `.page` style, `OnboardingStep` enum [Features/Onboarding/Sources/OnboardingStep.swift](Features/Onboarding/Sources/OnboardingStep.swift), strings v [KeymojiResources/Resources/en.lproj/Localizable.strings](KeymojiResources/Resources/en.lproj/Localizable.strings) pod prefixem `onboarding.*`.
 - „Setup instructions" v hlavním Settings (task 11, scope #8) musí onboarding znovu spustit — po této změně musí proto umět i přeskočit feature tour, nebo ho ukázat zvlášť jako vlastní row.
 
 ## Scope
@@ -23,7 +23,7 @@ Zdroj pravdy o tom, co je „zásadní funkce", je [tasks/README.md](README.md).
 
 Před psaním copy projít `tasks/README.md` shora dolů. Pro každý task, který má status **Done** (zkontrolovat hlavičku jednotlivých task souborů), rozhodnout:
 
-- **Patří do feature tour, pokud:** je viditelný uživateli při psaní, není odvoditelný z layoutu klávesnice a odlišuje Keybo od Apple stock.
+- **Patří do feature tour, pokud:** je viditelný uživateli při psaní, není odvoditelný z layoutu klávesnice a odlišuje Keymoji od Apple stock.
 - **Nepatří do feature tour, pokud:** je to interní implementace (scaffolding, refactor, modul split), bugfix/polish bez user-facing dopadu, nebo pre-App-Store hygiena (app icon).
 
 Tento výběr **udělat při implementaci tasku** (ne v něm dopředu fixovat seznam — README se hýbe). Aktuální kandidáti (k 2026-05-28, jen jako vodítko, ne závazný seznam):
@@ -94,7 +94,7 @@ struct FeatureTourStepView<ViewModel: OnboardingViewModeling>: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            // Headline: "What Keybo can do"
+            // Headline: "What Keymoji can do"
             // ScrollView se seznamem FeatureHighlight řádků (Icon + title + description)
             // Primary CTA: "Start typing" → onFinish()
             // Secondary CTA: "Show this again later in Settings"
@@ -120,16 +120,16 @@ FeatureTourStepView(viewModel: viewModel, onFinish: onFinish)
 
 Tour je čistě presentational — žádný state machine, žádné detekce. `currentStep` už enum case zvládne, persistence onboarding completion zůstává na `didFinishOnboarding()` v posledním kroku (= tour CTA).
 
-Edge case: pokud uživatel onboarding restartuje ze Settings („Setup instructions"), zobrazí se mu opět všechny 4 kroky včetně tour. Zvážit přidat parametr `OnboardingView(initialStep:)` aby šlo z Settings spustit přímo `featureTour` jako samostatný „What's in Keybo" prohlížeč. **Doporučení:** udělat to — v Settings dvě řádky:
+Edge case: pokud uživatel onboarding restartuje ze Settings („Setup instructions"), zobrazí se mu opět všechny 4 kroky včetně tour. Zvážit přidat parametr `OnboardingView(initialStep:)` aby šlo z Settings spustit přímo `featureTour` jako samostatný „What's in Keymoji" prohlížeč. **Doporučení:** udělat to — v Settings dvě řádky:
 - „Setup instructions" → `OnboardingView(initialStep: .addKeyboard)`
-- „What Keybo can do" → `OnboardingView(initialStep: .featureTour)`
+- „What Keymoji can do" → `OnboardingView(initialStep: .featureTour)`
 
 ### 7. Lokalizace
 
-Do `KeyboResources/Resources/en.lproj/Localizable.strings` přidat sekci:
+Do `KeymojiResources/Resources/en.lproj/Localizable.strings` přidat sekci:
 
 ```strings
-"onboarding.tour.title" = "What Keybo can do";
+"onboarding.tour.title" = "What Keymoji can do";
 "onboarding.tour.subtitle" = "A few things stock keyboards don't.";
 "onboarding.tour.cta" = "Start typing";
 
@@ -156,7 +156,7 @@ Existující `OnboardingViewModelMock` rozšířit o `currentStep: .featureTour`
 
 ### 9. Settings screen — nová row
 
-V [Features/Settings/Sources/SettingsView.swift](Features/Settings/Sources/SettingsView.swift) přidat do existující „Help" / „About" sekce (jakkoli se aktuálně jmenuje) druhou row „What Keybo can do" který otevírá `OnboardingView(initialStep: .featureTour)` v sheetu. Vedle stávající „Setup instructions".
+V [Features/Settings/Sources/SettingsView.swift](Features/Settings/Sources/SettingsView.swift) přidat do existující „Help" / „About" sekce (jakkoli se aktuálně jmenuje) druhou row „What Keymoji can do" který otevírá `OnboardingView(initialStep: .featureTour)` v sheetu. Vedle stávající „Setup instructions".
 
 ## Mimo scope
 
@@ -173,7 +173,7 @@ V [Features/Settings/Sources/SettingsView.swift](Features/Settings/Sources/Setti
 - Každá položka má SF Symbol + lokalizovaný nadpis + popisek.
 - ScrollView funguje na iPhone SE (overflow nezahazuje obsah).
 - CTA „Start typing" zavolá `didFinishOnboarding()` a zavře onboarding.
-- Settings screen má row „What Keybo can do" která otevírá tour samostatně (sheet, `initialStep: .featureTour`).
+- Settings screen má row „What Keymoji can do" která otevírá tour samostatně (sheet, `initialStep: .featureTour`).
 - Snapshot testy green (dark + light + SE width).
 - Manuální test: full first-run flow projít, ověřit že tour je čitelný a CTA odešle do Settings.
 - README.md v `tasks/` nebyl rozšířen — taskový seznam zůstává jako úložiště plánů, ne user-facing dokumentace.
@@ -182,12 +182,12 @@ V [Features/Settings/Sources/SettingsView.swift](Features/Settings/Sources/Setti
 
 - **Maintenance overhead** — pokud přibyde fíčura, někdo musí ručně rozšířit `FeatureHighlight.all` a strings. Mitigation: do checklistu při closing každého user-facing tasku přidat „zvážit zda zmínit v onboarding tour".
 - **Wall-of-text** — pokud výběr v kroku 1 nezvládne self-discipline, tour se rozroste na 12 položek a nikdo to nepřečte. Mitigation: hard cap 7 položek, nadbytek shrnout („+ víc v Settings").
-- **Onboarding restart** — pokud user dá Setup instructions ze Settings, neměl by být donucen znovu projít tour (kterou už viděl). Proto `initialStep:` parametr — Setup instructions otevírá `.addKeyboard`, „What Keybo can do" otevírá `.featureTour`. Dva entry pointy ze Settings.
+- **Onboarding restart** — pokud user dá Setup instructions ze Settings, neměl by být donucen znovu projít tour (kterou už viděl). Proto `initialStep:` parametr — Setup instructions otevírá `.addKeyboard`, „What Keymoji can do" otevírá `.featureTour`. Dva entry pointy ze Settings.
 
 ## Reference
 
 - Onboarding feature: [Features/Onboarding/Sources/](Features/Onboarding/Sources/)
-- Existující strings: [KeyboResources/Resources/en.lproj/Localizable.strings](KeyboResources/Resources/en.lproj/Localizable.strings)
+- Existující strings: [KeymojiResources/Resources/en.lproj/Localizable.strings](KeymojiResources/Resources/en.lproj/Localizable.strings)
 - Settings screen kam přidat row: [Features/Settings/Sources/SettingsView.swift](Features/Settings/Sources/SettingsView.swift)
 - Zdroj kanonického seznamu fíčur: [tasks/README.md](README.md)
 

@@ -13,7 +13,7 @@ let features: [Feature] = [
 let appTargets: [Target] = features.flatMap(\.allTargets)
 
 let project = Project(
-	name: "Keybo",
+	name: "Keymoji",
 	organizationName: "Freedom Martin, s.r.o.",
 	options: .options(
 		developmentRegion: "en"
@@ -49,18 +49,18 @@ let project = Project(
 	+ appTargets,
 	schemes: [
 		.scheme(
-			name: "Keybo",
+			name: "Keymoji",
 			buildAction: .buildAction(
-				targets: ["Keybo", "KeyboardExtension"]
+				targets: ["Keymoji", "KeyboardExtension"]
 			),
 			runAction: .runAction(
-				executable: .executable("Keybo")
+				executable: .executable("Keymoji")
 			),
 			archiveAction: .archiveAction(
 				configuration: "Release"
 			),
 			profileAction: .profileAction(
-				configuration: "Release", executable: .executable("Keybo")
+				configuration: "Release", executable: .executable("Keymoji")
 			)
 		)
 	]

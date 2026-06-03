@@ -1,5 +1,5 @@
 import Foundation
-import KeyboCore
+import KeymojiCore
 
 /// Pure-logic input dispatcher. Routes `Key` taps to the text proxy and updates `KeyboardState`.
 /// `now` is injectable so the double-tap-space window can be tested deterministically.

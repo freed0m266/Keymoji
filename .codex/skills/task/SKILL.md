@@ -1,11 +1,11 @@
 ---
 name: task
-description: Start work on a numbered Keybo task from tasks/. Use when the user writes "/task <number>", optionally with "--skip-review" or "-s". Implements the task in this repo, then runs a Claude closing review by default.
+description: Start work on a numbered Keymoji task from tasks/. Use when the user writes "/task <number>", optionally with "--skip-review" or "-s". Implements the task in this repo, then runs a Claude closing review by default.
 ---
 
-# Keybo Task
+# Keymoji Task
 
-Work on a numbered task from the Keybo `tasks/` folder.
+Work on a numbered task from the Keymoji `tasks/` folder.
 
 `/task <number>` runs the task and then asks Claude to review the staged changes.
 `/task <number> --skip-review` or `/task <number> -s` skips the closing review.
@@ -28,7 +28,7 @@ Work on a numbered task from the Keybo `tasks/` folder.
    - If the branch already exists, switch to it.
    - If the working tree is dirty before switching, stop and ask the user how to proceed.
 8. Implement the task.
-   - Follow Keybo conventions in `AGENTS.md`.
+   - Follow Keymoji conventions in `AGENTS.md`.
    - Respect task Scope, Mimo scope, Hotovo kdyz, Rizika, and Reference sections.
    - Add or update focused tests/snapshots according to the touched target.
    - Run relevant verification.
@@ -46,7 +46,7 @@ The review is done by Claude, not Codex.
 2. Run a non-interactive Claude review of the staged diff from the repo root. Use a command like:
 
 ```bash
-claude -p 'Review the staged diff in this repository. Focus on real bugs, missing edge cases, concurrency or memory issues, incorrect API usage, privacy regressions, extension-safety issues, and designs that conflict with the existing Keybo architecture. Base findings only on the staged diff and repository context. Do not edit files. Return findings with severity, file/line when possible, rationale, and suggested fix. If there are no actionable findings, say so clearly.' \
+claude -p 'Review the staged diff in this repository. Focus on real bugs, missing edge cases, concurrency or memory issues, incorrect API usage, privacy regressions, extension-safety issues, and designs that conflict with the existing Keymoji architecture. Base findings only on the staged diff and repository context. Do not edit files. Return findings with severity, file/line when possible, rationale, and suggested fix. If there are no actionable findings, say so clearly.' \
   --allowedTools 'Bash(git diff:*),Bash(git status:*),Bash(git log:*),Read' \
   --permission-mode dontAsk
 ```

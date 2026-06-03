@@ -198,9 +198,9 @@ final class KeyboardViewSnapshots: XCTestCase {
 }
 ```
 
-Použít `AssertSnapshot()` helper z `KeyboTesting`. Reference image se vytvoří při prvním běhu (`record: true`), pak commitne.
+Použít `AssertSnapshot()` helper z `KeymojiTesting`. Reference image se vytvoří při prvním běhu (`record: true`), pak commitne.
 
-Snapshoty rendrovat na 393×260 (iPhone 15 šířka, klávesnice s number row v portrait). `inPreview(colorScheme: .light/.dark)` helper z `KeyboUI` (rozšíření za WidgetCoin vzor).
+Snapshoty rendrovat na 393×260 (iPhone 15 šířka, klávesnice s number row v portrait). `inPreview(colorScheme: .light/.dark)` helper z `KeymojiUI` (rozšíření za WidgetCoin vzor).
 
 ### 7. SwiftUI Previews
 
@@ -234,7 +234,7 @@ Každý `KeyView` dostane:
 
 ### 9. Locale assertion
 
-V `KeyboardView.init` přidat `assert(...)` nebo logger note: „Keybo v1.0 supports US English layout only". Nejde o crash, jen safety check pro budoucí refaktor.
+V `KeyboardView.init` přidat `assert(...)` nebo logger note: „Keymoji v1.0 supports US English layout only". Nejde o crash, jen safety check pro budoucí refaktor.
 
 ## Mimo scope
 
@@ -263,8 +263,8 @@ V `KeyboardView.init` přidat `assert(...)` nebo logger note: „Keybo v1.0 supp
 
 ## Reference
 
-- `KeyboUI/Sources/Extensions/View+Extensions.swift` — `inPreview()` helper
-- `KeyboTesting/Sources/AssertSnapshot.swift` — snapshot helper
+- `KeymojiUI/Sources/Extensions/View+Extensions.swift` — `inPreview()` helper
+- `KeymojiTesting/Sources/AssertSnapshot.swift` — snapshot helper
 - `~/Development/WidgetCoin/Features/Settings/Tests/SettingsSnapshots.swift` — vzor snapshot test
 - Apple HIG: Keyboards → Layout — <https://developer.apple.com/design/human-interface-guidelines/keyboards>
 - SF Symbols: shift, delete.left, return, globe — <https://developer.apple.com/sf-symbols/>

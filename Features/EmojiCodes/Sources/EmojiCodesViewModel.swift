@@ -8,7 +8,7 @@
 
 import Foundation
 import UIKit
-import KeyboCore
+import KeymojiCore
 import KeyboardCore
 
 public struct EmojiCodeEntry: Identifiable, Hashable, Sendable {

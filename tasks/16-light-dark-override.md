@@ -10,7 +10,7 @@ Picker v Settings „System / Light / Dark" který přepíše systémový color 
 
 ## Scope (až přijde čas)
 
-- `AppearancePreference` enum v `KeyboCore` (system / light / dark).
+- `AppearancePreference` enum v `KeymojiCore` (system / light / dark).
 - Persistence v `AppGroupStore` přes `AppGroupStoreKey.appearance`.
 - Settings picker (segmented control) v `SettingsView`.
 - V `KeyboardView` aplikovat `.preferredColorScheme(...)` (nebo equivalent pro keyboard extension) podle preference.

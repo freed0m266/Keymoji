@@ -1,6 +1,6 @@
 import ProjectDescription
 
-private let targetName = "KeyboTesting"
+private let targetName = "KeymojiTesting"
 
 public let testing: Target = .target(
 	name: targetName,

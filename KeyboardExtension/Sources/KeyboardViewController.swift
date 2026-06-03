@@ -1,11 +1,11 @@
 import AVFoundation
 import UIKit
 import SwiftUI
-import KeyboCore
+import KeymojiCore
 import KeyboardCore
 import KeyboardUI
 
-/// Principal class for the Keybo custom keyboard extension.
+/// Principal class for the Keymoji custom keyboard extension.
 /// `@objc(KeyboardViewController)` exposes an unmangled Obj-C name so the system
 /// extension loader can resolve it via NSExtensionPrincipalClass without relying
 /// on Swift name mangling. This is the only place in the project where `@objc` is used.
@@ -55,7 +55,7 @@ final class KeyboardViewController: UIInputViewController {
 	/// not work, the controller is never inspected. `inputViewStyle: .keyboard` matches the default
 	/// `UIInputViewController.view` style so the SwiftUI host on top renders identically.
 	override func loadView() {
-		view = KeyboInputView(frame: .zero, inputViewStyle: .keyboard)
+		view = KeymojiInputView(frame: .zero, inputViewStyle: .keyboard)
 	}
 
 	override func viewDidLoad() {
@@ -624,6 +624,6 @@ extension KeyboardViewController: KeyboardControlling {}
 // `enableInputClicksWhenVisible`. iOS additionally gates audibility on the user's Settings →
 // Sounds & Haptics → Keyboard Clicks preference, and (per Apple's custom keyboard guide)
 // `playInputClick` requires Allow Full Access to be enabled for the extension.
-private final class KeyboInputView: UIInputView, UIInputViewAudioFeedback {
+private final class KeymojiInputView: UIInputView, UIInputViewAudioFeedback {
 	var enableInputClicksWhenVisible: Bool { true }
 }

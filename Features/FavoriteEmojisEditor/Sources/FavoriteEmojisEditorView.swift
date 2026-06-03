@@ -9,7 +9,7 @@
 import SwiftUI
 import EmojiCatalogPicker
 import KeyboardCore
-import KeyboResources
+import KeymojiResources
 
 public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeling>: View {
 	@State private var viewModel: ViewModel

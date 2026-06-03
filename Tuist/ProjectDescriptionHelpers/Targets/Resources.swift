@@ -1,6 +1,6 @@
 import ProjectDescription
 
-private let targetName = "KeyboResources"
+private let targetName = "KeymojiResources"
 
 public let resources = Target.target(
 	name: targetName,

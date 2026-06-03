@@ -2,7 +2,7 @@
 
 > Aktuální status snapshot: [dashboard.html](dashboard.html) (regenerate s `python3 scripts/generate_dashboard.py`).
 
-Tasky pro **Keybo v1.0** — jednoduchá custom iOS klávesnice nahrazující SwiftKey pro osobní použití, s plánem na App Store release.
+Tasky pro **Keymoji v1.0** — jednoduchá custom iOS klávesnice nahrazující SwiftKey pro osobní použití, s plánem na App Store release.
 
 Procházet shora dolů; pořadí respektuje dependency. Plnohodnotně funkční klávesnice je po dokončení tasku 09. Tasky 10–13 dotahují host appku a App Store readiness.
 
@@ -78,7 +78,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 
 ## Mimo scope úplně
 
-- **iPad support.** iPad keyboard má vlastní layout (split, floating, mini), to je celý vlastní projekt. Keybo zůstává iPhone only minimálně do v1.5.
+- **iPad support.** iPad keyboard má vlastní layout (split, floating, mini), to je celý vlastní projekt. Keymoji zůstává iPhone only minimálně do v1.5.
 - **Více jazyků klávesnice.** v1.0 i dohledný Future jsou English only. Diakritika dostupná přes long-press popover, ne přes layout switch. Pozn.: positional **QWERTY/QWERTZ** varianta je v scope (task 45) — není to další jazyk, jen prohození pozic Y/Z; písmena zůstávají English-only.
 - **SwiftKey-style next-word prediction (bigram model nad personal corpus).**
   Prefix-match completion z UILexicon + UITextChecker + personal recents je

@@ -1,7 +1,7 @@
 import Foundation
 
 /// Top-level categories shown as tabs in the emoji panel. Order mirrors Apple's stock picker
-/// plus a Keybo-specific `favorites` tab pinned to the left when the user has curated any.
+/// plus a Keymoji-specific `favorites` tab pinned to the left when the user has curated any.
 /// `favorites` and `recents` are runtime-driven (not part of the bundled catalog) and only
 /// appear when their respective data sources are non-empty.
 public enum EmojiCategory: String, Sendable, CaseIterable, Equatable, Identifiable {

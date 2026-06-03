@@ -6,7 +6,7 @@
 
 ## Souhrn
 
-Keybo dnes „připomíná" iOS klávesnici, ale ne dost přesvědčivě, aby vedle stock Apple klávesy v dark mode neprozradil, že je z jiné dílny. Cíl tasku: vizuálně doladit klávesnici tak, aby vedle nativní (viz reference screenshoty přiložené k tomuto tasku v chatu) působila jako nerozeznatelná — stejná hierarchie barev, corner radius, paddings, font, row heights. **Funkčně se nic nemění** — number row, suggestion bar, emoji panel, long-press popover, trackpad-on-space, delete repeat atd. zůstávají všechno na svém místě.
+Keymoji dnes „připomíná" iOS klávesnici, ale ne dost přesvědčivě, aby vedle stock Apple klávesy v dark mode neprozradil, že je z jiné dílny. Cíl tasku: vizuálně doladit klávesnici tak, aby vedle nativní (viz reference screenshoty přiložené k tomuto tasku v chatu) působila jako nerozeznatelná — stejná hierarchie barev, corner radius, paddings, font, row heights. **Funkčně se nic nemění** — number row, suggestion bar, emoji panel, long-press popover, trackpad-on-space, delete repeat atd. zůstávají všechno na svém místě.
 
 Nejviditelnější odchylka je v [KeyStyle.swift](KeyboardUI/Sources/Style/KeyStyle.swift): mapping barev je obrácený proti Apple. Dnes je `characterKey` *tmavší* (systemGray4) než `systemKey` (systemGray2). Apple to má naopak — písmenkové klávesy jsou *světlejší*, system klávesy (shift / delete / 123) *tmavší*, a wide „function" klávesy (space, return, ABC switch) ještě tmavší / víc translucent. Plus jsou tam menší odchylky v paddings, row spacing, fontu space labelu a výšce number row.
 
@@ -83,7 +83,7 @@ Dnešní `systemKey().font` je 16pt semibold — pro return key OK, pro space ne
 
 ### 9. Akceptační kritérium — side-by-side
 
-Finální verifikace: screenshot Keybo a screenshot Apple stock klávesnice ve stejné scéně (Spotlight nebo Safari search bar, dark mode, stejný device), překryté v Preview / Pixelmator. Per-vrstva backgroundový rozdíl < 5 % RGB; geometrie kláves se nesmí lišit o víc než 1pt na žádné dimenzi.
+Finální verifikace: screenshot Keymoji a screenshot Apple stock klávesnice ve stejné scéně (Spotlight nebo Safari search bar, dark mode, stejný device), překryté v Preview / Pixelmator. Per-vrstva backgroundový rozdíl < 5 % RGB; geometrie kláves se nesmí lišit o víc než 1pt na žádné dimenzi.
 
 Stejný test i v light mode.
 
@@ -106,10 +106,10 @@ Stejný test i v light mode.
 
 - [KeyStyle.swift](KeyboardUI/Sources/Style/KeyStyle.swift) rozlišuje 3 vrstvy (character / system / function), aplikováno přes `key.action`-based dispatch v `style(for:page:)`.
 - Paddings / row spacing / key spacing v [KeyboardView.swift](KeyboardUI/Sources/Views/KeyboardView.swift) a [KeyRowView.swift](KeyboardUI/Sources/Views/KeyRowView.swift) sladěné s naměřenými hodnotami z reference screenshotů (audit zapsaný v PR description).
-- Side-by-side screenshot (Keybo vlevo, Apple stock vpravo, oboje dark mode, stejná scéna) — rozdíl backgroundu < 5 % RGB, geometrie kláves se neliší o víc než 1pt na žádné dimenzi.
+- Side-by-side screenshot (Keymoji vlevo, Apple stock vpravo, oboje dark mode, stejná scéna) — rozdíl backgroundu < 5 % RGB, geometrie kláves se neliší o víc než 1pt na žádné dimenzi.
 - Stejné side-by-side i pro light mode.
 - Snapshot testy aktualizované; každý nový snapshot vizuálně překontrolovaný.
-- **Manuální test:** instalovat extension, povolit v Settings, otevřít Messages (dark + light mode) — Keybo splývá s Apple toolbarem nad ní (suggestion bar, accessory views) bez „aha, jiná dílna" momentu.
+- **Manuální test:** instalovat extension, povolit v Settings, otevřít Messages (dark + light mode) — Keymoji splývá s Apple toolbarem nad ní (suggestion bar, accessory views) bez „aha, jiná dílna" momentu.
 
 ## Reference
 

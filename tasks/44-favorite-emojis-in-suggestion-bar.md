@@ -135,7 +135,7 @@ Volitelně: do [`KeyboardViewSnapshots`](../KeyboardUI/Tests/KeyboardViewSnapsho
 - Jakmile se objeví jakýkoli suggestion (text nebo Slack), favorites zmizí a vykreslí se suggestions; po jejich zmizení se favorites zase vrátí.
 - Když je `favoriteEmojis` prázdné a `suggestions` prázdné, bar je vizuálně tichý jako dnes (C1) — výška klávesnice se v žádném z přechodů nemění.
 - Snapshot testy z bodu 3 jsou zelené; stávající suggestion-bar snapshoty zůstaly beze změny (default `favoriteEmojis: []` nic nerozbil).
-- Build `xcodebuild -workspace Keybo.xcworkspace -scheme Keybo -destination 'generic/platform=iOS Simulator' build` projde zelený.
+- Build `xcodebuild -workspace Keymoji.xcworkspace -scheme Keymoji -destination 'generic/platform=iOS Simulator' build` projde zelený.
 
 ## Rizika
 

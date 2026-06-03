@@ -13,7 +13,7 @@ V1.0 má placeholder ikonu (z Template scaffoldu nebo trivial generation). Před
 - Designerský brief: „klávesa K" nebo abstraktní keyboard motif, recognizable na home screen.
 - Export: 1024×1024 master + všechny iOS icon sizes (Asset Catalog AppIcon.appiconset).
 - Marketing screenshoty (pro App Store Connect): 5 obrazovek host appky v různých velikostech.
-- Update `Keybo/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json` + soubory.
+- Update `Keymoji/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json` + soubory.
 
 ## Závislosti
 

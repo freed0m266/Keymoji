@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import KeyboResources
+import KeymojiResources
 
 struct SelectKeyboardStepView<ViewModel: OnboardingViewModeling>: View {
 	@Bindable var viewModel: ViewModel

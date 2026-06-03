@@ -1,7 +1,7 @@
 import ProjectDescription
 
 let tuist = Tuist(
-	fullHandle: "keybo/Keybo",
+	fullHandle: "keymoji/Keymoji",
 	generationOptions: .options(
 		optionalAuthentication: true
 	)

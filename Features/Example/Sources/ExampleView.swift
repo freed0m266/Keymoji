@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import KeyboUI
+import KeymojiUI
 
 public struct ExampleView<ViewModel: ExampleViewModeling>: View {
 	@State private var viewModel: ViewModel

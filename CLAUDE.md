@@ -1,14 +1,14 @@
-# Keybo
+# Keymoji
 
-iOS app keybo with a modular SwiftUI architecture, managed with Tuist.
+iOS app keymoji with a modular SwiftUI architecture, managed with Tuist.
 
 ## Targets
 
-- **Keybo** — Main app entry point (placeholder ContentView)
-- **KeyboCore** — Shared framework (DI, Services, BaseViewModel, Logger)
-- **KeyboUI** — Design system (View extensions, Icon wrapper, reusable components)
-- **KeyboResources** — Localization strings and `L10n` alias
-- **KeyboTesting** — Snapshot testing utilities (`AssertSnapshot` helper)
+- **Keymoji** — Main app entry point (placeholder ContentView)
+- **KeymojiCore** — Shared framework (DI, Services, BaseViewModel, Logger)
+- **KeymojiUI** — Design system (View extensions, Icon wrapper, reusable components)
+- **KeymojiResources** — Localization strings and `L10n` alias
+- **KeymojiTesting** — Snapshot testing utilities (`AssertSnapshot` helper)
 - **Feature modules** (`Features/`) — Independent feature frameworks: `Example`
 
 ## Build

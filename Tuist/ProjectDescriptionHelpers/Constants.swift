@@ -1,3 +1,3 @@
 import ProjectDescription
 
-public let appGroupIdentifier = "group.com.freedommartin.keybo"
+public let appGroupIdentifier = "group.com.freedommartin.keymoji"

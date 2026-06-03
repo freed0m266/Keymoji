@@ -8,7 +8,7 @@
 
 import Foundation
 import UIKit
-import KeyboCore
+import KeymojiCore
 
 @MainActor
 public protocol OnboardingViewModeling: Observable, AnyObject {
@@ -97,6 +97,6 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	private static func detectKeyboardActivated() -> Bool {
 		UITextInputMode.activeInputModes
 			.compactMap { $0.value(forKey: "identifier") as? String }
-			.contains { $0.contains("com.freedommartin.keybo.keyboard") }
+			.contains { $0.contains("com.freedommartin.keymoji.keyboard") }
 	}
 }

@@ -94,7 +94,7 @@ existující 30+ call sites v previews a snapshot testech bez úprav.
 
 ### 4. `AppGroupStore` + key
 
-- `AppGroupStoreKey` ([`AppGroupStoreKey.swift`](KeyboCore/Sources/Shared/AppGroupStoreKey.swift)):
+- `AppGroupStoreKey` ([`AppGroupStoreKey.swift`](KeymojiCore/Sources/Shared/AppGroupStoreKey.swift)):
   přidat `case letterLayout`.
 - Typed accessor, vzor podle `spaceDoubleTapAction`:
 
@@ -110,11 +110,11 @@ var letterLayout: LetterLayout {
 }
 ```
 
-> `LetterLayout` musí být viditelné v `KeyboCore` (kde žije `AppGroupStore`). Pokud je
+> `LetterLayout` musí být viditelné v `KeymojiCore` (kde žije `AppGroupStore`). Pokud je
 > `LetterLayout` v `KeyboardCore`, je potřeba buď accessor přesunout, nebo enum dát do
-> `KeyboCore` a re-exportovat. **Doporučení:** dát `LetterLayout` do `KeyboCore`
+> `KeymojiCore` a re-exportovat. **Doporučení:** dát `LetterLayout` do `KeymojiCore`
 > (`Sources/Shared/`) po vzoru `AppearancePreference` / `SpaceDoubleTapAction`, které tam už
-> žijí — `KeyboardCore` na `KeyboCore` linkuje, takže `LayoutBuilder` k němu má přístup.
+> žijí — `KeyboardCore` na `KeymojiCore` linkuje, takže `LayoutBuilder` k němu má přístup.
 > Ověřit, kde přesně `AppearancePreference`/`SpaceDoubleTapAction` leží, a držet konzistenci.
 
 ### 5. `KeyboardState` + `KeyboardRoot` + `refreshFromStore`
@@ -155,7 +155,7 @@ ale jdou přes `L10n` kvůli konzistenci — viz lokalizace níže).
 
 ### 7. Lokalizace + README
 
-- `KeyboResources/.../Localizable.strings`:
+- `KeymojiResources/.../Localizable.strings`:
 
 ```strings
 "settings.keyboard.letterLayout" = "Letter layout";
@@ -208,7 +208,7 @@ ale jdou přes `L10n` kvůli konzistenci — viz lokalizace níže).
 
 ## Rizika
 
-- **Umístění `LetterLayout` enumu** (KeyboCore vs KeyboardCore) — accessor v `AppGroupStore`
+- **Umístění `LetterLayout` enumu** (KeymojiCore vs KeyboardCore) — accessor v `AppGroupStore`
   i `LayoutBuilder` ho oba musí vidět. Vyřešit dle toho, kde leží `AppearancePreference` /
   `SpaceDoubleTapAction` (Scope 4 pozn.). Špatná volba = circular/ chybějící import.
 - **Stabilita key ID** — `letter.<lower>` ID jsou per-písmeno, ne per-pozice, takže přesun je

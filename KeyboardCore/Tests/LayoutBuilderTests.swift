@@ -1,5 +1,5 @@
 import XCTest
-import KeyboCore
+import KeymojiCore
 @testable import KeyboardCore
 
 final class LayoutBuilderTests: XCTestCase {

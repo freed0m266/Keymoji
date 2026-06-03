@@ -12,7 +12,7 @@ Upgrade: Darwin notifications (`CFNotificationCenterPostNotification` přes Darw
 
 ## Scope (až přijde čas)
 
-- `SettingsChangeNotifier` v `KeyboCore` — wrapper nad Darwin notifications.
+- `SettingsChangeNotifier` v `KeymojiCore` — wrapper nad Darwin notifications.
 - Host příklad: `SettingsViewModel.didSet showNumberRow` → `notifier.notifyShowNumberRowChanged()`.
 - Extension: `KeyboardViewController` v `viewDidLoad` zaregistruje observer; v `deinit` deregistruje.
 - Pozor na `@Sendable` v notification callback (Swift 6 concurrency).

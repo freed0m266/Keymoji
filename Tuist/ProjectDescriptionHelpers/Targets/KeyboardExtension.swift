@@ -8,7 +8,7 @@ public let keyboardExtension: Target = .target(
 	product: .appExtension,
 	bundleId: "\(appBundleId).keyboard",
 	infoPlist: .extendingDefault(with: [
-		"CFBundleDisplayName": "Keybo",
+		"CFBundleDisplayName": "Keymoji",
 		"NSExtension": [
 			"NSExtensionPointIdentifier": "com.apple.keyboard-service",
 			"NSExtensionPrincipalClass": "$(PRODUCT_MODULE_NAME).KeyboardViewController",

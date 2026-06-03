@@ -19,7 +19,7 @@ Preference žije v `AppGroupStore`, čte se v `viewWillAppear` jako ostatní set
 - Dnes je dvojitý tap na space hardcoded na `". "` substituci v `KeyboardCore/Sources/Logic/InputDispatcher.swift` v `handleSpace(state:proxy:now:)`. Window 500 ms (`doubleSpaceWindow`).
 - Některým uživatelům `". "` chování vadí (chybné triggery při rychlém psaní, jiné jazykové návyky). Apple stock klávesnice nabízí v Settings → General → Keyboards toggle „." Shortcut" (zap/vyp). My jdeme o krok dál — třetí volba „dismiss" je oblíbená feature ze SwiftKey.
 - Settings screen je v [Features/Settings/Sources/SettingsView.swift](Features/Settings/Sources/SettingsView.swift) — přidáme nový Picker do `keyboardSection`.
-- `AppGroupStore` má vzor pro string-enum preferenci: viz `appearance: AppearancePreference` v [KeyboCore/Sources/Shared/AppGroupStore.swift:99](KeyboCore/Sources/Shared/AppGroupStore.swift:99). Stejný pattern použijeme.
+- `AppGroupStore` má vzor pro string-enum preferenci: viz `appearance: AppearancePreference` v [KeymojiCore/Sources/Shared/AppGroupStore.swift:99](KeymojiCore/Sources/Shared/AppGroupStore.swift:99). Stejný pattern použijeme.
 - `KeyboardControlling.dismissKeyboard()` už existuje ([KeyboardCore/Sources/Public/KeyboardControlling.swift](KeyboardCore/Sources/Public/KeyboardControlling.swift)) — `InputDispatcher.dispatch` ho dostává v parametru, takže `handleSpace` k němu může dosáhnout.
 
 ## Scope
@@ -43,17 +43,17 @@ public enum SpaceDoubleTapAction: String, Sendable, CaseIterable {
 }
 ```
 
-Důvod, proč v `KeyboardCore` (a ne v `KeyboCore`): hodnota se čte uvnitř `InputDispatcher`, který je v `KeyboardCore`. `AppGroupStore` (v `KeyboCore`) referencuje tento enum přes import — `KeyboCore` už importuje `KeyboardCore`? Pokud ne, zvolíme opačnou polohu (enum v `KeyboCore`, `InputDispatcher` ho importuje). **Zkontrolovat dependency graph před implementací** — `AppearancePreference` žije v `KeyboCore`, takže nejspíš dáme i `SpaceDoubleTapAction` do `KeyboCore/Sources/Shared/` pro konzistenci a `KeyboardCore` ho bude importovat. Důležité je, ať enum sdílí host app i extension přes jeden import bez kruhové závislosti.
+Důvod, proč v `KeyboardCore` (a ne v `KeymojiCore`): hodnota se čte uvnitř `InputDispatcher`, který je v `KeyboardCore`. `AppGroupStore` (v `KeymojiCore`) referencuje tento enum přes import — `KeymojiCore` už importuje `KeyboardCore`? Pokud ne, zvolíme opačnou polohu (enum v `KeymojiCore`, `InputDispatcher` ho importuje). **Zkontrolovat dependency graph před implementací** — `AppearancePreference` žije v `KeymojiCore`, takže nejspíš dáme i `SpaceDoubleTapAction` do `KeymojiCore/Sources/Shared/` pro konzistenci a `KeyboardCore` ho bude importovat. Důležité je, ať enum sdílí host app i extension přes jeden import bez kruhové závislosti.
 
 ### 2. `AppGroupStoreKey` + typed accessor
 
-V [KeyboCore/Sources/Shared/AppGroupStoreKey.swift](KeyboCore/Sources/Shared/AppGroupStoreKey.swift) přidat case:
+V [KeymojiCore/Sources/Shared/AppGroupStoreKey.swift](KeymojiCore/Sources/Shared/AppGroupStoreKey.swift) přidat case:
 
 ```swift
 case spaceDoubleTapAction
 ```
 
-V [KeyboCore/Sources/Shared/AppGroupStore.swift](KeyboCore/Sources/Shared/AppGroupStore.swift) (vedle `appearance`):
+V [KeymojiCore/Sources/Shared/AppGroupStore.swift](KeymojiCore/Sources/Shared/AppGroupStore.swift) (vedle `appearance`):
 
 ```swift
 var spaceDoubleTapAction: SpaceDoubleTapAction {
@@ -195,7 +195,7 @@ V `Features/Settings/Testing/SettingsViewModelMock.swift` přidat default `.inse
 
 ### 8. Lokalizace
 
-`KeyboResources/Resources/en.lproj/Localizable.strings`:
+`KeymojiResources/Resources/en.lproj/Localizable.strings`:
 
 ```strings
 "settings.keyboard.spaceDoubleTapAction" = "Double-tap space";
@@ -207,7 +207,7 @@ V `Features/Settings/Testing/SettingsViewModelMock.swift` přidat default `.inse
 
 (+ `cs.lproj` pokud existuje. Zkontrolovat v repu.)
 
-V `KeyboResources` `L10n` aliasy doplnit pod `L10n.Settings.Keyboard.SpaceDoubleTap.*` (pattern `L10n.Settings.Keyboard.Appearance.*` jako vzor).
+V `KeymojiResources` `L10n` aliasy doplnit pod `L10n.Settings.Keyboard.SpaceDoubleTap.*` (pattern `L10n.Settings.Keyboard.Appearance.*` jako vzor).
 
 ### 9. Unit testy
 
@@ -264,14 +264,14 @@ V `KeyboardCore/Tests/InputDispatcherTests.swift` (rozšířit existující spac
 - **`dismissKeyboard()` UX trailing space.** Po dismissu zůstane v dokumentu jedna mezera z prvního tapu. To je správně (uživatel ji tam vědomě vložil), ale někteří mohou očekávat „čistý" dismiss bez stop. Hold rule: respektovat to, co uživatel zapsal — nemazat jeho input. Pokud feedback ukáže opak, budoucí toggle „Strip trailing space on dismiss" jako samostatný task.
 - **Interakce s auto-switch (task 27).** Když dismissujeme ze symbol page, scope 4 dělá `handleSpace` *před* page switchem na letters. Pořadí je: handleSpace → dismiss → return z handleSpace → if-symbols → page = letters. Page state je updated i přes dismiss; není problém — klávesnice je jen schovaná, ne destroyed. Test 5 ve scope 9 to ověří.
 - **Window 500 ms a `.dismissKeyboard`.** Uživatel může chtít dvě mezery za sebou a omylem triggernout dismiss. Mitigace: 500 ms je dost krátké, že náhodný double-tap je vzácný; pokud někoho rozčiluje, může přepnout na `.none`. Žádný runtime fix.
-- **`SpaceDoubleTapAction` umístění (KeyboCore vs. KeyboardCore).** Před implementací zkontrolovat dependency graph v `Tuist/`. `AppearancePreference` je v `KeyboCore` a používá ji jak `AppGroupStore` (`KeyboCore`), tak Settings (`Features/Settings`). `SpaceDoubleTapAction` potřebuje navíc i `KeyboardCore` (`InputDispatcher`). Pokud `KeyboardCore` neimportuje `KeyboCore`, dáme enum sem; jinak `KeyboCore` jako `AppearancePreference`. **Tuist dep graph je single source of truth — neimplementovat naslepo.**
+- **`SpaceDoubleTapAction` umístění (KeymojiCore vs. KeyboardCore).** Před implementací zkontrolovat dependency graph v `Tuist/`. `AppearancePreference` je v `KeymojiCore` a používá ji jak `AppGroupStore` (`KeymojiCore`), tak Settings (`Features/Settings`). `SpaceDoubleTapAction` potřebuje navíc i `KeyboardCore` (`InputDispatcher`). Pokud `KeyboardCore` neimportuje `KeymojiCore`, dáme enum sem; jinak `KeymojiCore` jako `AppearancePreference`. **Tuist dep graph je single source of truth — neimplementovat naslepo.**
 
 ## Reference
 
 - [tasks/27-auto-switch-to-letters-after-space.md](tasks/27-auto-switch-to-letters-after-space.md) — vzor pro space-related InputDispatcher změny + page switch interakce.
 - [tasks/16-light-dark-override.md](tasks/16-light-dark-override.md) — vzor pro string-enum preferenci v `AppGroupStore` + Settings Picker.
-- [KeyboCore/Sources/Shared/AppearancePreference.swift](KeyboCore/Sources/Shared/AppearancePreference.swift) — vzor enum.
-- [KeyboCore/Sources/Shared/AppGroupStore.swift:99](KeyboCore/Sources/Shared/AppGroupStore.swift:99) — vzor accessor.
+- [KeymojiCore/Sources/Shared/AppearancePreference.swift](KeymojiCore/Sources/Shared/AppearancePreference.swift) — vzor enum.
+- [KeymojiCore/Sources/Shared/AppGroupStore.swift:99](KeymojiCore/Sources/Shared/AppGroupStore.swift:99) — vzor accessor.
 - [Features/Settings/Sources/SettingsView.swift:62](Features/Settings/Sources/SettingsView.swift:62) — vzor Picker integration.
 - [KeyboardCore/Sources/Logic/InputDispatcher.swift:99](KeyboardCore/Sources/Logic/InputDispatcher.swift:99) — `handleSpace` k úpravě.
 

@@ -6,10 +6,10 @@
 
 ## Souhrn
 
-Z původního prompt seznamu „I liked": SwiftKey má dedicated emoji klávesu, která otevře emoji picker. V Keybo v1.0 to není; uživatel musí přepnout přes globe na system emoji klávesnici (přes long-press globe → emoji).
+Z původního prompt seznamu „I liked": SwiftKey má dedicated emoji klávesu, která otevře emoji picker. V Keymoji v1.0 to není; uživatel musí přepnout přes globe na system emoji klávesnici (přes long-press globe → emoji).
 
 Upgrade: vlastní emoji klávesa na bottom row (nebo místo emoji symbol vlevo od space?), která buď:
-- (a) otevře *vlastní* emoji panel uvnitř Keybo (potřebuje emoji data, search, kategorie — větší práce),
+- (a) otevře *vlastní* emoji panel uvnitř Keymoji (potřebuje emoji data, search, kategorie — větší práce),
 - (b) zavolá `advanceToNextInputMode()` s navigací na system emoji (Apple API neumí cílit specifický keyboard — fail).
 
 Reálná cesta je **(a)** — vlastní emoji panel jako sub-page v `KeyboardPage`.

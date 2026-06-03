@@ -1,5 +1,5 @@
 import XCTest
-import KeyboCore
+import KeymojiCore
 @testable import KeyboardCore
 
 final class PersonalRecentsStoreTests: XCTestCase {
@@ -10,7 +10,7 @@ final class PersonalRecentsStoreTests: XCTestCase {
 
 	override func setUp() {
 		super.setUp()
-		suiteName = "keybo.tests.recents.\(UUID().uuidString)"
+		suiteName = "keymoji.tests.recents.\(UUID().uuidString)"
 		appStore = AppGroupStore(suiteName: suiteName)
 		store = PersonalRecentsStore(store: appStore)
 	}

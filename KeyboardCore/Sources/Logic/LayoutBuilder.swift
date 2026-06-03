@@ -1,5 +1,5 @@
 import Foundation
-import KeyboCore
+import KeymojiCore
 
 /// Pure factory that builds a `KeyboardLayout` from `(page, showNumberRow, returnKeyType, letterLayout)`.
 /// All keyboard layout shape decisions live here — view layer just renders the output.

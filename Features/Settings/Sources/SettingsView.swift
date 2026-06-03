@@ -7,9 +7,9 @@
 //
 
 import SwiftUI
-import KeyboCore
-import KeyboResources
-import KeyboUI
+import KeymojiCore
+import KeymojiResources
+import KeymojiUI
 
 import About
 import EmojiCodes

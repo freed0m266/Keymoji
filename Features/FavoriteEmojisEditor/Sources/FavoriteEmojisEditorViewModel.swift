@@ -8,7 +8,7 @@
 
 import Foundation
 import SwiftUI
-import KeyboCore
+import KeymojiCore
 
 @MainActor
 public protocol FavoriteEmojisEditorViewModeling: Observable, AnyObject {

@@ -6,7 +6,7 @@
 
 ## Souhrn
 
-V1.0 task 08 záměrně vynechává klikací zvuk klávesnice (`UIDevice.current.playInputClick()`). Defaultně iOS klávesnice click sound poskytuje jen pokud uživatel má „Keyboard Clicks" zapnuté v Settings → Sounds & Haptics. Pro Keybo je to ~10 řádků kódu.
+V1.0 task 08 záměrně vynechává klikací zvuk klávesnice (`UIDevice.current.playInputClick()`). Defaultně iOS klávesnice click sound poskytuje jen pokud uživatel má „Keyboard Clicks" zapnuté v Settings → Sounds & Haptics. Pro Keymoji je to ~10 řádků kódu.
 
 ## Scope (až přijde čas)
 

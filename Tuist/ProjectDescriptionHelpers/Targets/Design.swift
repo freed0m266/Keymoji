@@ -1,6 +1,6 @@
 import ProjectDescription
 
-private let targetName = "KeyboUI"
+private let targetName = "KeymojiUI"
 
 public let design = Target.target(
 	name: targetName,

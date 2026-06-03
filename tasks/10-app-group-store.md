@@ -10,7 +10,7 @@ Implementovat sdílený storage mezi host appkou a keyboard extensionem. Pattern
 
 ## Kontext
 
-- App Group `group.com.freedommartin.keybo` deklarován v entitlements obou targetů v tasku 01.
+- App Group `group.com.freedommartin.keymoji` deklarován v entitlements obou targetů v tasku 01.
 - WidgetCoin používá `UserDefaults(suiteName:)` wrapper s typed enum `AppGroupStoreKey`. Replicate ten pattern.
 - Cross-process challenge: host appka zapíše → extension přečte. Bez Darwin notifications musí extension re-read **každý** `viewWillAppear`. Pro v1.0 stačí.
 
@@ -18,7 +18,7 @@ Implementovat sdílený storage mezi host appkou a keyboard extensionem. Pattern
 
 ### 1. `AppGroupStoreKey` enum
 
-`KeyboCore/Sources/Shared/AppGroupStoreKey.swift`:
+`KeymojiCore/Sources/Shared/AppGroupStoreKey.swift`:
 
 ```swift
 public enum AppGroupStoreKey: String, Sendable, CaseIterable {
@@ -30,7 +30,7 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 
 ### 2. `AppGroupStore` wrapper
 
-`KeyboCore/Sources/Shared/AppGroupStore.swift`:
+`KeymojiCore/Sources/Shared/AppGroupStore.swift`:
 
 ```swift
 import Foundation
@@ -81,14 +81,14 @@ public final class AppGroupStore: Sendable {
     }
 }
 
-public let appGroupSuiteName = "group.com.freedommartin.keybo"
+public let appGroupSuiteName = "group.com.freedommartin.keymoji"
 ```
 
 **Proč `suite.object(forKey:) != nil` check** v `bool(...)`? `UserDefaults.bool(forKey:)` vrací `false` pokud klíč neexistuje — to je k nerozlišitelnému od „uloženo `false`". Pomocí `object(forKey:) != nil` rozeznáme „uloženo" od „neuloženo" a vrátíme default jen v druhém případě.
 
 ### 3. Typed accessory (volitelně, pro pohodlí)
 
-`KeyboCore/Sources/Shared/AppGroupStore+TypedAccess.swift`:
+`KeymojiCore/Sources/Shared/AppGroupStore+TypedAccess.swift`:
 
 ```swift
 public extension AppGroupStore {
@@ -157,12 +157,12 @@ Toggle("Always show number row", isOn: $showNumberRow)
 
 ### 6. Unit testy
 
-`KeyboCore_Tests` *(nebo nový test target — viz task 01 — `KeyboardCore_Tests`)*: `AppGroupStore` testovatelný snadno s custom suite name (in-memory style):
+`KeymojiCore_Tests` *(nebo nový test target — viz task 01 — `KeyboardCore_Tests`)*: `AppGroupStore` testovatelný snadno s custom suite name (in-memory style):
 
 ```swift
 final class AppGroupStoreTests: XCTestCase {
     var store: AppGroupStore!
-    let testSuite = "group.com.freedommartin.keybo.tests"
+    let testSuite = "group.com.freedommartin.keymoji.tests"
 
     override func setUp() {
         store = AppGroupStore(suiteName: testSuite)
@@ -210,7 +210,7 @@ V RELEASE-mode toto je preferable nad crash. Žádná production aplikace by nem
 
 ## Hotovo když
 
-- `AppGroupStore` v `KeyboCore/Sources/Shared/`.
+- `AppGroupStore` v `KeymojiCore/Sources/Shared/`.
 - `AppGroupStoreKey` enum s `showNumberRow`, `hapticFeedbackEnabled`.
 - Typed accessors `.showNumberRow` a `.hapticFeedbackEnabled`.
 - `KeyboardViewController.viewWillAppear` re-reads `showNumberRow` ze store.

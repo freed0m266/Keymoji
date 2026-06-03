@@ -215,7 +215,7 @@ Row 3 má méně kláves; layout je nevyvážený. Apple to řeší tak, že row
 [#+=]  . , ? ! '  [delete]
 ```
 
-Pro Keybo bez `#+=` třetí stránky to bude:
+Pro Keymoji bez `#+=` třetí stránky to bude:
 
 ```
 [ABC]  . , ? ! '  [delete]
@@ -283,7 +283,7 @@ Cílem je ~20 testů. Každý jednotlivý test < 10 řádků. Use `XCTAssertEqua
 
 ### 6. Logging
 
-`KeyboardCore` linkuje `KeyboCore` který bringe SwiftyBeaver. **Nepoužívat v KeyboardCore žádný logging** — je to čistá synchronní logika, log je tu zbytečný a v extension procesu jsou každé bajty paměti drahé. Logger zavedeme až ve task 04 (InputDispatcher) nebo 11 (host onboarding).
+`KeyboardCore` linkuje `KeymojiCore` který bringe SwiftyBeaver. **Nepoužívat v KeyboardCore žádný logging** — je to čistá synchronní logika, log je tu zbytečný a v extension procesu jsou každé bajty paměti drahé. Logger zavedeme až ve task 04 (InputDispatcher) nebo 11 (host onboarding).
 
 ## Mimo scope
 

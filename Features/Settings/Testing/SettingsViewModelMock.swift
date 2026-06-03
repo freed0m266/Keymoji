@@ -8,7 +8,7 @@
 
 #if DEBUG
 import Foundation
-import KeyboCore
+import KeymojiCore
 
 @Observable
 @MainActor

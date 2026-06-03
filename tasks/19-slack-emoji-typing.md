@@ -6,7 +6,7 @@
 
 ## Souhrn
 
-Když uživatel napíše `:smile:` nebo `:thumbsup:`, Keybo to automaticky nahradí za emoji. Inspirace ze Slacku / Discord / GitHubu.
+Když uživatel napíše `:smile:` nebo `:thumbsup:`, Keymoji to automaticky nahradí za emoji. Inspirace ze Slacku / Discord / GitHubu.
 
 ## Scope (až přijde čas)
 

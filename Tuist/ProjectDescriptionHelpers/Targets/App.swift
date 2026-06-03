@@ -1,8 +1,8 @@
 import ProjectDescription
 
-let appBundleId = "com.freedommartin.keybo"
+let appBundleId = "com.freedommartin.keymoji"
 
-private let targetName = "Keybo"
+private let targetName = "Keymoji"
 
 public let app: Target = .target(
 	name: targetName,

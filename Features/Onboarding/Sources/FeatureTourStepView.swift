@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import KeyboResources
+import KeymojiResources
 
 struct FeatureTourStepView<ViewModel: OnboardingViewModeling>: View {
 	@Bindable var viewModel: ViewModel

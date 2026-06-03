@@ -1,5 +1,5 @@
 import Foundation
-import KeyboCore
+import KeymojiCore
 
 /// Mutable runtime state of the keyboard held by `KeyboardViewController`.
 /// `InputDispatcher` mutates this in-place; the view rebuilds layout from these values.

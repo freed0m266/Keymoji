@@ -4,7 +4,7 @@ import KeyboardCore
 /// Real haptic implementation. Generators are prepared once at init; each tap triggers a single impact.
 ///
 /// `UIImpactFeedbackGenerator` only generates vibrations from a keyboard extension when the user
-/// has enabled "Allow Full Access" in Settings → General → Keyboards → Keybo. Without it, all
+/// has enabled "Allow Full Access" in Settings → General → Keyboards → Keymoji. Without it, all
 /// methods silently no-op (matches iOS sandbox behavior — there is no public API to query for it).
 ///
 /// The `isEnabled` closure lets `KeyboardViewController` short-circuit when the host-app toggle

@@ -11,7 +11,7 @@ Když uživatel napíše větu končící `. `, `? `, nebo `! ` a začne psát d
 ## Kontext
 
 - `UITextDocumentProxy.documentContextBeforeInput` vrací text vlevo od kurzoru. Detekce sentence boundary čte poslední 1–3 znaky.
-- `UITextInputTraits.autocapitalizationType` říká, jakou auto-cap chce hosting appka (`.none`, `.words`, `.sentences`, `.allCharacters`). V Keybo v1.0 implementujeme jen `.sentences`. `.words` a `.allCharacters` jsou Future (nebo wontfix).
+- `UITextInputTraits.autocapitalizationType` říká, jakou auto-cap chce hosting appka (`.none`, `.words`, `.sentences`, `.allCharacters`). V Keymoji v1.0 implementujeme jen `.sentences`. `.words` a `.allCharacters` jsou Future (nebo wontfix).
 - Hooky v `KeyboardViewController`: `textDidChange` — po každé změně cursor pozice / dokumentu.
 
 ## Scope
@@ -106,7 +106,7 @@ public override func textDidChange(_ textInput: UITextInput?) {
 
 Apple: pokud uživatel napíše `. A` (kde `A` bylo auto-capitalizováno), pak stiskne backspace, smaže to **písmeno `A` ale nikoli auto-cap state** — shift zůstane v `.upper`, takže další tap zase napíše velké písmeno. To je „undo my auto-cap" interaction.
 
-V Keybo v1.0 **toto neimplementujeme** — backspace prostě smaže předchozí znak, shift se přirozeně přizpůsobí přes `textDidChange` (pokud kontext před cursorem zase končí `. `, auto-cap re-triggerne).
+V Keymoji v1.0 **toto neimplementujeme** — backspace prostě smaže předchozí znak, shift se přirozeně přizpůsobí přes `textDidChange` (pokud kontext před cursorem zase končí `. `, auto-cap re-triggerne).
 
 To je čistší řešení a v praxi se chová správně, jen má jiný interakční model než Apple. Pro v1.0 OK.
 

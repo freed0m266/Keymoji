@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import KeyboCore
+import KeymojiCore
 import KeyboardCore
 
 @MainActor
@@ -19,7 +19,7 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var spaceDoubleTapAction: SpaceDoubleTapAction { get set }
 	var letterLayout: LetterLayout { get set }
 	var suggestionsEnabled: Bool { get set }
-	/// Number of words Keybo has learned for completion. Read-only; refresh on view appear.
+	/// Number of words Keymoji has learned for completion. Read-only; refresh on view appear.
 	var learnedWordCount: Int { get }
 	var versionString: String { get }
 

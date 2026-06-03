@@ -1,6 +1,6 @@
-# Keybo
+# Keymoji
 
-Keybo is a private, on-device custom iOS keyboard. It is built as a personal
+Keymoji is a private, on-device custom iOS keyboard. It is built as a personal
 SwiftKey replacement with a path to App Store release.
 
 Core product constraints:
@@ -17,22 +17,22 @@ Core product constraints:
 - `tasks/README.md` and numbered `tasks/*.md` are the roadmap and scope source of truth.
 - `Project.swift` and `Tuist/ProjectDescriptionHelpers/Targets/**` define generated targets.
 - `marketing/privacy-policy.html` is the privacy policy source of truth.
-- `KeyboCore/Sources/Shared/KeyboURLs.swift` points to the hosted privacy URL.
+- `KeymojiCore/Sources/Shared/KeymojiURLs.swift` points to the hosted privacy URL.
 
 ## Targets
 
-- `Keybo`: host app. Owns onboarding, settings entry points, app resources, and app group entitlement.
+- `Keymoji`: host app. Owns onboarding, settings entry points, app resources, and app group entitlement.
 - `KeyboardExtension`: app extension principal target. Hosts SwiftUI in `UIInputViewController`,
   bridges UIKit types into `KeyboardCore`, and wires haptics/click sound/text proxy.
 - `KeyboardCore`: pure Swift keyboard logic. No UIKit or SwiftUI. Models, layout, input dispatch,
   shift/caps state, auto-cap, emoji parsing/search, suggestions, and personal recents.
 - `KeyboardUI`: SwiftUI keyboard rendering. Extension-safe (`APPLICATION_EXTENSION_API_ONLY = YES`).
-  Depends on `KeyboardCore`, `KeyboUI`, `KeyboResources`, and `KeyboCore`.
-- `KeyboCore`: shared app utilities such as `AppDependency`, `BaseViewModel`, `AppGroupStore`,
+  Depends on `KeyboardCore`, `KeymojiUI`, `KeymojiResources`, and `KeymojiCore`.
+- `KeymojiCore`: shared app utilities such as `AppDependency`, `BaseViewModel`, `AppGroupStore`,
   `SettingsChangeNotifier`, `Logger`, and shared enums/settings.
-- `KeyboUI`: host/design-system helpers (`Icon`, view extensions). Do not confuse with `KeyboardUI`.
-- `KeyboResources`: localized strings and generated `L10n` alias.
-- `KeyboTesting`: snapshot helpers.
+- `KeymojiUI`: host/design-system helpers (`Icon`, view extensions). Do not confuse with `KeyboardUI`.
+- `KeymojiResources`: localized strings and generated `L10n` alias.
+- `KeymojiTesting`: snapshot helpers.
 - `Features/*`: independent host-app feature frameworks.
 
 Current feature modules include `Onboarding`, `Settings`, `About`, `EmojiCodes`,
@@ -49,16 +49,16 @@ tuist generate
 - Build the app and keyboard extension:
 
 ```bash
-xcodebuild -workspace Keybo.xcworkspace -scheme Keybo -destination 'generic/platform=iOS Simulator' build
+xcodebuild -workspace Keymoji.xcworkspace -scheme Keymoji -destination 'generic/platform=iOS Simulator' build
 ```
 
 - Run focused test schemes when touching a target. Use an installed iPhone simulator for test
   destinations, for example:
 
 ```bash
-xcodebuild test -project Keybo.xcodeproj -scheme KeyboardCore_Tests -destination 'platform=iOS Simulator,name=<available iPhone>'
-xcodebuild test -project Keybo.xcodeproj -scheme KeyboardUI_Tests -destination 'platform=iOS Simulator,name=<available iPhone>'
-xcodebuild test -project Keybo.xcodeproj -scheme Settings_Tests -destination 'platform=iOS Simulator,name=<available iPhone>'
+xcodebuild test -project Keymoji.xcodeproj -scheme KeyboardCore_Tests -destination 'platform=iOS Simulator,name=<available iPhone>'
+xcodebuild test -project Keymoji.xcodeproj -scheme KeyboardUI_Tests -destination 'platform=iOS Simulator,name=<available iPhone>'
+xcodebuild test -project Keymoji.xcodeproj -scheme Settings_Tests -destination 'platform=iOS Simulator,name=<available iPhone>'
 ```
 
 - SwiftLint runs through the build phase via Mint. Keep code lint-clean instead of bypassing it.
@@ -73,7 +73,7 @@ xcodebuild test -project Keybo.xcodeproj -scheme Settings_Tests -destination 'pl
 - Keep visual keyboard behavior in `KeyboardUI`; avoid putting input/state-machine logic there
   unless it is strictly view interaction glue.
 - Shared cross-process settings live in `AppGroupStore` using the app group
-  `group.com.freedommartin.keybo`.
+  `group.com.freedommartin.keymoji`.
 - When adding a setting that affects the keyboard, add a typed `AppGroupStore` accessor,
   update `AppGroupStoreKey`, and post/observe through `SettingsChangeNotifier` if the extension
   must react while visible.
@@ -141,7 +141,7 @@ Use `./scripts/new_feature.sh FeatureName` for new host-app feature scaffolding,
 - For pure logic changes, add or update `KeyboardCore/Tests/**`.
 - For keyboard rendering changes, update `KeyboardUI/Tests/**` snapshots intentionally.
 - For host feature UI changes, add/update the matching `Features/<Name>/Tests/*Snapshots.swift`.
-- `KeyboTesting/AssertSnapshot` is the generic snapshot helper; `KeyboardUI/Tests/SnapshotHelpers.swift`
+- `KeymojiTesting/AssertSnapshot` is the generic snapshot helper; `KeyboardUI/Tests/SnapshotHelpers.swift`
   is specialized for keyboard renders.
 - Snapshot tests use `#filePath` in local helpers so references stay next to tests. Keep that pattern.
 - Do not silently accept snapshot churn. Verify the visual change matches the task before recording.

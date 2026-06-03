@@ -160,7 +160,7 @@ public protocol SettingsNavigating: Sendable {
 }
 ```
 
-Konkrétní `SettingsNavigator` v host appce (`Keybo/Sources/App/SettingsNavigator.swift`):
+Konkrétní `SettingsNavigator` v host appce (`Keymoji/Sources/App/SettingsNavigator.swift`):
 
 Drží reference na sheet state v root view (`RootView`):
 
@@ -218,15 +218,15 @@ SettingsNavigator(
 
 ### 6. Lokalizace
 
-`KeyboResources/Resources/en.lproj/Localizable.strings`:
+`KeymojiResources/Resources/en.lproj/Localizable.strings`:
 
 ```strings
-"settings.title" = "Keybo";
+"settings.title" = "Keymoji";
 
 "settings.keyboard.header" = "Keyboard";
 "settings.keyboard.showNumberRow" = "Always show number row";
 "settings.keyboard.hapticFeedback" = "Haptic feedback";
-"settings.keyboard.hapticFooter" = "Haptic feedback requires Allow Full Access in iOS Settings → General → Keyboards → Keybo.";
+"settings.keyboard.hapticFooter" = "Haptic feedback requires Allow Full Access in iOS Settings → General → Keyboards → Keymoji.";
 
 "settings.setupInstructions" = "Setup instructions";
 "settings.about" = "About";

@@ -7,8 +7,8 @@
 //
 
 import SwiftUI
-import KeyboCore
-import KeyboResources
+import KeymojiCore
+import KeymojiResources
 
 public struct EmojiCodesView<ViewModel: EmojiCodesViewModeling>: View {
 	@Bindable private var viewModel: ViewModel

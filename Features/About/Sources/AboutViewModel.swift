@@ -8,7 +8,7 @@
 
 import Foundation
 import UIKit
-import KeyboCore
+import KeymojiCore
 
 @MainActor
 public protocol AboutViewModeling: Observable, AnyObject {
@@ -28,12 +28,12 @@ final class AboutViewModel: BaseViewModel, AboutViewModeling {
 	// MARK: - Public API
 
 	func openPrivacyPolicy() {
-		guard let url = URL(string: KeyboURLs.privacyPolicy) else { return }
+		guard let url = URL(string: KeymojiURLs.privacyPolicy) else { return }
 		UIApplication.shared.open(url)
 	}
 
 	func openSourceCode() {
-		guard let url = URL(string: KeyboURLs.sourceCode) else { return }
+		guard let url = URL(string: KeymojiURLs.sourceCode) else { return }
 		UIApplication.shared.open(url)
 	}
 }

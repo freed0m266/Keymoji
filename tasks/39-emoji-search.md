@@ -8,7 +8,7 @@
 
 Native iOS emoji picker má v horní části search input („Search Emoji"). Tap aktivuje QWERTY layout + horizontal scrollable bar s matching emoji a vrátí se po `×` zpět do gridu. Po expansi catalogu na ~1 400 emoji v tasku [34](34-full-unicode-single-emoji-catalog.md) je objevení specifického emoji bez search prakticky nemožné — task 34 to v Mimo scope explicitně označil jako future UX task.
 
-Tento task přidává tu samou capability do Keybo's [`EmojiPanelView`](KeyboardUI/Sources/Views/EmojiPanelView.swift): trvale viditelný search bar nad gridem (mode `.emojis`) a po jeho tapu mode switch do nového `.emojiSearch` (QWERTY pro typing query + horizontal results bar nahoře). Search algoritmus je prefix-match přes CLDR keywords + emoji name + Slack shortcode, multi-word AND.
+Tento task přidává tu samou capability do Keymoji's [`EmojiPanelView`](KeyboardUI/Sources/Views/EmojiPanelView.swift): trvale viditelný search bar nad gridem (mode `.emojis`) a po jeho tapu mode switch do nového `.emojiSearch` (QWERTY pro typing query + horizontal results bar nahoře). Search algoritmus je prefix-match přes CLDR keywords + emoji name + Slack shortcode, multi-word AND.
 
 ## Předpoklady (rozhodnutí z grill session 2026-05-28)
 

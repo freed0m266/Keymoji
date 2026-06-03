@@ -383,7 +383,7 @@ V `viewWillDisappear` + `textWillChange` zkontrolovat: pokud `state.currentEligi
 
 ### 8. `AppGroupStore` rozšíření + Darwin notification
 
-V [`AppGroupStore.swift`](../KeyboCore/Sources/Shared/AppGroupStore.swift):
+V [`AppGroupStore.swift`](../KeymojiCore/Sources/Shared/AppGroupStore.swift):
 
 ```swift
 public extension AppGroupStore {
@@ -427,7 +427,7 @@ Section {
     Text(L10n.Settings.Suggestions.sectionHeader)
 } footer: {
     Text(L10n.Settings.Suggestions.toggleFooter)
-        // "Suggests words as you type. Keybo learns from your typing to improve
+        // "Suggests words as you type. Keymoji learns from your typing to improve
         //  suggestions — all learning stays on this iPhone."
 }
 
@@ -459,21 +459,21 @@ if viewModel.suggestionsEnabled {
 
 ### 10. Lokalizace
 
-V [`KeyboResources/Resources/en.lproj/Localizable.strings`](../KeyboResources/Resources/en.lproj/Localizable.strings):
+V [`KeymojiResources/Resources/en.lproj/Localizable.strings`](../KeymojiResources/Resources/en.lproj/Localizable.strings):
 
 ```strings
 "settings.suggestions.section_header" = "Suggestions";
 "settings.suggestions.toggle_title" = "Word suggestions";
-"settings.suggestions.toggle_footer" = "Suggests words as you type. Keybo learns from your typing to improve suggestions — all learning stays on this iPhone.";
+"settings.suggestions.toggle_footer" = "Suggests words as you type. Keymoji learns from your typing to improve suggestions — all learning stays on this iPhone.";
 "settings.suggestions.learned_words_label" = "Learned words";
 "settings.suggestions.clear_button" = "Clear learned words";
 "settings.suggestions.clear_footer" = "Removes all learned words. Apple's built-in suggestions are not affected.";
 "settings.suggestions.clear_alert_title" = "Clear learned words?";
-"settings.suggestions.clear_alert_message" = "This permanently removes all words Keybo has learned from your typing. This cannot be undone.";
+"settings.suggestions.clear_alert_message" = "This permanently removes all words Keymoji has learned from your typing. This cannot be undone.";
 "settings.suggestions.clear_alert_confirm" = "Clear";
 
 "onboarding.tour.suggestions.title" = "Private word suggestions";
-"onboarding.tour.suggestions.description" = "Keybo suggests words as you type and learns from your typing — all on this iPhone. Nothing is sent online, not even to Apple. You can clear what Keybo has learned anytime in Settings.";
+"onboarding.tour.suggestions.description" = "Keymoji suggests words as you type and learns from your typing — all on this iPhone. Nothing is sent online, not even to Apple. You can clear what Keymoji has learned anytime in Settings.";
 ```
 
 Po `tuist generate` se vygeneruje `L10n.Settings.Suggestions.*` + `L10n.Onboarding.Tour.Suggestions.*`. Použít.
@@ -500,16 +500,16 @@ V [`marketing/privacy-policy.html`](../marketing/privacy-policy.html) přidat no
 ```html
 <h2>Word suggestions</h2>
 <p>
-  When you type, Keybo can suggest words to complete what you're writing.
-  To make these suggestions better over time, Keybo remembers words you
+  When you type, Keymoji can suggest words to complete what you're writing.
+  To make these suggestions better over time, Keymoji remembers words you
   frequently type — words of 3 or more characters from regular text fields,
   plus email addresses you type in email-typed fields. This data is stored
-  in a private container on your iPhone that only Keybo can read. It is
+  in a private container on your iPhone that only Keymoji can read. It is
   never sent to any server, not even Apple's. You can remove all learned
-  words anytime in Keybo → Settings → Suggestions → Clear learned words.
+  words anytime in Keymoji → Settings → Suggestions → Clear learned words.
 </p>
 <p>
-  Keybo never learns from:
+  Keymoji never learns from:
 </p>
 <ul>
   <li>Password fields, secure text entry fields, or fields marked for one-time codes</li>
@@ -582,7 +582,7 @@ V [tasks/README.md](README.md):
 
 Původní:
 ```
-- **Word prediction / autocorrect.** SwiftKey-style ML prediction je full project. Mimo Keybo scope.
+- **Word prediction / autocorrect.** SwiftKey-style ML prediction je full project. Mimo Keymoji scope.
 ```
 
 Nahradit dvěma entries:
@@ -602,14 +602,14 @@ README update jde do stejného PR/commit chain jako task 40 implementace.
 - **Next-word prediction (bigram nad personal corpus).** Architektura je připravena (`SuggestionProviding` protocol je source-agnostic, lze přidat `NextWordPredictionProvider`), ale samotná implementace je future task. Cílí v1.3+.
 - **Autocorrect / silent text replacement po space.** Bar nikdy automaticky nepřepisuje user input. Selection je vždy explicitní (tap na chip). Permanently out of scope per design rule.
 - **Fuzzy / spell-correction suggestions.** `UITextChecker.guesses(...)` se nikdy nepoužije, jen `.completions(...)`. User který napíše `helo` dostane buď completion `helot` nebo nic — nikdy `hello` jako „opravu".
-- **Spell-check podtrhnout červeně.** Mimo scope — Keybo není editor, je klávesnice.
+- **Spell-check podtrhnout červeně.** Mimo scope — Keymoji není editor, je klávesnice.
 - **Per-app deny-list** („v Signalu nelearn"). Hypotetický future task pokud uživatelé reportují privacy concern. Default deny-list per field type (E1) by měl 99 % case pokrýt.
 - **Per-word management list** v Settings („here are 500 learned words, swipe to delete"). Shoulder-surfing risk + UI bloat. Pouze bulk clear button.
 - **Granular learning toggle** (separate od display). Jeden master toggle stačí.
 - **Decay over time** (timestamp-based pruning). LRU eviction nad cap 500 je dostatečná pro v1.2.
 - **Cloud sync recents přes iCloud.** Out of scope; design je intentionally device-local.
 - **Predictive emoji (🙂 jako chip pro `happy`).** Out of scope, separátní future task.
-- **iPad layout adaptation.** Per README.md, iPad obecně mimo Keybo scope.
+- **iPad layout adaptation.** Per README.md, iPad obecně mimo Keymoji scope.
 
 ## Hotovo když
 
@@ -658,7 +658,7 @@ README update jde do stejného PR/commit chain jako task 40 implementace.
 - Existing dispatcher: [`KeyboardCore/Sources/Logic/InputDispatcher.swift`](../KeyboardCore/Sources/Logic/InputDispatcher.swift)
 - Existing shift state: [`KeyboardCore/Sources/Logic/ShiftStateMachine.swift`](../KeyboardCore/Sources/Logic/ShiftStateMachine.swift), [`KeyboardCore/Sources/Logic/AutoCapitalizer.swift`](../KeyboardCore/Sources/Logic/AutoCapitalizer.swift)
 - Existing recents/favorites persistence pattern: [`KeyboardExtension/Sources/KeyboardViewController.swift`](../KeyboardExtension/Sources/KeyboardViewController.swift) `recordRecentEmojiIfNeeded`, `toggleFavorite`
-- `AppGroupStore`: [`KeyboCore/Sources/Shared/AppGroupStore.swift`](../KeyboCore/Sources/Shared/AppGroupStore.swift), [`AppGroupStoreKey.swift`](../KeyboCore/Sources/Shared/AppGroupStoreKey.swift)
+- `AppGroupStore`: [`KeymojiCore/Sources/Shared/AppGroupStore.swift`](../KeymojiCore/Sources/Shared/AppGroupStore.swift), [`AppGroupStoreKey.swift`](../KeymojiCore/Sources/Shared/AppGroupStoreKey.swift)
 - Onboarding feature tour: task [38](38-onboarding-feature-tour.md), [`Features/Onboarding/Sources/FeatureHighlight.swift`](../Features/Onboarding/Sources/FeatureHighlight.swift)
 - Privacy doc: [`marketing/privacy-policy.html`](../marketing/privacy-policy.html), task [13](13-about-and-privacy.md)
 - Settings UI: [`Features/Settings/Sources/SettingsView.swift`](../Features/Settings/Sources/SettingsView.swift), task [12](12-host-app-settings.md)

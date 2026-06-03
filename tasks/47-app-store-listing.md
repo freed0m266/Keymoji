@@ -6,17 +6,17 @@
 
 ## Cíl
 
-Mít připravený App Store listing, screenshoty a klíčová slova před první submission. Keybo je privacy-first klávesnice — to je hlavní marketingový hook a musí prosakovat celým listingem.
+Mít připravený App Store listing, screenshoty a klíčová slova před první submission. Keymoji je privacy-first klávesnice — to je hlavní marketingový hook a musí prosakovat celým listingem.
 
 ## Kontext
 
 - App Store Connect submission vyžaduje vyplněné metadata, screenshoty pro každou podporovanou velikost a privacy policy URL (z task 13).
-- Keybo je **English-only** UI (viz README „Mimo scope") — listing děláme **EN primary**, CZ jako sekundární locale (Martin je CZ, ale klávesnice cílí globálně).
+- Keymoji je **English-only** UI (viz README „Mimo scope") — listing děláme **EN primary**, CZ jako sekundární locale (Martin je CZ, ale klávesnice cílí globálně).
 - Privacy claim „nesbíráme nic" je doslova pravda (žádný analytics/crash reporting) — můžeme ho použít jako headline bez review rizika.
 
 ## Scope
 
-- **Název (max 30 znaků):** „Keybo – Private Keyboard" (zkontrolovat délku).
+- **Název (max 30 znaků):** „Keymoji – Private Keyboard" (zkontrolovat délku).
 - **Subtitle (max 30 znaků):** EN „No tracking. Just typing." / CZ „Klávesnice, co nešpehuje".
 - **Keywords (max 100 znaků, comma-separated, bez mezer kvůli úspoře):**
   EN: `keyboard,private,privacy,emoji,haptic,typing,qwerty,qwertz,no tracking,offline,custom,fast`
@@ -54,10 +54,10 @@ Mít připravený App Store listing, screenshoty a klíčová slova před první
 
 ## Mimo scope
 
-- App Store Connect API / fastlane automatizace uploadu — manuální submission v1.0 stačí (WidgetCoin to řeší samostatným taskem 19, pro Keybo zatím přehnané).
+- App Store Connect API / fastlane automatizace uploadu — manuální submission v1.0 stačí (WidgetCoin to řeší samostatným taskem 19, pro Keymoji zatím přehnané).
 - App Preview video. Future polish.
 - Více locale než EN + CZ.
-- Paid tier / IAP screenshoty — Keybo je free, žádný paywall.
+- Paid tier / IAP screenshoty — Keymoji je free, žádný paywall.
 
 ## Hotovo když
 
@@ -71,7 +71,7 @@ Mít připravený App Store listing, screenshoty a klíčová slova před první
 - **Full Access vysvětlení** — App Store review je u custom keyboardů citlivý na „Allow Full Access". Description i screenshot 5 musí jasně říct, že Full Access je **jen** pro haptiku a zvuky kláves, ne pro data. Nesoulad s privacy labelem = rejection.
 - **Nesoulad s privacy policy (task 13)** — `marketing/privacy-policy.html` aktuálně tvrdí, že Full Access je pro „haptic feedback" + „reading/writing preferences in a shared container". Obojí je nepřesné: (a) chybí **zvuky** (taky vyžadují Full Access), (b) přístup k shared containeru je gated **App Group entitlementem**, ne Full Accessem. Před submission sjednotit policy text i listing copy na pravdivé znění: „Full Access enables haptic feedback and key click sounds." (Drobná oprava task 13 artefaktu — flag, ne scope tohoto tasku.)
 - **Privacy label vs. realita** — pokud do appky kdykoli přibude jakýkoli SDK se síťovým přístupem, label „Data Not Collected" přestane platit a je to App Store violation. Držet privacy claim doslova (viz README non-goal: žádné analytics/telemetry).
-- **Název delší než 30 znaků** — „Keybo – Private Keyboard" zkontrolovat byte count.
+- **Název delší než 30 znaků** — „Keymoji – Private Keyboard" zkontrolovat byte count.
 
 ## Reference
 

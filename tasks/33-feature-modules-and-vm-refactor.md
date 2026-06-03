@@ -29,7 +29,7 @@ Obojí byly přidány mimo `scripts/new_feature.sh` workflow a nemají vlastní 
 
 ## Canonical VM pattern (z Example)
 
-Reference: [ExampleViewModel.swift](Features/Example/Sources/ExampleViewModel.swift), [BaseViewModel.swift](KeyboCore/Sources/ViewModels/BaseViewModel.swift) pro MARK strukturu.
+Reference: [ExampleViewModel.swift](Features/Example/Sources/ExampleViewModel.swift), [BaseViewModel.swift](KeymojiCore/Sources/ViewModels/BaseViewModel.swift) pro MARK strukturu.
 
 ```swift
 @MainActor
@@ -70,7 +70,7 @@ Pravidla:
 2. **Konkrétní `<Name>ViewModel` class je `internal`** (žádné `public`).
 3. **Stored properties, init, methods jsou `internal`** (žádné `public`). Mock i call sites závisí jen na protokolu, který je `public`.
 4. **Žádný `override init()`** — pokud VM nepotřebuje nic injectovat, prostě se zdědí `BaseViewModel.init()`. Žádný no-op override.
-5. **MARK sekce** v tomto pořadí: `// MARK: - Init`, `// MARK: - Public API` (public + internal funkce), `// MARK: - Private API` (private funkce). Stored properties patří před init bez vlastního MARKu (mirror [BaseViewModel](KeyboCore/Sources/ViewModels/BaseViewModel.swift)).
+5. **MARK sekce** v tomto pořadí: `// MARK: - Init`, `// MARK: - Public API` (public + internal funkce), `// MARK: - Private API` (private funkce). Stored properties patří před init bez vlastního MARKu (mirror [BaseViewModel](KeymojiCore/Sources/ViewModels/BaseViewModel.swift)).
 6. **Protocol zůstává `public`** — to je API surface feature modulu, ten musí ven.
 7. **Mocky (`<Name>ViewModelMock`) zůstávají `public`** — implementují protokol přímo, ne dědí concrete VM, takže internal concrete je nikdy nezasáhne.
 
@@ -97,7 +97,7 @@ Pro každý feature script automaticky:
 
 #### 2a. `Tuist/.../Features/EmojiCatalogPicker.swift`
 
-Picker používá `EmojiCatalog` z `KeyboardCore` a `L10n.Settings.Favorites.Picker.*` z `KeyboResources`.
+Picker používá `EmojiCatalog` z `KeyboardCore` a `L10n.Settings.Favorites.Picker.*` z `KeymojiResources`.
 
 ```swift
 public let emojiCatalogPicker = Feature(
@@ -276,7 +276,7 @@ Aplikovat canonical pattern (viz výše) na všechny VM: About, Settings, EmojiC
 - **`testEmojiCatalogPicker_noSelection_dark`** — picker s prázdným `selectedEmojis`.
 - **`testEmojiCatalogPicker_someSelected_dark`** — picker s ~5 selected, ověří checkmark badges.
 
-Použít `AssertSnapshot` helper z `KeyboTesting` (viz [SettingsSnapshots.swift:56-77](Features/Settings/Tests/SettingsSnapshots.swift:56)). Wrap views v `NavigationStack` kvůli toolbaru. `SettingsSnapshots` ponechat beze změny.
+Použít `AssertSnapshot` helper z `KeymojiTesting` (viz [SettingsSnapshots.swift:56-77](Features/Settings/Tests/SettingsSnapshots.swift:56)). Wrap views v `NavigationStack` kvůli toolbaru. `SettingsSnapshots` ponechat beze změny.
 
 ### 7. Ověřit, že nic nespadlo
 
@@ -335,7 +335,7 @@ Použít `AssertSnapshot` helper z `KeyboTesting` (viz [SettingsSnapshots.swift:
 
 - [scripts/new_feature.sh](scripts/new_feature.sh) — generátor (kopíruje Example, přejmenuje, vloží do Project.swift + App.swift)
 - [Features/Example/Sources/ExampleViewModel.swift](Features/Example/Sources/ExampleViewModel.swift) — **canonical VM pattern** k zrcadlení
-- [KeyboCore/Sources/ViewModels/BaseViewModel.swift](KeyboCore/Sources/ViewModels/BaseViewModel.swift) — referenční MARK struktura
+- [KeymojiCore/Sources/ViewModels/BaseViewModel.swift](KeymojiCore/Sources/ViewModels/BaseViewModel.swift) — referenční MARK struktura
 - [Tuist/.../Features/EmojiCodes.swift](Tuist/ProjectDescriptionHelpers/Targets/Features/EmojiCodes.swift) — vzor Tuist manifestu s `keyboardCore`
 - [Tuist/.../Features/Settings.swift](Tuist/ProjectDescriptionHelpers/Targets/Features/Settings.swift) — sem přidat `.target(favoriteEmojisEditor)`
 - [Features/Settings/Sources/FavoritesEditor/](Features/Settings/Sources/FavoritesEditor/) — zdroj přesunu

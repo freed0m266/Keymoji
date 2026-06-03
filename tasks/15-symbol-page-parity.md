@@ -6,7 +6,7 @@
 
 ## Cíl
 
-Po přepnutí klávesnice na symboly musí mít stránka **stejnou strukturu (počet řádků a tím pádem výšku kláves) jako letter page**, takže klávesy nevyrostou. A musí nabídnout víc znaků — ve Keybo dnes uživatel po `[123]` toggle vidí jen ~15 znaků; SwiftKey/Apple nabízejí ~30+ rozdělených do dvou stránek s `[#+=]` togglem mezi nimi.
+Po přepnutí klávesnice na symboly musí mít stránka **stejnou strukturu (počet řádků a tím pádem výšku kláves) jako letter page**, takže klávesy nevyrostou. A musí nabídnout víc znaků — ve Keymoji dnes uživatel po `[123]` toggle vidí jen ~15 znaků; SwiftKey/Apple nabízejí ~30+ rozdělených do dvou stránek s `[#+=]` togglem mezi nimi.
 
 V referenčních screenshotech ze SwiftKey:
 - Numberrow nahoře (když ho má uživatel zapnutý).
@@ -16,7 +16,7 @@ V referenčních screenshotech ze SwiftKey:
 
 ## Kontext
 
-Aktuální Keybo symbol page (`KeyboardCore/Sources/Logic/LayoutBuilder.swift:makeSymbolRows`):
+Aktuální Keymoji symbol page (`KeyboardCore/Sources/Logic/LayoutBuilder.swift:makeSymbolRows`):
 
 - Row 2: `- / : ; ( ) $ & @ "`
 - Row 3: `[ABC] . , ? ! ' [delete]`
@@ -125,7 +125,7 @@ V `LayoutBuilder.makeBottomRow(page:)` — pro letters → `123`, pro `symbols(_
 
 ## Mimo scope
 
-- Třetí symbol stránka (`#+=` má jen 2 v Apple/SwiftKey). Žádná Keybo `symbols(.thirdPage)`.
+- Třetí symbol stránka (`#+=` má jen 2 v Apple/SwiftKey). Žádná Keymoji `symbols(.thirdPage)`.
 - Custom symbol order / user preference. Hard-coded layouts pro v1.0.
 - Live preview během switch (animace mezi pages). Instant cut.
 

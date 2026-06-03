@@ -1,4 +1,4 @@
-# Keybo
+# Keymoji
 
 A simple, private, on-device custom iOS keyboard. Built as a personal replacement for SwiftKey, with an eye on App Store release.
 
@@ -34,22 +34,22 @@ tuist install
 tuist generate
 
 # Open in Xcode
-open Keybo.xcworkspace
+open Keymoji.xcworkspace
 ```
 
-To use Keybo as your iOS keyboard after building & installing:
+To use Keymoji as your iOS keyboard after building & installing:
 
-1. Settings → General → Keyboard → Keyboards → Add New Keyboard → Keybo
-2. Tap Keybo in the list → enable **Allow Full Access** (required by iOS for haptic feedback; Keybo doesn't use it for anything else — see [Privacy](#privacy))
-3. In any text field, tap the globe icon and pick Keybo
+1. Settings → General → Keyboard → Keyboards → Add New Keyboard → Keymoji
+2. Tap Keymoji in the list → enable **Allow Full Access** (required by iOS for haptic feedback; Keymoji doesn't use it for anything else — see [Privacy](#privacy))
+3. In any text field, tap the globe icon and pick Keymoji
 
 The host app's onboarding screen walks through these steps with live status detection.
 
 ## Project Structure
 
 ```
-Keybo/
-├── Keybo/                          # Host app (onboarding + settings entry point)
+Keymoji/
+├── Keymoji/                          # Host app (onboarding + settings entry point)
 │   ├── Sources/
 │   │   ├── App/                    # @main + AppDelegate (SwiftyBeaver setup)
 │   │   └── Views/                  # RootView, ContentView
@@ -72,15 +72,15 @@ Keybo/
 │   │   ├── Views/                  # KeyboardView, KeyRowView, KeyView, LongPressPopoverView
 │   │   └── Style/                  # KeyStyle (semantic colors)
 │   └── Tests/                      # Snapshot tests (light + dark)
-├── KeyboCore/                      # Cross-target shared utilities
+├── KeymojiCore/                      # Cross-target shared utilities
 │   └── Sources/
 │       ├── Dependencies/           # AppDependency container
-│       ├── Shared/                 # AppGroupStore, BaseViewModel, Logger, KeyboURLs
+│       ├── Shared/                 # AppGroupStore, BaseViewModel, Logger, KeymojiURLs
 │       ├── Services/               # NetworkService scaffold (unused; legacy from template)
 │       └── Extensions/             # Foundation extensions
-├── KeyboUI/                        # Design system for the host app
-├── KeyboResources/                 # Localization (L10n alias, en.lproj)
-├── KeyboTesting/                   # AssertSnapshot helper
+├── KeymojiUI/                        # Design system for the host app
+├── KeymojiResources/                 # Localization (L10n alias, en.lproj)
+├── KeymojiTesting/                   # AssertSnapshot helper
 ├── Features/                       # Host-app feature frameworks
 │   ├── Example/                    # Template leftover (unused)
 │   ├── Onboarding/                 # 3-step setup flow with live activation detection
@@ -101,7 +101,7 @@ KeyboardExtension                Host app
         ↓                            ↓
   KeyboardUI    ←————  shares —————  Features/*
         ↓                            ↓
-  KeyboardCore  ←————  shares —————  KeyboCore (AppGroupStore, Logger)
+  KeyboardCore  ←————  shares —————  KeymojiCore (AppGroupStore, Logger)
 ```
 
 - Every `ViewModel` is backed by a `*ViewModeling` `@MainActor` protocol; concrete impls inherit `BaseViewModel`.
@@ -117,7 +117,7 @@ Keyboard logic is split:
 
 ## Privacy
 
-Keybo's `marketing/privacy-policy.html` is the source of truth — hosted at the URL in `KeyboCore/Sources/Shared/KeyboURLs.swift`. Summary:
+Keymoji's `marketing/privacy-policy.html` is the source of truth — hosted at the URL in `KeymojiCore/Sources/Shared/KeymojiURLs.swift`. Summary:
 
 - **Nothing collected.** No typing data, words, phrases, device identifiers, or analytics.
 - **No network access.** The extension never makes URL requests.
@@ -128,7 +128,7 @@ Keybo's `marketing/privacy-policy.html` is the source of truth — hosted at the
 
 - `KeyboardCore_Tests` — ~85 unit tests covering layout builder, shift state machine, auto-cap, input dispatch.
 - `KeyboardUI_Tests` — 16 snapshot tests (light + dark variants).
-- `KeyboCore_Tests` — `AppGroupStore` tests with isolated `UserDefaults` suite.
+- `KeymojiCore_Tests` — `AppGroupStore` tests with isolated `UserDefaults` suite.
 - `Onboarding_Tests`, `Settings_Tests`, `About_Tests` — feature snapshot tests.
 
 Snapshots use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) with `#filePath` so references live next to the test source files, not in the simulator sandbox.

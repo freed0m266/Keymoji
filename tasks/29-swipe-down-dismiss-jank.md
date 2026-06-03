@@ -6,7 +6,7 @@
 
 ## Souhrn
 
-V appkách se scrollovacím chatem (typicky iMessage, ale i Mail, Messages-like apps obecně) iOS nabízí gesto „swipe down z chat area" pro schování klávesnice. U Keybo se animace skrývání **sekne / trhá** — klávesnice nesleduje prst plynule a finální dismiss vypadá choppy. Nativní Apple klávesnice i SwiftKey to samé gesto odbavují plynule.
+V appkách se scrollovacím chatem (typicky iMessage, ale i Mail, Messages-like apps obecně) iOS nabízí gesto „swipe down z chat area" pro schování klávesnice. U Keymoji se animace skrývání **sekne / trhá** — klávesnice nesleduje prst plynule a finální dismiss vypadá choppy. Nativní Apple klávesnice i SwiftKey to samé gesto odbavují plynule.
 
 Vnímáme to jako bug, ne jako missing feature: iOS gesto zvládá driveni interactive dismiss `UIInputViewController` zdánlivě out-of-the-box (žádný explicitní opt-in není potřeba). Něco v našem rendering/hosting setupu zjevně blokuje main thread nebo brání systému plynule animovat `inputView.frame.origin.y`.
 
@@ -22,7 +22,7 @@ Pořadí od nejpravděpodobnější:
    - **Co ověriť:** zapnout `CA_DEBUG_TRANSACTIONS=1` nebo Instruments → SwiftUI / Time Profiler během dismissu. Hledat top-frame v `KeyboardView.body`.
    - **Fix kandidát:** rasterizovat snapshot klávesnice před dismissem? Nebo `host.view.layer.shouldRasterize = true` během gesture? Risk: vizuální regrese, nutno testovat.
 
-3. **`KeyboInputView` (`inputViewStyle: .keyboard`) interaguje špatně s system dismiss.** Náš custom `UIInputView` subclass je tam jen kvůli `UIInputViewAudioFeedback`. Pokud sám o sobě nedělá nic divného (a v `KeyboardViewController.swift:265+` vypadá minimalisticky), tato hypotéza je low-probability — ale stojí za izolaci: nahradit dočasně default `inputView` a sledovat, jestli dismiss zplyne.
+3. **`KeymojiInputView` (`inputViewStyle: .keyboard`) interaguje špatně s system dismiss.** Náš custom `UIInputView` subclass je tam jen kvůli `UIInputViewAudioFeedback`. Pokud sám o sobě nedělá nic divného (a v `KeyboardViewController.swift:265+` vypadá minimalisticky), tato hypotéza je low-probability — ale stojí za izolaci: nahradit dočasně default `inputView` a sledovat, jestli dismiss zplyne.
 
 4. **`KeyboardRoot` má drahý `body` při zmenšujícím se frame.** Pokud `GeometryReader` uvnitř `KeyboardView` propočítává layout celé klávesnice (40+ kláves) na každý frame, gesto se sekne. Náš guard v `viewDidLayoutSubviews` brání `rebuild()`, ale ne SwiftUI internímu layout passu.
    - **Co ověřit:** Instruments → SwiftUI → kolik bodies/s. Pokud `KeyRowView.body` se reevaluje 60×/s během dismissu, je to ono.
@@ -71,6 +71,6 @@ Bug objevený až po dokončení core funkčnosti. Není to blocker (klávesnice
 
 ## Reference
 
-- `KeyboardExtension/Sources/KeyboardViewController.swift` — hosting controller, `viewDidLayoutSubviews`, `KeyboInputView`
+- `KeyboardExtension/Sources/KeyboardViewController.swift` — hosting controller, `viewDidLayoutSubviews`, `KeymojiInputView`
 - `KeyboardExtension/Sources/KeyboardRoot.swift` — SwiftUI root
 - Apple Custom Keyboard Programming Guide: <https://developer.apple.com/library/archive/documentation/General/Conceptual/ExtensibilityPG/Keyboard.html>

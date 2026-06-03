@@ -20,7 +20,7 @@ Pořadí od nejpravděpodobnější:
    - **Co ověřit:** otevřít klávesnici v Notes hned po čerstvém boot phonu (bez prior audio session) vs. po hraní Spotify. Hypotéza je, že čerstvý boot = OK, po Spotify = bug.
    - **Fix kandidát:** v `KeyboardViewController.viewDidLoad` (nebo `viewWillAppear`) explicit `try AVAudioSession.sharedInstance().setCategory(.ambient, options: [.mixWithOthers])` před prvním `playInputClick()`. `.ambient` je correct pro UI sound effects co nemají soutěžit s media playback. **Pozor:** keyboard extension nesmí přerušit playing music host appky — `.mixWithOthers` je tam musí.
 
-2. **`UIInputViewAudioFeedback` conformance se aktivuje s delayem.** `KeyboInputView` (subclass `UIInputView`, conformance v [`KeyboardViewController.swift:431`](../KeyboardExtension/Sources/KeyboardViewController.swift)) je installed v `loadView()`. iOS interně cachuje audio feedback eligibility až někdy po view did appear. Před tím první `playInputClick()` calls jdou do fallback path která ignoruje system click volume.
+2. **`UIInputViewAudioFeedback` conformance se aktivuje s delayem.** `KeymojiInputView` (subclass `UIInputView`, conformance v [`KeyboardViewController.swift:431`](../KeyboardExtension/Sources/KeyboardViewController.swift)) je installed v `loadView()`. iOS interně cachuje audio feedback eligibility až někdy po view did appear. Před tím první `playInputClick()` calls jdou do fallback path která ignoruje system click volume.
    - **Co ověřit:** logovat `view.window != nil` + `isInputViewVisible` v okamžiku každého z prvních 10 stisků. Pokud první 3 stisky jsou před `viewDidAppear`, hypotéza sedí.
    - **Fix kandidát:** odložit first `play()` call dokud `viewDidAppear` neproběhne — buď v `UIKitClickSound` přes weak ref na controller, nebo gate flag který se flipne v `viewDidAppear`. Cena: první stisk může být tichý (acceptable trade-off vs. „příliš nahlas").
 
@@ -31,7 +31,7 @@ Pořadí od nejpravděpodobnější:
 
 ## Reprodukce
 
-1. Killnout Keybo extension (force-quit nějakou appku co ho používá).
+1. Killnout Keymoji extension (force-quit nějakou appku co ho používá).
 2. Otevřít Spotify, spustit playback hudby (libovolnou hlasitostí).
 3. Otevřít Notes nebo Messages, focus do input field — klávesnice se objeví.
 4. Začít psát rychle (>3 stisky/s).
@@ -60,7 +60,7 @@ Manuální verifikace dle hypotézy 1 — pokud control scenario je OK a repro s
    - Pokud hypotéza 3 (fallback path): kombinovat fix 1 + 2 — explicit session setup zajistí že fallback path nikdy nesáhne na media volume.
 
 3. **Regression check existing path.**
-   - Click sound stále hraje (Sounds & Haptics on, Allow Full Access on, Keybo Settings click toggle on).
+   - Click sound stále hraje (Sounds & Haptics on, Allow Full Access on, Keymoji Settings click toggle on).
    - Click sound stále nehraje když Settings toggle off.
    - Click sound stále nehraje když user vypne Keyboard Clicks v Sounds & Haptics.
    - Host app playback hudby není přerušený nebo paused když začnu psát (kritické — `.mixWithOthers` musí tam být, jinak break music).
@@ -83,17 +83,17 @@ Manuální verifikace dle hypotézy 1 — pokud control scenario je OK a repro s
 ## Hotovo když
 
 - [ ] Root cause identified (která hypotéza to byla, zaznamenat v komentáři ve fixed kódu).
-- [ ] Reprodukce scénář (Spotify playback → otevři Keybo → psaní) už nevykazuje hlasitý úvod — od prvního stisku tichý click parita s native keyboard.
+- [ ] Reprodukce scénář (Spotify playback → otevři Keymoji → psaní) už nevykazuje hlasitý úvod — od prvního stisku tichý click parita s native keyboard.
 - [ ] Control scenario (fresh boot, žádné prior audio) zůstává funkční.
-- [ ] Hudba v host appce není přerušená když začnu psát na Keybo (regression check pro `.mixWithOthers` pokud aplikováno).
+- [ ] Hudba v host appce není přerušená když začnu psát na Keymoji (regression check pro `.mixWithOthers` pokud aplikováno).
 - [ ] Settings toggle pro click sound funguje (on/off) beze změny.
-- [ ] Side-by-side audio recording s nativní klávesnicí (loud Spotify scenario) — Keybo click track není slyšitelně hlasitější.
+- [ ] Side-by-side audio recording s nativní klávesnicí (loud Spotify scenario) — Keymoji click track není slyšitelně hlasitější.
 - [ ] Žádná regrese haptik, popover, ani delete-repeat.
 
 ## Reference
 
 - [`KeyboardExtension/Sources/UIKitClickSound.swift`](../KeyboardExtension/Sources/UIKitClickSound.swift) — `play()` wrapper kolem `UIDevice.current.playInputClick()`.
-- [`KeyboardExtension/Sources/KeyboardViewController.swift`](../KeyboardExtension/Sources/KeyboardViewController.swift) — `loadView` instaluje `KeyboInputView` (UIInputViewAudioFeedback conformance, line ~431).
+- [`KeyboardExtension/Sources/KeyboardViewController.swift`](../KeyboardExtension/Sources/KeyboardViewController.swift) — `loadView` instaluje `KeymojiInputView` (UIInputViewAudioFeedback conformance, line ~431).
 - [`KeyboardCore/Sources/Public/KeyClickSounding.swift`](../KeyboardCore/Sources/Public/KeyClickSounding.swift) — protocol + Noop.
 - Task [26](26-sound-feedback.md) — původní sound feedback impl.
 - Apple — [`UIDevice.playInputClick()`](https://developer.apple.com/documentation/uikit/uidevice/1620025-playinputclick), [`UIInputViewAudioFeedback`](https://developer.apple.com/documentation/uikit/uiinputviewaudiofeedback), [`AVAudioSession` categories](https://developer.apple.com/documentation/avfaudio/avaudiosession/category).

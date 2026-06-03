@@ -71,7 +71,7 @@ Jeden `<!DOCTYPE html>` soubor. Struktura:
 
 ```
 <header sticky>
-  <h1>Keybo tasks</h1>
+  <h1>Keymoji tasks</h1>
   <div class="stats">
     <span>NN total · NN done · NN todo · NN draft</span>
   </div>

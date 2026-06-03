@@ -51,8 +51,8 @@ find "$REPO_ROOT" \
         -path "$REPO_ROOT/.git" \
         -o -path "$REPO_ROOT/Derived" \
         -o -path "$REPO_ROOT/Tuist/.build" \
-        -o -path "$REPO_ROOT/Keybo.xcodeproj" \
-        -o -path "$REPO_ROOT/Keybo.xcworkspace" \
+        -o -path "$REPO_ROOT/Keymoji.xcodeproj" \
+        -o -path "$REPO_ROOT/Keymoji.xcworkspace" \
     \) -prune \
     -o -type f -path "*/__Snapshots__/*.png" -print \
     | sort > "$snapshot_files"
@@ -85,8 +85,8 @@ if [[ "$keep_dirs" == false ]]; then
                 -path "$REPO_ROOT/.git" \
                 -o -path "$REPO_ROOT/Derived" \
                 -o -path "$REPO_ROOT/Tuist/.build" \
-                -o -path "$REPO_ROOT/Keybo.xcodeproj" \
-                -o -path "$REPO_ROOT/Keybo.xcworkspace" \
+                -o -path "$REPO_ROOT/Keymoji.xcodeproj" \
+                -o -path "$REPO_ROOT/Keymoji.xcworkspace" \
             \) -prune \
             -o -type d \( -name "__Snapshots__" -o -path "*/__Snapshots__/*" \) -print \
             | sort -r

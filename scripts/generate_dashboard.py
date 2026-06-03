@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a static dark-mode Kanban dashboard of the Keybo task files.
+"""Generate a static dark-mode Kanban dashboard of the Keymoji task files.
 
 Parses every `tasks/[0-9]*.md`, extracts a few lines of metadata (number,
 title, status, priority/effort/impact, summary paragraph) with plain regex —
@@ -491,14 +491,14 @@ def render_html(tasks):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>Keybo tasks</title>
+  <title>Keymoji tasks</title>
   <style>
 {CSS}
   </style>
 </head>
 <body>
   <header class="site">
-    <h1>Keybo tasks</h1>
+    <h1>Keymoji tasks</h1>
     <div class="stats">
       <span class="mono">{n_total}</span> total ·
       <span class="mono">{n_done}</span> done ·
@@ -531,7 +531,7 @@ def render_html(tasks):
 # --------------------------------------------------------------------------
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Generate the Keybo task dashboard HTML.")
+    parser = argparse.ArgumentParser(description="Generate the Keymoji task dashboard HTML.")
     parser.add_argument("--no-open", action="store_true", help="Skip opening in browser")
     parser.add_argument("--out", default=str(TASKS_DIR / "dashboard.html"),
                         help="Output path (default: tasks/dashboard.html)")

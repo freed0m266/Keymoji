@@ -11,14 +11,14 @@ Plnohodnotný onboarding flow v host appce, který provede uživatele třemi kro
 ## Kontext
 
 - Klávesnice v iOS vyžaduje 3 manuální kroky od uživatele:
-  1. **Add Keyboard**: Settings.app → General → Keyboards → Keyboards → Add New Keyboard → Keybo.
-  2. **Allow Full Access**: Settings.app → General → Keyboards → Keybo → Allow Full Access.
-  3. **Select keyboard during typing**: v jakékoliv appce → tap globe key → vybrat Keybo.
+  1. **Add Keyboard**: Settings.app → General → Keyboards → Keyboards → Add New Keyboard → Keymoji.
+  2. **Allow Full Access**: Settings.app → General → Keyboards → Keymoji → Allow Full Access.
+  3. **Select keyboard during typing**: v jakékoliv appce → tap globe key → vybrat Keymoji.
 - Detekce stavu:
   - Krok 1 *lze* detekovat přes `UITextInputMode.activeInputModes` — zda obsahuje input mode s naším extension bundle ID.
   - Krok 2 (Full Access) *nelze* spolehlivě detekovat. Nepřímo: pokus zapsat do shared App Group UserDefaults — pokud success, máme Full Access. Toto má edge cases (Full Access ovlivňuje další věci než jen storage). Pro v1.0 onboarding zobrazí krok 2 jako „já jsem to udělal" tlačítko, ne automatic detection.
   - Krok 3 nedetekujeme — uživatel ho udělá sám až bude potřebovat.
-- Onboarding bydlí v `Features/Onboarding/` jako standardní Keybo feature framework (přes `Feature` factory v `Tuist/ProjectDescriptionHelpers/Targets/Feature.swift`).
+- Onboarding bydlí v `Features/Onboarding/` jako standardní Keymoji feature framework (přes `Feature` factory v `Tuist/ProjectDescriptionHelpers/Targets/Feature.swift`).
 
 ## Scope
 
@@ -125,7 +125,7 @@ public final class OnboardingViewModel: OnboardingViewModeling {
     private func checkKeyboardActivated() -> Bool {
         UITextInputMode.activeInputModes
             .compactMap { $0.value(forKey: "identifier") as? String }
-            .contains { $0.contains("com.freedommartin.keybo.keyboard") }
+            .contains { $0.contains("com.freedommartin.keymoji.keyboard") }
     }
 }
 ```
@@ -161,7 +161,7 @@ public protocol OnboardingPreferencesProviding: Sendable {
 }
 ```
 
-Implementace `OnboardingPreferencesProviding` v `KeyboCore` — postaveno na `AppGroupStore` z task 10:
+Implementace `OnboardingPreferencesProviding` v `KeymojiCore` — postaveno na `AppGroupStore` z task 10:
 
 ```swift
 public struct OnboardingPreferences: OnboardingPreferencesProviding {
@@ -232,44 +232,44 @@ Tři separate views, každý s vlastním obsahem. Pro stručnost:
 
 **Step 1 — Add Keyboard:**
 
-- Headline: „Add Keybo to your keyboards"
-- Body: „Open Settings → General → Keyboards → Keyboards → Add New Keyboard → Keybo"
+- Headline: „Add Keymoji to your keyboards"
+- Body: „Open Settings → General → Keyboards → Keyboards → Add New Keyboard → Keymoji"
 - CTA: „Open Settings" (open `UIApplication.openSettingsURLString`)
 - Status (live): `viewModel.isKeyboardActivated` → checkmark ✓ + auto-advance.
 
 **Step 2 — Allow Full Access:**
 
 - Headline: „Enable Full Access for haptic feedback"
-- Body: „In Settings → General → Keyboards → Keybo, turn on Allow Full Access. Keybo does not collect any data."
-- Footer (důležité): „Why this is needed: iOS requires Full Access for haptic feedback in keyboards. Keybo doesn't access the internet, doesn't sync, doesn't collect typing data."
+- Body: „In Settings → General → Keyboards → Keymoji, turn on Allow Full Access. Keymoji does not collect any data."
+- Footer (důležité): „Why this is needed: iOS requires Full Access for haptic feedback in keyboards. Keymoji doesn't access the internet, doesn't sync, doesn't collect typing data."
 - CTA: „Open Settings"
 - Secondary: „I've done this" → advance to step 3
 - Žádná auto-detekce — uživatel musí klepnout na „I've done this".
 
-**Step 3 — Select Keybo:**
+**Step 3 — Select Keymoji:**
 
-- Headline: „Switch to Keybo when typing"
-- Body: „In any text field, tap the globe icon on your keyboard and select Keybo."
+- Headline: „Switch to Keymoji when typing"
+- Body: „In any text field, tap the globe icon on your keyboard and select Keymoji."
 - CTA: „Done" → volá `didFinishOnboarding()`, dismiss onboarding.
 - Footer: „You can re-open this guide later from Settings."
 
 ### 6. Lokalizace
 
-`KeyboResources/Resources/en.lproj/Localizable.strings`:
+`KeymojiResources/Resources/en.lproj/Localizable.strings`:
 
 ```strings
-"onboarding.step1.title" = "Add Keybo to your keyboards";
-"onboarding.step1.description" = "Open Settings → General → Keyboards → Keyboards → Add New Keyboard → Keybo";
+"onboarding.step1.title" = "Add Keymoji to your keyboards";
+"onboarding.step1.description" = "Open Settings → General → Keyboards → Keyboards → Add New Keyboard → Keymoji";
 "onboarding.step1.cta" = "Open Settings";
 
 "onboarding.step2.title" = "Enable Full Access for haptic feedback";
-"onboarding.step2.description" = "In Settings → General → Keyboards → Keybo, turn on Allow Full Access.";
-"onboarding.step2.privacy" = "Why this is needed: iOS requires Full Access for haptic feedback in keyboards. Keybo doesn't access the internet, doesn't sync, doesn't collect typing data.";
+"onboarding.step2.description" = "In Settings → General → Keyboards → Keymoji, turn on Allow Full Access.";
+"onboarding.step2.privacy" = "Why this is needed: iOS requires Full Access for haptic feedback in keyboards. Keymoji doesn't access the internet, doesn't sync, doesn't collect typing data.";
 "onboarding.step2.cta" = "Open Settings";
 "onboarding.step2.confirm" = "I've done this";
 
-"onboarding.step3.title" = "Switch to Keybo when typing";
-"onboarding.step3.description" = "In any text field, tap the globe icon on your keyboard and select Keybo.";
+"onboarding.step3.title" = "Switch to Keymoji when typing";
+"onboarding.step3.description" = "In any text field, tap the globe icon on your keyboard and select Keymoji.";
 "onboarding.step3.done" = "Done";
 "onboarding.step3.footer" = "You can re-open this guide later from Settings.";
 ```
@@ -278,11 +278,11 @@ Po `tuist generate` se vygeneruje `L10n.Onboarding.step1Title` atd. (přes Tuist
 
 ### 7. Integration v root App
 
-`Keybo/Sources/App/KeyboApp.swift` (existující scaffold přejmenovaný z `TemplateApp` v rámci renaming):
+`Keymoji/Sources/App/KeymojiApp.swift` (existující scaffold přejmenovaný z `TemplateApp` v rámci renaming):
 
 ```swift
 @main
-struct KeyboApp: App {
+struct KeymojiApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
@@ -355,7 +355,7 @@ public final class OnboardingViewModelMock: OnboardingViewModeling {
 
 ### 11. AppDependency rozšíření
 
-V `KeyboCore/Sources/Dependencies/AppDependency.swift` (existující ze scaffold):
+V `KeymojiCore/Sources/Dependencies/AppDependency.swift` (existující ze scaffold):
 
 ```swift
 extension AppDependency {

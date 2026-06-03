@@ -1,7 +1,7 @@
 import XCTest
 import SwiftUI
 @testable import KeyboardUI
-import KeyboCore
+import KeymojiCore
 import KeyboardCore
 
 final class KeyboardViewSnapshots: XCTestCase {

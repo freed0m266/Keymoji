@@ -7,8 +7,8 @@
 //
 
 import SwiftUI
-import KeyboCore
-import KeyboResources
+import KeymojiCore
+import KeymojiResources
 
 public struct AboutView<ViewModel: AboutViewModeling>: View {
 	@State private var viewModel: ViewModel
@@ -80,7 +80,7 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 }
 
 /// Lightweight row used by AboutView for external link items. Lives here for v1.0; if a similar
-/// pattern shows up elsewhere we can hoist it into `KeyboUI`.
+/// pattern shows up elsewhere we can hoist it into `KeymojiUI`.
 private struct LabeledChevronRow: View {
 	let title: String
 

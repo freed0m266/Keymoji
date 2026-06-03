@@ -6,7 +6,7 @@ import KeyboardCore
 /// per-key sounds (task 46):
 ///
 /// - **Character keys** use `UIDevice.current.playInputClick()`. It only produces audio when the
-///   controller's *visible input view* conforms to `UIInputViewAudioFeedback` (see `KeyboInputView`
+///   controller's *visible input view* conforms to `UIInputViewAudioFeedback` (see `KeymojiInputView`
 ///   in `KeyboardViewController.swift`), the user has "Keyboard Clicks" enabled in Settings →
 ///   Sounds & Haptics, and the extension has Allow Full Access. This is the idiomatic Apple path
 ///   and routes through the quiet UI-sound level — the volume profile validated in task 41.
@@ -28,7 +28,7 @@ import KeyboardCore
 /// NOTE (on-device verification still required — task 46 spike): the sound IDs below are not
 /// publicly documented by Apple and the volume/toggle behavior of `AudioServicesPlaySystemSound`
 /// for these IDs must be confirmed by ear against the stock keyboard on a real device, including a
-/// re-check of the task-41 volume scenario (Spotify playing → open Keybo → type).
+/// re-check of the task-41 volume scenario (Spotify playing → open Keymoji → type).
 @MainActor
 final class UIKitClickSound: KeyClickSounding {
 	private let isEnabled: () -> Bool

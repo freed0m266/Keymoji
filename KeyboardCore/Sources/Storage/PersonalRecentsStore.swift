@@ -1,5 +1,5 @@
 import Foundation
-import KeyboCore
+import KeymojiCore
 
 /// Read access to the personal recents pool. The completion provider depends only on this narrow
 /// protocol so it can be mocked in tests without touching `AppGroupStore`.

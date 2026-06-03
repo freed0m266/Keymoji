@@ -317,7 +317,7 @@ Pokrýt:
 
 ### 11. Logger
 
-V `KeyboardViewController` a `InputDispatcher` přidat **minimální** logging pomocí `KeyboCore`-poskytnutého SwiftyBeaver wrapperu (v `KeyboCore/Sources/Shared/Logger.swift`, viz Template scaffold):
+V `KeyboardViewController` a `InputDispatcher` přidat **minimální** logging pomocí `KeymojiCore`-poskytnutého SwiftyBeaver wrapperu (v `KeymojiCore/Sources/Shared/Logger.swift`, viz Template scaffold):
 
 - `Logger.debug("Keyboard appeared")` v `viewDidLoad`.
 - Žádné logy v dispatch hot path (žádné `log(key)` per stisk — performance + privacy).
@@ -343,7 +343,7 @@ V `KeyboardViewController` a `InputDispatcher` přidat **minimální** logging p
 - Return key label se mění podle `returnKeyType` z hosting appky (otestováno v Safari adresním řádku → „Go", v Mail subject → „Done").
 - Triple-tap space NEvkládá `. . ` (regression test pokryt).
 - ~12 unit testů pro `InputDispatcher` green.
-- Manuální smoke test v Notes.app: napsat „hello world. this is keybo." a uvidět očekávaný text.
+- Manuální smoke test v Notes.app: napsat „hello world. this is keymoji." a uvidět očekávaný text.
 
 ## Rizika
 
@@ -353,7 +353,7 @@ V `KeyboardViewController` a `InputDispatcher` přidat **minimální** logging p
 
 ## Reference
 
-- `KeyboCore/Sources/Shared/Logger.swift` — log wrapper
+- `KeymojiCore/Sources/Shared/Logger.swift` — log wrapper
 - Apple: UIInputViewController — <https://developer.apple.com/documentation/uikit/uiinputviewcontroller>
 - Apple: UITextDocumentProxy — <https://developer.apple.com/documentation/uikit/uitextdocumentproxy>
 

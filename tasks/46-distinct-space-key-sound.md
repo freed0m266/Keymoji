@@ -8,7 +8,7 @@
 
 Nativní iOS klávesnice přehrává **jiný zvuk pro mezerník i pro delete** než pro běžné
 znakové klávesy — mezerník/modifikátory mají hlubší, „dutější" cvak, delete má vlastní zvuk,
-znaky mají vyšší „tok". Keybo dnes hraje **jeden a tentýž** click pro všechny klávesy. Cílem je,
+znaky mají vyšší „tok". Keymoji dnes hraje **jeden a tentýž** click pro všechny klávesy. Cílem je,
 aby mezerník i delete hrály stejné odlišené zvuky jako nativní klávesnice, zatímco ostatní
 klávesy zůstanou na současném znakovém clicku.
 
@@ -113,7 +113,7 @@ mezerníku tu cenu hoden).
 - [ ] Delete-on-hold repeat (i word-delete eskalace) hraje delete zvuk konzistentně po celou dobu držení.
 - [ ] Ostatní klávesy (písmena, čísla, symboly, emoji, suggestion chipy) zní beze změny.
 - [ ] App-side click toggle (`AppGroupStore`) stále vypne/zapne veškerý zvuk včetně mezerníku a delete.
-- [ ] Žádná regrese hlasitosti z tasku 41 (test scénář: Spotify playback → otevři Keybo → psaní).
+- [ ] Žádná regrese hlasitosti z tasku 41 (test scénář: Spotify playback → otevři Keymoji → psaní).
 - [ ] Hudba host appky není přerušena při psaní.
 - [ ] Rozhodnutí o respektu systémového „Keyboard Clicks" toggle je vědomé a zaznamenané v kódu
       (komentář u `UIKitClickSound`).

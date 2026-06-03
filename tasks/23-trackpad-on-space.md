@@ -6,7 +6,7 @@
 
 ## Souhrn
 
-Apple stock klávesnice umí: long-press na space → klávesnice se „zmrazí" a slouží jako trackpad pro pohyb kurzoru v textu. Velmi user-loved feature. V Keybo v1.0 vynecháno kvůli scope.
+Apple stock klávesnice umí: long-press na space → klávesnice se „zmrazí" a slouží jako trackpad pro pohyb kurzoru v textu. Velmi user-loved feature. V Keymoji v1.0 vynecháno kvůli scope.
 
 ## Scope (až přijde čas)
 

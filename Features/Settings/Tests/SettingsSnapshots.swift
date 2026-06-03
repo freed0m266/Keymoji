@@ -9,7 +9,7 @@
 import XCTest
 import SwiftUI
 import SnapshotTesting
-import KeyboCore
+import KeymojiCore
 @testable import Settings
 
 @MainActor

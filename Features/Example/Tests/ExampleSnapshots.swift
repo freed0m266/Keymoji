@@ -7,7 +7,7 @@
 //
 
 import XCTest
-import KeyboTesting
+import KeymojiTesting
 @testable import Example
 
 class ExampleSnapshots: XCTestCase {

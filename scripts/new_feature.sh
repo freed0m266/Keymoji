@@ -19,13 +19,13 @@ first_char_lower="$(printf '%s' "${name_pascal:0:1}" | tr '[:upper:]' '[:lower:]
 name_camel="${first_char_lower}${name_pascal:1}"
 created_date="$(date '+%d.%m.%Y')"
 
-feature_keybo_dir="Features/Example"
+feature_keymoji_dir="Features/Example"
 feature_destination_dir="Features/${name_pascal}"
 tuist_feature_file="Tuist/ProjectDescriptionHelpers/Targets/Features/${name_pascal}.swift"
 project_manifest="Project.swift"
 app_manifest="Tuist/ProjectDescriptionHelpers/Targets/App.swift"
 
-for required_path in "$feature_keybo_dir" "$project_manifest" "$app_manifest"; do
+for required_path in "$feature_keymoji_dir" "$project_manifest" "$app_manifest"; do
     if [[ ! -e "$required_path" ]]; then
         echo "Required path not found: $required_path" >&2
         exit 1
@@ -42,7 +42,7 @@ if [[ -e "$tuist_feature_file" ]]; then
     exit 1
 fi
 
-cp -R "$feature_keybo_dir" "$feature_destination_dir"
+cp -R "$feature_keymoji_dir" "$feature_destination_dir"
 
 # Rename files/directories whose names contain Example/example.
 while IFS= read -r -d '' path; do

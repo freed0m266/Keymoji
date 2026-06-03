@@ -13,7 +13,7 @@ Připravit veškerou Tuist a Xcode infrastrukturu nutnou pro custom keyboard ext
 - Stávající `Project.swift` registruje targety `app`, `core`, `design`, `resources`, `testing` + features. Chybí: `KeyboardCore`, `KeyboardUI`, `KeyboardExtension`.
 - `Tuist/ProjectDescriptionHelpers/Targets/` obsahuje per-target soubory (`App.swift`, `Core.swift`, ...). Přidáme tři nové: `KeyboardCore.swift`, `KeyboardUI.swift`, `KeyboardExtension.swift`.
 - Existing `Tuist/ProjectDescriptionHelpers/Targets/Feature.swift` factory generuje feature framework + test target — pro `KeyboardUI` toho využijeme analogicky (potřebujeme test target pro snapshoty).
-- App Group ID: `group.com.freedommartin.keybo` (viz `tasks/README.md` rozhodnutí). I když ho v v1.0 začneme reálně používat až v tasku 10, entitlements se nastavují teď — pozdější úprava entitlements vyžaduje re-provisioning.
+- App Group ID: `group.com.freedommartin.keymoji` (viz `tasks/README.md` rozhodnutí). I když ho v v1.0 začneme reálně používat až v tasku 10, entitlements se nastavují teď — pozdější úprava entitlements vyžaduje re-provisioning.
 - `RequestsOpenAccess = YES` je v `Info.plist` extension targetu — bez něj se v iOS Settings nezobrazí toggle pro Full Access a haptika v tasku 08 nepoběží.
 
 ## Scope
@@ -24,8 +24,8 @@ Připravit veškerou Tuist a Xcode infrastrukturu nutnou pro custom keyboard ext
 
 - Framework target, iPhone-only, bundle ID `\(appBundleId).keyboardcore`.
 - Sources: `KeyboardCore/Sources/**`.
-- Dependencies: pouze `resources` (pro `L10n`) a `core` (`KeyboCore` — bude se hodit pro shared utility později). Zatím **žádný SwiftUI import** v tomto frameworku — pure Swift + Foundation.
-- Bez `SwiftLint` build phase script — drobné frameworky nepotřebují (analogicky `KeyboCore`).
+- Dependencies: pouze `resources` (pro `L10n`) a `core` (`KeymojiCore` — bude se hodit pro shared utility později). Zatím **žádný SwiftUI import** v tomto frameworku — pure Swift + Foundation.
+- Bez `SwiftLint` build phase script — drobné frameworky nepotřebují (analogicky `KeymojiCore`).
 
 Adresářová struktura na disku:
 
@@ -47,7 +47,7 @@ KeyboardCore/
 - Použít existující `Feature` factory z `Tuist/ProjectDescriptionHelpers/Targets/Feature.swift` (dostane test target zdarma). Ne, nemůžeme — `Feature` factory předpokládá adresář `Features/<Name>/...`, ale `KeyboardUI` je top-level framework, ne feature. Takže napsat dedicated `KeyboardUI` target ručně, analogicky `design`/`Design.swift`.
 - Framework target, iPhone-only, bundle ID `\(appBundleId).keyboardui`.
 - Sources: `KeyboardUI/Sources/**`.
-- Dependencies: `core`, `design` (`KeyboUI`), `resources`, **`keyboardCore`**, `testing` v test targetu.
+- Dependencies: `core`, `design` (`KeymojiUI`), `resources`, **`keyboardCore`**, `testing` v test targetu.
 - `APPLICATION_EXTENSION_API_ONLY = YES` — protože KeyboardUI bude linkován z `appExtension` targetu a Apple vyžaduje, aby framework v extension nepoužíval nedovolené API (např. `UIApplication.shared`). Bez tohoto flagu xcodebuild propustí, ale App Store validation zabije buildu.
 - Dedicated `KeyboardUI_Tests` target (analogicky `Feature` factory), unit test product, dep na `keyboardUI` + `testing`. Sources: `KeyboardUI/Tests/**`.
 
@@ -73,7 +73,7 @@ KeyboardUI/
 - Bez `SwiftLint` script v BuildPhases (drobné, lint pokrytý přes `KeyboardUI`).
 - `APPLICATION_EXTENSION_API_ONLY` se nenastavuje (extension target sám tomu už podléhá implicitně).
 - **Info.plist** (psaný přes `infoPlist: .extendingDefault(with: ...)`):
-  - `CFBundleDisplayName = "Keybo"`
+  - `CFBundleDisplayName = "Keymoji"`
   - `NSExtension`:
     - `NSExtensionPointIdentifier = "com.apple.keyboard-service"`
     - `NSExtensionAttributes`:
@@ -83,7 +83,7 @@ KeyboardUI/
       - `RequestsOpenAccess = true`
     - `NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).KeyboardViewController"` — třída se vytvoří v tasku 04, teď stačí placeholder.
 - **Entitlements**:
-  - `com.apple.security.application-groups = ["group.com.freedommartin.keybo"]`
+  - `com.apple.security.application-groups = ["group.com.freedommartin.keymoji"]`
 
 Placeholder `KeyboardExtension/Sources/KeyboardViewController.swift`:
 
@@ -126,25 +126,25 @@ public let keyboardCoreTests: Target = .target(
 V root `Project.swift`:
 
 - Přidat `keyboardCore`, `keyboardCoreTests`, `keyboardUI`, `keyboardUITests`, `keyboardExtension` do `targets:` arrayu.
-- App target (`Tuist/ProjectDescriptionHelpers/Targets/App.swift`) dostane novou dependency: `.target(keyboardExtension)` — aby host appka extension nesla bundlem. Také dostane entitlements `com.apple.security.application-groups = ["group.com.freedommartin.keybo"]` (host i extension musí být ve stejné App Group).
-- Scheme `Keybo` ostává funkční. Doplnit do scheme `buildAction.targets` i `keyboardExtension` (aby `tuist build` budoval všechno).
+- App target (`Tuist/ProjectDescriptionHelpers/Targets/App.swift`) dostane novou dependency: `.target(keyboardExtension)` — aby host appka extension nesla bundlem. Také dostane entitlements `com.apple.security.application-groups = ["group.com.freedommartin.keymoji"]` (host i extension musí být ve stejné App Group).
+- Scheme `Keymoji` ostává funkční. Doplnit do scheme `buildAction.targets` i `keyboardExtension` (aby `tuist build` budoval všechno).
 
 ### 6. App Group identifier jako Tuist konstanta
 
 V `Tuist/ProjectDescriptionHelpers/Targets/App.swift` nebo nově v `Tuist/ProjectDescriptionHelpers/Constants.swift` (nový soubor):
 
 ```swift
-public let appGroupIdentifier = "group.com.freedommartin.keybo"
+public let appGroupIdentifier = "group.com.freedommartin.keymoji"
 ```
 
-Použít na obou targetech (host + extension) v entitlements. **Nezavádět to přes `$(APP_GROUP_IDENTIFIER)` xcconfig macro** (jak má WidgetCoin) — zbytečná indirekce pro Keybo, kde nemáme `Configuration/*.xcconfig`. Plain Swift konstanta v ProjectDescriptionHelpers stačí.
+Použít na obou targetech (host + extension) v entitlements. **Nezavádět to přes `$(APP_GROUP_IDENTIFIER)` xcconfig macro** (jak má WidgetCoin) — zbytečná indirekce pro Keymoji, kde nemáme `Configuration/*.xcconfig`. Plain Swift konstanta v ProjectDescriptionHelpers stačí.
 
 ### 7. Provisioning a podpis
 
 `DEVELOPMENT_TEAM` v root `Project.swift` je prázdný (`""`). Po `tuist generate` se Xcode pokusí provisioning vyřešit automaticky. Pro keyboard extension to může selhat (vyžaduje paid Apple Dev account pro App Groups). Reálný workflow:
 
 1. V Xcode v root projektu → Signing & Capabilities → vybrat Tým.
-2. Pro host app target i extension target — zkontrolovat „App Groups" capability je zapnutá a vybraná `group.com.freedommartin.keybo`.
+2. Pro host app target i extension target — zkontrolovat „App Groups" capability je zapnutá a vybraná `group.com.freedommartin.keymoji`.
 3. Pokud Xcode hlásí „No matching provisioning profile" — re-generovat profile přes Apple Developer Portal nebo nechat Xcode „Try Again".
 
 Tento krok se **neautomatizuje v Tuistu** — Tuist `entitlements:` deklaruje capability, ale provisioning profile vytvoří Xcode/Developer Portal. Stačí to zdokumentovat v tomto tasku jako manual step.
@@ -154,10 +154,10 @@ Tento krok se **neautomatizuje v Tuistu** — Tuist `entitlements:` deklaruje ca
 Po všech změnách:
 
 ```bash
-cd /Users/martin/Development/Keybo
+cd /Users/martin/Development/Keymoji
 tuist install
 tuist generate
-xcodebuild -workspace Keybo.xcworkspace -scheme Keybo -destination 'generic/platform=iOS Simulator' build
+xcodebuild -workspace Keymoji.xcworkspace -scheme Keymoji -destination 'generic/platform=iOS Simulator' build
 ```
 
 Build musí projít zelený. Pokud entitlements / signing fail, doložit v Xcode UI a re-run.
@@ -166,16 +166,16 @@ Build musí projít zelený. Pokud entitlements / signing fail, doložit v Xcode
 
 1. Spustit host appku v iOS simulátoru.
 2. Otevřít Settings.app v simulátoru → General → Keyboards → Add New Keyboard.
-3. „Keybo" by se mělo objevit v seznamu „Third-Party Keyboards".
+3. „Keymoji" by se mělo objevit v seznamu „Third-Party Keyboards".
 4. Vybrat ho → zapnout „Allow Full Access" prompt (i když ho ještě nemáme onboarding).
-5. Otevřít Notes.app → globe key → vybrat Keybo → klávesnice se zobrazí jako prázdná šedá plocha (placeholder `KeyboardViewController` nic nerenderuje).
+5. Otevřít Notes.app → globe key → vybrat Keymoji → klávesnice se zobrazí jako prázdná šedá plocha (placeholder `KeyboardViewController` nic nerenderuje).
 
-Pokud se Keybo zobrazí v seznamu a po výběru se objeví prázdná plocha — task hotový.
+Pokud se Keymoji zobrazí v seznamu a po výběru se objeví prázdná plocha — task hotový.
 
 ## Mimo scope
 
 - Žádný keyboard layout, žádné klávesy, žádný input (to je task 02–04).
-- Žádné assety, žádný app icon (placeholder app icon je v `Keybo/Resources/Assets.xcassets/AppIcon.appiconset` ze scaffoldu; real icon je Future task).
+- Žádné assety, žádný app icon (placeholder app icon je v `Keymoji/Resources/Assets.xcassets/AppIcon.appiconset` ze scaffoldu; real icon je Future task).
 - Žádný onboarding UI v hostu (task 11). Placeholder `ContentView` z Template scaffoldu zůstává.
 - Žádné settings (task 12).
 - Žádný `AppGroupStore` implementační kód (task 10). Pouze entitlements deklarace.
@@ -183,11 +183,11 @@ Pokud se Keybo zobrazí v seznamu a po výběru se objeví prázdná plocha — 
 ## Hotovo když
 
 - `tuist generate` projde bez chyby.
-- `xcodebuild build` schémy `Keybo` na iOS Simulator destination projde zelený.
+- `xcodebuild build` schémy `Keymoji` na iOS Simulator destination projde zelený.
 - `KeyboardCore`, `KeyboardUI`, `KeyboardExtension` targety existují v Xcode projektu.
-- Klávesnice „Keybo" je dostupná v iOS Settings → General → Keyboards → Add New Keyboard po instalaci host appky.
+- Klávesnice „Keymoji" je dostupná v iOS Settings → General → Keyboards → Add New Keyboard po instalaci host appky.
 - Po výběru v globe keyi se zobrazí prázdná šedá keyboard plocha v Notes.app.
-- App Group `group.com.freedommartin.keybo` je deklarovaný v entitlements host appky i extensionu.
+- App Group `group.com.freedommartin.keymoji` je deklarovaný v entitlements host appky i extensionu.
 - Žádný `@objc` mimo `KeyboardViewController` placeholder.
 
 ## Rizika

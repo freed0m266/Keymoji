@@ -18,10 +18,10 @@ disabled_rules:
   - trailing_whitespace
 
 included:
-  - Keybo
-  - KeyboCore
-  - KeyboUI
-  - KeyboResources
+  - Keymoji
+  - KeymojiCore
+  - KeymojiUI
+  - KeymojiResources
   - Features
 
 excluded:
