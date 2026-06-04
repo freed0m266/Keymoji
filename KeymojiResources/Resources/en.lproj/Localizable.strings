@@ -94,11 +94,19 @@
 "settings.suggestions.toggleTitle" = "Word suggestions";
 "settings.suggestions.toggleFooter" = "Suggests words as you type. Keymoji learns from your typing to improve suggestions — all learning stays on this iPhone.";
 "settings.suggestions.learnedWordsLabel" = "Learned words";
-"settings.suggestions.clearButton" = "Clear learned words";
-"settings.suggestions.clearFooter" = "Removes all learned words. Apple's built-in suggestions are not affected.";
-"settings.suggestions.clearAlertTitle" = "Clear learned words?";
-"settings.suggestions.clearAlertMessage" = "This permanently removes all words Keymoji has learned from your typing. This cannot be undone.";
-"settings.suggestions.clearAlertConfirm" = "Clear";
+
+"settings.learnedWords.title" = "Learned words";
+"settings.learnedWords.sort.recency" = "Recently used";
+"settings.learnedWords.sort.alphabetical" = "A–Z";
+"settings.learnedWords.count" = "%d×";
+"settings.learnedWords.accessibilityLabel" = "%@, written %d times";
+"settings.learnedWords.clearAll" = "Clear all";
+"settings.learnedWords.clearAlertTitle" = "Clear all learned words?";
+"settings.learnedWords.clearAlertMessage" = "This permanently removes all words Keymoji has learned from your typing. This cannot be undone.";
+"settings.learnedWords.clearAlertConfirm" = "Clear all";
+"settings.learnedWords.emptyTitle" = "No learned words yet";
+"settings.learnedWords.emptyMessage" = "Keymoji learns words as you type and offers them as suggestions — all on this iPhone. They'll appear here.";
+"settings.learnedWords.listFooter" = "Swipe a word to delete it. Apple's built-in suggestions are not affected.";
 
 "emojiCodes.title" = "Emoji codes";
 "emojiCodes.searchPrompt" = "Search shortcodes";
