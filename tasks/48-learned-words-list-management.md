@@ -1,6 +1,6 @@
 # 48 — Seznam naučených slov se správou (zobrazit + mazat jednotlivě)
 
-**Status:** To do
+**Status:** Done — 2026-06-03
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** Medium
 
