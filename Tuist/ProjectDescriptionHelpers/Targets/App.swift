@@ -35,6 +35,7 @@ public let app: Target = .target(
 		.target(emojiCatalogPicker),
 		.target(example),
 		.target(favoriteEmojisEditor),
+		.target(learnedWordsEditor),
 		.target(onboarding),
 		.target(about),
 		.target(settings),

@@ -23,11 +23,9 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var learnedWordCount: Int { get }
 	var versionString: String { get }
 
-	/// Recompute `learnedWordCount` from the store (the keyboard mutates it out-of-process).
+	/// Recompute `learnedWordCount` from the store (the keyboard mutates it out-of-process, and the
+	/// Learned words editor can delete entries). Refresh on view appear.
 	func refreshLearnedWordCount()
-	/// Wipe the personal recents pool and reset the counter. The keyboard reads recents live, so
-	/// the change takes effect on its next keystroke without an explicit cross-process ping.
-	func clearLearnedWords()
 }
 
 @MainActor
@@ -117,10 +115,5 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 
 	func refreshLearnedWordCount() {
 		learnedWordCount = recentsStore.count
-	}
-
-	func clearLearnedWords() {
-		recentsStore.clear()
-		learnedWordCount = 0
 	}
 }

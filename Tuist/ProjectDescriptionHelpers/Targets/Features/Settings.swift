@@ -10,6 +10,7 @@ public let settings = Feature(
 		.target(onboarding),
 		.target(about),
 		.target(emojiCodes),
-		.target(favoriteEmojisEditor)
+		.target(favoriteEmojisEditor),
+		.target(learnedWordsEditor)
 	]
 )

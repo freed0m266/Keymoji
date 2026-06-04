@@ -46,9 +46,5 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 	}
 
 	public func refreshLearnedWordCount() {}
-
-	public func clearLearnedWords() {
-		learnedWordCount = 0
-	}
 }
 #endif

@@ -5,6 +5,7 @@ let features: [Feature] = [
 	emojiCatalogPicker,
 	example,
 	favoriteEmojisEditor,
+	learnedWordsEditor,
 	onboarding,
 	about,
 	emojiCodes,

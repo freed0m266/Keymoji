@@ -8,6 +8,20 @@ public protocol PersonalRecentsReading: Sendable {
 	func matches(prefix: String) -> [(word: String, count: Int)]
 }
 
+/// One learned word with its frequency and last-used time. Drives the management screen.
+public struct LearnedWord: Sendable, Equatable {
+	public let word: String
+	public let count: Int
+	/// Seconds since 1970, from the last-used map. Used only for recency sorting.
+	public let lastUsed: Double
+
+	public init(word: String, count: Int, lastUsed: Double) {
+		self.word = word
+		self.count = count
+		self.lastUsed = lastUsed
+	}
+}
+
 /// Learns and persists the words a user types so they can be offered as completions. Backed by two
 /// JSON blobs in `AppGroupStore`: a `{word: count}` frequency map and a parallel `{word: timestamp}`
 /// last-used map that breaks LRU-eviction ties.
@@ -51,6 +65,13 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 		loadCounts().count
 	}
 
+	/// All learned words, unsorted. The management screen owns the sort order.
+	public func allLearnedWords() -> [LearnedWord] {
+		let counts = loadCounts()
+		let lastUsed = loadLastUsed()
+		return counts.map { LearnedWord(word: $0.key, count: $0.value, lastUsed: lastUsed[$0.key] ?? 0) }
+	}
+
 	// MARK: - Write
 
 	/// Learn one word. Idempotent: a repeat increments its count and refreshes its last-used time.
@@ -67,6 +88,18 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 
 		evictIfNeeded(counts: &counts, lastUsed: &lastUsed)
 
+		save(counts: counts, lastUsed: lastUsed)
+	}
+
+	/// Remove a single word from both maps. No-op if absent. Keeps the count and last-used maps
+	/// in sync, exactly like `learn`. The keyboard reads recents live, so the next keystroke sees
+	/// the change without a cross-process ping.
+	public func remove(_ word: String) {
+		var counts = loadCounts()
+		var lastUsed = loadLastUsed()
+		guard counts[word] != nil || lastUsed[word] != nil else { return }
+		counts[word] = nil
+		lastUsed[word] = nil
 		save(counts: counts, lastUsed: lastUsed)
 	}
 

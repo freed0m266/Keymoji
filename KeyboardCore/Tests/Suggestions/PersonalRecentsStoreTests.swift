@@ -140,6 +140,49 @@ final class PersonalRecentsStoreTests: XCTestCase {
 		XCTAssertTrue(store.matches(prefix: "hel").isEmpty)
 	}
 
+	// MARK: - List & remove
+
+	func testAllLearnedWords_returnsCountsAndLastUsed() {
+		store.learn("hello", fromContextType: .prose, now: Date(timeIntervalSince1970: 100))
+		store.learn("hello", fromContextType: .prose, now: Date(timeIntervalSince1970: 200))
+		store.learn("world", fromContextType: .prose, now: Date(timeIntervalSince1970: 300))
+
+		let words = store.allLearnedWords()
+		XCTAssertEqual(Set(words.map(\.word)), ["hello", "world"])
+		let hello = words.first { $0.word == "hello" }
+		XCTAssertEqual(hello?.count, 2)
+		XCTAssertEqual(hello?.lastUsed, 200)
+		let world = words.first { $0.word == "world" }
+		XCTAssertEqual(world?.count, 1)
+		XCTAssertEqual(world?.lastUsed, 300)
+	}
+
+	func testAllLearnedWords_emptyStore_returnsEmpty() {
+		XCTAssertTrue(store.allLearnedWords().isEmpty)
+	}
+
+	func testRemove_deletesFromBothMaps_leavingOthersUntouched() {
+		store.learn("hello", fromContextType: .prose, now: Date(timeIntervalSince1970: 100))
+		store.learn("hello", fromContextType: .prose, now: Date(timeIntervalSince1970: 200))
+		store.learn("world", fromContextType: .prose, now: Date(timeIntervalSince1970: 300))
+
+		store.remove("hello")
+
+		XCTAssertEqual(store.count, 1)
+		XCTAssertTrue(store.matches(prefix: "hel").isEmpty)
+		let remaining = store.allLearnedWords()
+		XCTAssertEqual(remaining.map(\.word), ["world"])
+		XCTAssertEqual(remaining.first?.count, 1)
+		XCTAssertEqual(remaining.first?.lastUsed, 300)
+	}
+
+	func testRemove_absentWord_isNoOp() {
+		store.learn("hello", fromContextType: .prose)
+		store.remove("missing")
+		XCTAssertEqual(store.count, 1)
+		XCTAssertEqual(store.matches(prefix: "hel").first?.count, 1)
+	}
+
 	// MARK: - Persistence round-trips through a second instance
 
 	func testPersistence_survivesNewStoreInstance() {
