@@ -21,6 +21,7 @@ public struct SuggestionBarView: View {
 	/// only when there are no `suggestions` (never alongside them; see `body`). Empty by default so
 	/// existing call sites and snapshots keep their behavior.
 	public let favoriteEmojis: [String]
+	public let totalWidth: CGFloat
 	public let onSelect: (Suggestion) -> Void
 	/// Tap handler for a favorite emoji glyph. The host routes it through the same emoji-insert
 	/// dispatch path as the emoji panel (text insertion + haptics/sound + recents update).
@@ -28,9 +29,25 @@ public struct SuggestionBarView: View {
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: () -> Void
 
+	private let barHeight: CGFloat = 40
+	private let chipSpacing: CGFloat = 6
+	private let horizontalPadding: CGFloat = 3
+	private let favoriteEmojiWidth: CGFloat = 36
+
+	private var emojiPages: [[String]] {
+		let usable = totalWidth - 2 * horizontalPadding
+		let per = Int(floor(usable / (favoriteEmojiWidth + chipSpacing)))
+		let emojisPerPage = max(1, per)
+
+		return stride(from: 0, to: favoriteEmojis.count, by: emojisPerPage).map {
+			Array(favoriteEmojis[$0 ..< min($0 + emojisPerPage, favoriteEmojis.count)])
+		}
+	}
+
 	public init(
 		suggestions: [Suggestion],
 		favoriteEmojis: [String] = [],
+		totalWidth: CGFloat,
 		onSelect: @escaping (Suggestion) -> Void,
 		onSelectEmoji: @escaping (String) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
@@ -38,13 +55,12 @@ public struct SuggestionBarView: View {
 	) {
 		self.suggestions = suggestions
 		self.favoriteEmojis = favoriteEmojis
+		self.totalWidth = totalWidth
 		self.onSelect = onSelect
 		self.onSelectEmoji = onSelectEmoji
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
 	}
-
-	private let barHeight: CGFloat = 40
 
 	public var body: some View {
 		Group {
@@ -93,9 +109,6 @@ public struct SuggestionBarView: View {
 
 	// MARK: - Pill (Slack shortcodes)
 
-	private let chipSpacing: CGFloat = 6
-	private let horizontalPadding: CGFloat = 6
-
 	private var pillBar: some View {
 		ScrollView(.horizontal, showsIndicators: false) {
 			HStack(spacing: chipSpacing) {
@@ -140,25 +153,28 @@ public struct SuggestionBarView: View {
 
 	// MARK: - Favorites (emoji quick-access)
 
-	/// Horizontal scroll of favorite emoji glyphs, filling the bar's otherwise-empty state. Same
-	/// scroll skeleton as `pillBar`, but each cell is a bare glyph — no rounded chip background.
 	private var favoritesBar: some View {
-		ScrollView(.horizontal, showsIndicators: false) {
-			HStack(spacing: chipSpacing) {
-				ForEach(favoriteEmojis, id: \.self) { emoji in
-					Button {
-						selectEmoji(emoji)
-					} label: {
-						Text(emoji)
-							.font(.system(size: 24))
-							.frame(minWidth: 36)
-							.frame(maxHeight: .infinity)
+		TabView {
+			ForEach(Array(emojiPages.enumerated()), id: \.offset) { index, page in
+				HStack(spacing: chipSpacing) {
+					ForEach(page, id: \.self) { emoji in
+						Button {
+							selectEmoji(emoji)
+						} label: {
+							Text(emoji)
+								.font(.system(size: 24))
+								.frame(minWidth: favoriteEmojiWidth)
+								.contentShape(Rectangle())
+						}
+						.buttonStyle(.plain)
 					}
-					.buttonStyle(.plain)
+					Spacer(minLength: 0) // last (partial) page stays left-aligned
 				}
+				.padding(.horizontal, horizontalPadding)
+				.tag(index)
 			}
-			.padding(.horizontal, horizontalPadding)
 		}
+		.tabViewStyle(.page(indexDisplayMode: .never))
 	}
 
 	private func selectEmoji(_ emoji: String) {

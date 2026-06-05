@@ -99,6 +99,7 @@ public struct KeyboardView: View {
 				SuggestionBarView(
 					suggestions: suggestions,
 					favoriteEmojis: favoriteEmojis,
+					totalWidth: max(0, width - horizontalPadding * 2),
 					onSelect: onSelectSuggestion,
 					onSelectEmoji: { emoji in insertEmojiKey(emoji) },
 					onKeyTapHaptic: onKeyTapHaptic,
