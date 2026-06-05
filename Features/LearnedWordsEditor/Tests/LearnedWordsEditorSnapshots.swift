@@ -25,6 +25,16 @@ final class LearnedWordsEditorSnapshots: XCTestCase {
 		LearnedWord(word: "typing", count: 2, lastUsed: 1_700_000_200)
 	]
 
+	func testLearnedWordsEditor_mostUsed_dark() {
+		let view = NavigationStack {
+			LearnedWordsEditorView(
+				viewModel: LearnedWordsEditorViewModelMock(words: Self.sampleWords, sort: .mostUsed)
+			)
+		}
+		.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
 	func testLearnedWordsEditor_recency_dark() {
 		let view = NavigationStack {
 			LearnedWordsEditorView(

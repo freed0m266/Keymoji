@@ -26,6 +26,35 @@ final class LearnedWordsEditorViewModelTests: XCTestCase {
 		store.learn("banana", fromContextType: .prose, now: Date(timeIntervalSince1970: 300))
 	}
 
+	/// Distinct counts with a tie: banana=3, apple=2, cherry=2.
+	/// Most-used order is therefore banana, then apple/cherry tie broken by word ASC.
+	private func seedVaryingCounts(_ store: PersonalRecentsStore) {
+		store.learn("apple", fromContextType: .prose, now: Date(timeIntervalSince1970: 100))
+		store.learn("apple", fromContextType: .prose, now: Date(timeIntervalSince1970: 110))
+		store.learn("banana", fromContextType: .prose, now: Date(timeIntervalSince1970: 200))
+		store.learn("banana", fromContextType: .prose, now: Date(timeIntervalSince1970: 210))
+		store.learn("banana", fromContextType: .prose, now: Date(timeIntervalSince1970: 220))
+		store.learn("cherry", fromContextType: .prose, now: Date(timeIntervalSince1970: 300))
+		store.learn("cherry", fromContextType: .prose, now: Date(timeIntervalSince1970: 310))
+	}
+
+	func testMostUsedSort_ordersByCountDescendingThenWord() {
+		let store = makeStore()
+		seedVaryingCounts(store)
+		let vm = LearnedWordsEditorViewModel(store: store, sort: .mostUsed)
+		XCTAssertEqual(vm.words.map(\.word), ["banana", "apple", "cherry"])
+		XCTAssertEqual(vm.words.map(\.count), [3, 2, 2])
+	}
+
+	func testDefaultSort_isMostUsed() {
+		let store = makeStore()
+		seedVaryingCounts(store)
+		// No explicit `sort:` argument → default must be `.mostUsed`.
+		let vm = LearnedWordsEditorViewModel(store: store)
+		XCTAssertEqual(vm.sort, .mostUsed)
+		XCTAssertEqual(vm.words.map(\.word), ["banana", "apple", "cherry"])
+	}
+
 	func testRecencySort_ordersByLastUsedDescending() {
 		let store = makeStore()
 		seed(store)
