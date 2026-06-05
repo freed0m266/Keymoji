@@ -20,7 +20,7 @@ public final class LearnedWordsEditorViewModelMock: LearnedWordsEditorViewModeli
 		didSet { words = Self.sorted(words, by: sort) }
 	}
 
-	public init(words: [LearnedWord] = [], sort: LearnedWordsSort = .recency) {
+	public init(words: [LearnedWord] = [], sort: LearnedWordsSort = .mostUsed) {
 		self.sort = sort
 		self.words = Self.sorted(words, by: sort)
 	}
@@ -35,6 +35,11 @@ public final class LearnedWordsEditorViewModelMock: LearnedWordsEditorViewModeli
 
 	private static func sorted(_ input: [LearnedWord], by sort: LearnedWordsSort) -> [LearnedWord] {
 		switch sort {
+		case .mostUsed:
+			return input.sorted {
+				if $0.count != $1.count { return $0.count > $1.count }
+				return $0.word.localizedCaseInsensitiveCompare($1.word) == .orderedAscending
+			}
 		case .recency:
 			return input.sorted {
 				if $0.lastUsed != $1.lastUsed { return $0.lastUsed > $1.lastUsed }

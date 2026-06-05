@@ -13,7 +13,9 @@ import KeyboardCore
 
 /// Sort order for the learned-words list. View-level state owned by the view model.
 public enum LearnedWordsSort: Sendable, Hashable {
-	/// Last-used first (default).
+	/// Most-written first (default).
+	case mostUsed
+	/// Last-used first.
 	case recency
 	/// A→Z, case-insensitive.
 	case alphabetical
@@ -49,7 +51,7 @@ final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewMo
 
 	init(
 		store: PersonalRecentsStore = PersonalRecentsStore(store: .shared),
-		sort: LearnedWordsSort = .recency
+		sort: LearnedWordsSort = .mostUsed
 	) {
 		self.store = store
 		self.sort = sort
@@ -85,6 +87,11 @@ final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewMo
 
 	private func sorted(_ input: [LearnedWord]) -> [LearnedWord] {
 		switch sort {
+		case .mostUsed:
+			return input.sorted {
+				if $0.count != $1.count { return $0.count > $1.count }
+				return $0.word.localizedCaseInsensitiveCompare($1.word) == .orderedAscending
+			}
 		case .recency:
 			return input.sorted {
 				if $0.lastUsed != $1.lastUsed { return $0.lastUsed > $1.lastUsed }

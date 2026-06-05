@@ -96,6 +96,7 @@
 "settings.suggestions.learnedWordsLabel" = "Learned words";
 
 "settings.learnedWords.title" = "Learned words";
+"settings.learnedWords.sort.mostUsed" = "Most used";
 "settings.learnedWords.sort.recency" = "Recently used";
 "settings.learnedWords.sort.alphabetical" = "A–Z";
 "settings.learnedWords.count" = "%d×";

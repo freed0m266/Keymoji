@@ -29,6 +29,7 @@ public struct LearnedWordsEditorView<ViewModel: LearnedWordsEditorViewModeling>:
 				List {
 					Section {
 						Picker(Texts.title, selection: $viewModel.sort) {
+							Text(Texts.Sort.mostUsed).tag(LearnedWordsSort.mostUsed)
 							Text(Texts.Sort.recency).tag(LearnedWordsSort.recency)
 							Text(Texts.Sort.alphabetical).tag(LearnedWordsSort.alphabetical)
 						}
@@ -96,6 +97,15 @@ private let sampleWords: [LearnedWord] = [
 	LearnedWord(word: "suggestion", count: 3, lastUsed: 1_700_000_400),
 	LearnedWord(word: "typing", count: 2, lastUsed: 1_700_000_200)
 ]
+
+#Preview("Most used") {
+	NavigationStack {
+		LearnedWordsEditorView(
+			viewModel: LearnedWordsEditorViewModelMock(words: sampleWords, sort: .mostUsed)
+		)
+	}
+	.preferredColorScheme(.dark)
+}
 
 #Preview("Recently used") {
 	NavigationStack {
