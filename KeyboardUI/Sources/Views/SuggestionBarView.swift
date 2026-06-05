@@ -1,5 +1,6 @@
 import SwiftUI
 import KeyboardCore
+import KeymojiUI
 
 /// The suggestion bar that sits above the keyboard. Renders an arbitrary `[Suggestion]`, drawing
 /// each chip per its `renderStyle`:
@@ -32,11 +33,11 @@ public struct SuggestionBarView: View {
 	private let barHeight: CGFloat = 40
 	private let chipSpacing: CGFloat = 6
 	private let horizontalPadding: CGFloat = 3
-	private let favoriteEmojiWidth: CGFloat = 36
+	private let favoriteEmojiWidth: CGFloat = 42
 
 	private var emojiPages: [[String]] {
 		let usable = totalWidth - 2 * horizontalPadding
-		let per = Int(floor(usable / (favoriteEmojiWidth + chipSpacing)))
+		let per = Int(floor(usable / favoriteEmojiWidth))
 		let emojisPerPage = max(1, per)
 
 		return stride(from: 0, to: favoriteEmojis.count, by: emojisPerPage).map {
@@ -156,7 +157,7 @@ public struct SuggestionBarView: View {
 	private var favoritesBar: some View {
 		TabView {
 			ForEach(Array(emojiPages.enumerated()), id: \.offset) { index, page in
-				HStack(spacing: chipSpacing) {
+				HStack(spacing: 0) {
 					ForEach(page, id: \.self) { emoji in
 						Button {
 							selectEmoji(emoji)
@@ -164,12 +165,13 @@ public struct SuggestionBarView: View {
 							Text(emoji)
 								.font(.system(size: 24))
 								.frame(minWidth: favoriteEmojiWidth)
-								.contentShape(Rectangle())
+								.tappable()
 						}
 						.buttonStyle(.plain)
 					}
 					Spacer(minLength: 0) // last (partial) page stays left-aligned
 				}
+				.tappable()
 				.padding(.horizontal, horizontalPadding)
 				.tag(index)
 			}
