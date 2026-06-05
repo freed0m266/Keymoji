@@ -1,6 +1,6 @@
 # 50 — Řazení naučených slov podle četnosti (`count`) + nový default
 
-**Status:** Todo
+**Status:** Done — 2026-06-05
 
 **Priorita:** v1.2 · **Úsilí:** S · **Dopad:** Low
 
