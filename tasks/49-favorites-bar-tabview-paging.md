@@ -1,6 +1,6 @@
 # 49 — Favorites bar: TabView paging místo free-scroll
 
-**Status:** Todo
+**Status:** Done — 2026-06-05
 
 **Priorita:** v1.1 · **Úsilí:** S–M · **Dopad:** Low–Medium (UX polish: swipe na favorites baru lístkuje po stránkách místo plynulého scrollu — předvídatelnější, „klávesnicovější" pocit, oblíbené emoji se nepřescrollují o půl glyfu)
 
