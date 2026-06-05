@@ -214,6 +214,7 @@ private func pillSuggestion(_ shortcode: String, _ emoji: String) -> Suggestion 
 			wordSuggestion("help", score: 0.7),
 			wordSuggestion("helicopter", score: 0.5)
 		],
+		totalWidth: 387,
 		onSelect: { _ in }
 	)
 	.frame(width: 393, height: 40)
@@ -227,6 +228,7 @@ private func pillSuggestion(_ shortcode: String, _ emoji: String) -> Suggestion 
 			pillSuggestion("smiley", "😃"),
 			pillSuggestion("smirk", "😏")
 		],
+		totalWidth: 387,
 		onSelect: { _ in }
 	)
 	.frame(width: 393, height: 40)
@@ -237,6 +239,7 @@ private func pillSuggestion(_ shortcode: String, _ emoji: String) -> Suggestion 
 	SuggestionBarView(
 		suggestions: [],
 		favoriteEmojis: ["❤️", "😀", "🚀", "🎉", "🐶", "🍕", "👍"],
+		totalWidth: 387,
 		onSelect: { _ in },
 		onSelectEmoji: { _ in }
 	)
