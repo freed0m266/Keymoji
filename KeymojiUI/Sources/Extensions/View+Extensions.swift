@@ -27,3 +27,11 @@ public extension View {
 			}
 	}
 }
+
+public extension View {
+	func tappable<S>(_ shape: S = .rect) -> some View where S : Shape {
+		self
+			.contentShape(shape)
+			.background(Color.black.opacity(0.001))
+	}
+}
