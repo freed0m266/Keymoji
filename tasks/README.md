@@ -68,6 +68,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 
 40. [40 — Word completion suggestions (UILexicon + UITextChecker + personal recents)](40-word-completion-suggestions.md)
 48. [48 — Seznam naučených slov se správou (zobrazit + mazat jednotlivě)](48-learned-words-list-management.md)
+51. [51 — Favorites bar: řazení podle četnosti používání](51-favorites-bar-sort-by-frequency.md)
 
 ## Pre-App-Store
 
