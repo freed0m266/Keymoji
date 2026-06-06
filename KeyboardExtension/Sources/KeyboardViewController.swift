@@ -103,6 +103,9 @@ final class KeyboardViewController: UIInputViewController {
 
 	override func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
+		// Pre-warm the Taptic Engine before the user starts typing — it idles after a few seconds,
+		// so the first tap after each appearance would otherwise pay the wake-from-idle latency.
+		haptics.prepareForInput()
 		refreshFromStore()
 		refreshAppearance()
 		refreshReturnKeyType()

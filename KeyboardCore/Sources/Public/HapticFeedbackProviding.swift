@@ -7,6 +7,9 @@ import Foundation
 /// `@MainActor` matches UIKit's `UIImpactFeedbackGenerator` isolation.
 @MainActor
 public protocol HapticFeedbackProviding {
+	/// Pre-warm the Taptic Engine before a burst of input (e.g. on keyboard appearance). The engine
+	/// only stays "prepared" for a few seconds, so this complements the per-tap re-prepare.
+	func prepareForInput()
 	func keyTap()
 	func popoverEntry()
 	func popoverHighlightChanged()
@@ -17,6 +20,7 @@ public protocol HapticFeedbackProviding {
 
 public struct NoopHaptics: HapticFeedbackProviding {
 	public init() {}
+	public func prepareForInput() {}
 	public func keyTap() {}
 	public func popoverEntry() {}
 	public func popoverHighlightChanged() {}
