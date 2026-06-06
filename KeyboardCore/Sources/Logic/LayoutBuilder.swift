@@ -130,7 +130,9 @@ public enum LayoutBuilder {
 		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift) }
 		let row3 = KeyboardRow(
 			id: "letters.row3",
-			keys: [makeShiftKey(shift: shift)] + row3Letters + [makeDeleteKey()]
+			keys: [makeShiftKey(shift: shift).addingGaps(trailing: symbolEdgeGapWeight)]
+				+ row3Letters
+				+ [makeDeleteKey().addingGaps(leading: symbolEdgeGapWeight)]
 		)
 		return [row1, row2, row3]
 	}

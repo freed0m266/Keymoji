@@ -503,7 +503,7 @@ struct KeyView: View {
 		switch type {
 		case .default:                       return .symbol(.return)
 		case .go:                             return .text("Go")
-		case .search, .google, .yahoo:       return .text("Search")
+		case .search, .google, .yahoo:       return .symbol(.search)
 		case .send:                           return .text("Send")
 		case .done:                           return .text("Done")
 		case .next:                           return .text("Next")

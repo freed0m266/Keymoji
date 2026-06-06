@@ -64,6 +64,7 @@ public enum SystemSymbol: String, Sendable, Equatable {
 	case shiftFill
 	case capsLockFill
 	case delete
+	case search
 	case `return`
 	case smiley
 
@@ -73,6 +74,7 @@ public enum SystemSymbol: String, Sendable, Equatable {
 		case .shiftFill:    return "shift.fill"
 		case .capsLockFill: return "capslock.fill"
 		case .delete:       return "delete.left"
+		case .search:       return "magnifyingglass"
 		case .return:       return "return"
 		case .smiley:       return "face.smiling"
 		}
@@ -117,8 +119,8 @@ public struct KeyWeight: Sendable, Equatable {
 
 	public static let standard = KeyWeight(1.0)
 	public static let wide = KeyWeight(1.5)
-	public static let space = KeyWeight(4.0)
+	public static let space = KeyWeight(4.25)
 	public static let small = KeyWeight(1.25)
 	public static let dotKey = KeyWeight(1.0)
-	public static let returnKey = KeyWeight(1.75)
+	public static let returnKey = KeyWeight(1.5)
 }
