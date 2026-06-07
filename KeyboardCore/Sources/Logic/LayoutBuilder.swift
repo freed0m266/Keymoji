@@ -128,11 +128,14 @@ public enum LayoutBuilder {
 			referenceWeight: 10
 		)
 		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift) }
+		// Shift / delete on the letter row use a narrower weight than the symbol row's `.wide` (1.5) so
+		// the seven letters line up with rows 1 and 2 at exactly `W/10`, edge gaps included:
+		//   1.2 (shift) + 0.3 gap + 7×1.0 (letters) + 0.3 gap + 1.2 (delete) = 10.0 weight units.
 		let row3 = KeyboardRow(
 			id: "letters.row3",
-			keys: [makeShiftKey(shift: shift).addingGaps(trailing: symbolEdgeGapWeight)]
+			keys: [makeShiftKey(shift: shift, weight: letterRowEdgeKeyWeight).addingGaps(trailing: symbolEdgeGapWeight)]
 				+ row3Letters
-				+ [makeDeleteKey().addingGaps(leading: symbolEdgeGapWeight)]
+				+ [makeDeleteKey(weight: letterRowEdgeKeyWeight).addingGaps(leading: symbolEdgeGapWeight)]
 		)
 		return [row1, row2, row3]
 	}
@@ -274,7 +277,12 @@ public enum LayoutBuilder {
 
 	// MARK: - Shared keys
 
-	private static func makeShiftKey(shift: ShiftState) -> Key {
+	/// Edge-key weight for the letter row 3 shift / delete. Narrower than `.wide` (1.5) so the seven
+	/// letters align with rows 1 / 2 at `W/10` once the `0.3` edge gaps are counted. Used *only* on the
+	/// letter row — the symbol row C keeps `.wide` (it has nothing to align with).
+	private static let letterRowEdgeKeyWeight = KeyWeight(1.2)
+
+	private static func makeShiftKey(shift: ShiftState, weight: KeyWeight = .wide) -> Key {
 		let symbol: SystemSymbol
 		switch shift {
 		case .lower:        symbol = .shift
@@ -286,18 +294,18 @@ public enum LayoutBuilder {
 			primary: .symbol(symbol),
 			alternates: [],
 			action: .shift,
-			visualWeight: .wide,
+			visualWeight: weight,
 			role: .system
 		)
 	}
 
-	private static func makeDeleteKey() -> Key {
+	private static func makeDeleteKey(weight: KeyWeight = .wide) -> Key {
 		Key(
 			id: "delete",
 			primary: .symbol(.delete),
 			alternates: [],
 			action: .backspace,
-			visualWeight: .wide,
+			visualWeight: weight,
 			role: .system
 		)
 	}

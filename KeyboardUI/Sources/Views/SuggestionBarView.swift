@@ -30,7 +30,7 @@ public struct SuggestionBarView: View {
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: () -> Void
 
-	private let barHeight: CGFloat = 40
+	private let barHeight = KeyboardMetrics.suggestionBarHeight
 	private let chipSpacing: CGFloat = 6
 	private let horizontalPadding: CGFloat = 3
 	private let favoriteEmojiWidth: CGFloat = 42

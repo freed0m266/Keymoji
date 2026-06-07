@@ -8,6 +8,9 @@ struct KeyView: View {
 	let style: KeyStyle
 	let returnKeyType: ReturnKeyType
 	let keyWidth: CGFloat
+	/// Fixed visible cap height (the coloured rectangle). The total row slot is `capHeight + rowGap`;
+	/// the gap is added as `rowGap/2` vertical padding *inside* the hit area below.
+	let capHeight: CGFloat
 	/// Extra tappable / filled space owned by this key on its leading / trailing side, in points.
 	/// The visible cap stays `keyWidth` wide and is pushed away from the gap; the gap area still
 	/// carries this key's background and hit-testing (e.g. the symbols toggle / delete edge gaps).
@@ -78,6 +81,7 @@ struct KeyView: View {
 		style: KeyStyle,
 		returnKeyType: ReturnKeyType,
 		keyWidth: CGFloat = 0,
+		capHeight: CGFloat = KeyboardMetrics.keyCapHeight,
 		leadingGapWidth: CGFloat = 0,
 		trailingGapWidth: CGFloat = 0,
 		popoverAlignment: HorizontalAlignment = .center,
@@ -93,6 +97,7 @@ struct KeyView: View {
 		self.style = style
 		self.returnKeyType = returnKeyType
 		self.keyWidth = keyWidth
+		self.capHeight = capHeight
 		self.leadingGapWidth = leadingGapWidth
 		self.trailingGapWidth = trailingGapWidth
 		self.popoverAlignment = popoverAlignment
@@ -117,14 +122,18 @@ struct KeyView: View {
 				.lineLimit(1)
 				.padding(.horizontal, 4)
 		}
+		// Fixed visible cap height — keys no longer float to fill leftover space, so letters and
+		// symbols stay the same height regardless of the suggestion bar (task 52).
+		.frame(height: capHeight)
 		.padding(.horizontal, 3)
-		.padding(.vertical, 6)
+		// Half the row gap on each side: the inter-row gap lives *inside* this key's hit area, so a
+		// tap landing between two rows still dispatches the nearer key (task 42 — must not break).
+		.padding(.vertical, KeyboardMetrics.rowGap / 2)
 		// Edge gaps are padded in here — *before* the background and hit shape — so the cap stays
 		// `keyWidth` wide and pushed away from the gap, while the gap area inherits this key's
 		// background fill and tap target. A tap in the gap therefore dispatches this key's action.
 		.padding(.leading, leadingGapWidth)
 		.padding(.trailing, trailingGapWidth)
-		.frame(minHeight: 48)
 		.background {
 			Color.black.opacity(0.001)
 		}
@@ -550,7 +559,7 @@ private struct KeyViewPreview: View {
 			keyWidth: keyWidth,
 			onTap: { _ in }
 		)
-		.frame(width: keyWidth, height: 44)
+		.frame(width: keyWidth, height: KeyboardMetrics.keyCapHeight + KeyboardMetrics.rowGap)
 		.padding(40)
 		.background(Color(.systemBackground))
 	}

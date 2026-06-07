@@ -76,7 +76,7 @@ public struct KeyboardView: View {
 		self.onTrackpadModeEntered = onTrackpadModeEntered
 	}
 
-	private let horizontalPadding: CGFloat = 3
+	private let horizontalPadding = KeyboardMetrics.horizontalPadding
 
 	private var isEmojiKeyboard: Bool {
 		layout.page == .emojis
@@ -108,6 +108,11 @@ public struct KeyboardView: View {
 					onKeyTapHaptic: onKeyTapHaptic,
 					onKeyClick: { onKeyClick(.character) }
 				)
+				// Explicit gap below the bar (decision #6). `keyboardHeight` counts `suggestionBarGap` in
+				// the frame, so this spacer must render it — otherwise the VStack is shorter than the
+				// frame and SwiftUI centres it, splitting the gap as stray blank above the bar and below
+				// the last row instead of placing it under the bar.
+				Color.clear.frame(height: KeyboardMetrics.suggestionBarGap)
 			}
 
 			if isEmojiKeyboard {
@@ -228,7 +233,8 @@ public struct KeyboardView: View {
 				canEscalateBackspace: canEscalateBackspace,
 				onTrackpadModeChanged: handleTrackpadModeChanged
 			)
-			.frame(maxHeight: row.isNumberRow ? 48 : nil)
+			// No per-row height clamp — each `KeyView` now carries its own fixed cap height, so the
+			// VStack is exactly the sum of the row slots and rows never stretch to fill leftover space.
 		}
 	}
 
@@ -243,41 +249,12 @@ public struct KeyboardView: View {
 		layout.rows
 	}
 
-	/// Vertical footprint the suggestion bar adds when shown: the bar height plus the inter-row
-	/// gap above the keys below it. Public so `KeyboardViewController` can mirror it in the host
-	/// input view's height constraint — otherwise the SwiftUI content overflows and clips.
-	public static let suggestionBarFootprint: CGFloat = 51
-
-	/// Hardcoded heights for iPhone portrait, v1.0. Adjust after on-device testing.
-	/// The suggestion bar (when shown) adds `suggestionBarFootprint` on top of the base height,
-	/// stacking above the number row rather than replacing it (A2).
+	/// Total keyboard height, derived bottom-up from `KeyboardMetrics` (cap heights + row gaps + bar +
+	/// emoji-search chrome). The same `KeyboardMetrics.keyboardHeight(for:showsSuggestionBar:)` drives the
+	/// host UIInputView constraint in `KeyboardViewController`, so the SwiftUI frame and the host can't
+	/// drift (drift used to clip the emoji-search bar — task 39 / task 52).
 	private var keyboardHeight: CGFloat {
-		let base: CGFloat = layout.showsNumberRow ? 260 : 216
-		if effectiveShowsBar {
-			return base + Self.suggestionBarFootprint
-		}
-		if isEmojiSearchKeyboard {
-			// Emoji search stacks the search bar (~36 pt) + horizontal results bar (~44 pt) + a
-			// vertical row gap above the full QWERTY layout. The layout builder also drops the
-			// number row in this mode, so we measure off the no-number-row base and add the
-			// chrome footprint. Without this, the bottom space/delete row clipped under the
-			// frame (caught by the Codex review on task 39).
-			return 216 + emojiSearchChromeHeight
-		}
-		return base
-	}
-
-	/// Vertical footprint of the emoji-search chrome (search bar + results bar + intra-row gap)
-	/// stacked above the regular QWERTY rows when `layout.page == .emojiSearch`.
-	private var emojiSearchChromeHeight: CGFloat {
-		let searchBarHeight: CGFloat = 32
-		let resultsBarHeight: CGFloat = 44
-		let topPaddingInsideSearchView: CGFloat = 4
-		let interBarSpacing: CGFloat = 6
-		return searchBarHeight
-			+ resultsBarHeight
-			+ topPaddingInsideSearchView
-			+ interBarSpacing
+		KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: effectiveShowsBar)
 	}
 }
 

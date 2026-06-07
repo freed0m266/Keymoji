@@ -27,6 +27,7 @@ struct KeyRowView: View {
 					style: KeyStyle.style(for: key, page: page),
 					returnKeyType: returnKeyType,
 					keyWidth: keyWidth,
+					capHeight: capHeight,
 					leadingGapWidth: leadingGap,
 					trailingGapWidth: trailingGap,
 					popoverAlignment: popoverAlignment(forKeyAt: index, keyWidth: keyWidth),
@@ -85,6 +86,13 @@ struct KeyRowView: View {
 		if keyMidX - halfPopover < 0 { return .leading }
 		if keyMidX + halfPopover > totalWidth { return .trailing }
 		return .center
+	}
+
+	/// Fixed visible cap height for every key in this row — the number row is a touch shorter than the
+	/// letter / symbol / bottom rows. The row's total slot is `capHeight + rowGap` (the gap padding lives
+	/// inside each `KeyView`).
+	private var capHeight: CGFloat {
+		row.isNumberRow ? KeyboardMetrics.numberRowCapHeight : KeyboardMetrics.keyCapHeight
 	}
 
 	/// Width of one weight unit after subtracting symmetric insets. Keys and gaps both bill against it.

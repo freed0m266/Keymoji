@@ -379,16 +379,6 @@ final class KeyboardViewController: UIInputViewController {
 
 	// MARK: - Keyboard height
 
-	/// Resting heights for the SwiftUI keyboard. Mirror `KeyboardView.keyboardHeight` so the
-	/// host UIInputView and the SwiftUI content agree on size — if the SwiftUI frame is
-	/// taller than the host, the overflow gets clipped (visible as a missing search bar at
-	/// the top of `.emojiSearch` mode, reported on real device).
-	private static let regularHeightWithNumberRow: CGFloat = 260
-	private static let regularHeightWithoutNumberRow: CGFloat = 216
-	/// Extra footprint for the search bar + horizontal results bar stacked above the QWERTY
-	/// rows in `.emojiSearch`. Matches `KeyboardView.emojiSearchChromeHeight`.
-	private static let emojiSearchChromeFootprint: CGFloat = 97
-
 	private func installKeyboardHeightConstraint() {
 		let constraint = view.heightAnchor.constraint(equalToConstant: desiredKeyboardHeight())
 		// `.required - 1`: high enough for iOS to honour as the keyboard's desired height,
@@ -409,14 +399,16 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func desiredKeyboardHeight() -> CGFloat {
-		if state.page.isEmojiSearch {
-			return Self.regularHeightWithoutNumberRow + Self.emojiSearchChromeFootprint
-		}
-		let base = state.showNumberRow ? Self.regularHeightWithNumberRow : Self.regularHeightWithoutNumberRow
-		// The suggestion bar is a separate row (A2); the host input view must grow to fit it or it
-		// clips. Mirrors `KeyboardView.keyboardHeight`. `showsSuggestionBar` is false off letter
-		// pages, so symbol/emoji pages keep the base height.
-		return base + (showsSuggestionBar ? KeyboardView.suggestionBarFootprint : 0)
+		// Build the same layout `makeRoot` renders, then ask `KeyboardMetrics` for its height. The host
+		// UIInputView constraint and the SwiftUI frame therefore come from one formula and can't drift —
+		// drift used to clip the SwiftUI content (missing search bar at the top of `.emojiSearch`).
+		let layout = KeyboardCore.makeLayout(
+			page: state.page,
+			showNumberRow: state.showNumberRow,
+			returnKeyType: state.returnKeyType,
+			letterLayout: state.letterLayout
+		)
+		return KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: showsSuggestionBar)
 	}
 
 	/// Build the SwiftUI root with the current state and the live suggestion list. Suggestions are
