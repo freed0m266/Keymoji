@@ -1,6 +1,6 @@
 # 54 — Skrýt number row v landscape orientaci
 
-**Status:** Todo
+**Status:** Done — 2026-06-07
 
 **Priorita:** v1.2 · **Úsilí:** S · **Dopad:** Medium (UX v landscape)
 
