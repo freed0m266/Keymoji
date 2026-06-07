@@ -70,6 +70,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 48. [48 — Seznam naučených slov se správou (zobrazit + mazat jednotlivě)](48-learned-words-list-management.md)
 51. [51 — Favorites bar: řazení podle četnosti používání](51-favorites-bar-sort-by-frequency.md)
 54. [54 — Skrýt number row v landscape orientaci](54-hide-number-row-in-landscape.md)
+56. [56 — SuggestionBar: zobrazovat vždy kromě emoji / emoji-search stránek](56-suggestion-bar-always-except-emoji.md)
 
 ## v1.2 — Sizing & layout
 
