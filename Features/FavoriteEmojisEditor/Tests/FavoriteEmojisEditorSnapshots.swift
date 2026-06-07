@@ -26,6 +26,20 @@ final class FavoriteEmojisEditorSnapshots: XCTestCase {
 		assertSnapshot(view)
 	}
 
+	func testFavoriteEmojisEditor_frequency_dark() {
+		let view = NavigationStack {
+			FavoriteEmojisEditorView(
+				viewModel: FavoriteEmojisEditorViewModelMock(
+					favorites: ["❤️", "😀", "🚀", "🎉", "🐶"],
+					sortMode: .frequency,
+					counts: ["🚀": 20, "🐶": 12, "😀": 5, "❤️": 1]
+				)
+			)
+		}
+		.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
 	func testFavoriteEmojisEditor_empty_dark() {
 		let view = NavigationStack {
 			FavoriteEmojisEditorView(viewModel: FavoriteEmojisEditorViewModelMock(favorites: []))
