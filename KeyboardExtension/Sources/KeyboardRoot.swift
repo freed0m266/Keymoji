@@ -6,6 +6,10 @@ import KeyboardUI
 /// `KeyboardState` and routes key taps back to the controller via `dispatch`.
 struct KeyboardRoot: View {
 	let state: KeyboardState
+	/// Favorites in display order (bar + panel). The controller computes the order — manual or
+	/// frequency-sorted — and freezes it while the favorites are visible, so it never shuffles
+	/// under the user's finger.
+	let favoriteEmojis: [String]
 	let suggestions: [Suggestion]
 	let showsSuggestionBar: Bool
 	let dispatch: (Key) -> Void
@@ -29,7 +33,7 @@ struct KeyboardRoot: View {
 			layout: layout,
 			width: state.keyboardWidth,
 			recentEmojis: state.recentEmojis,
-			favoriteEmojis: state.favoriteEmojis,
+			favoriteEmojis: favoriteEmojis,
 			searchQuery: state.searchQuery,
 			suggestions: suggestions,
 			showsSuggestionBar: showsSuggestionBar,

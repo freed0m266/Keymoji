@@ -9,14 +9,28 @@
 #if DEBUG
 import Foundation
 import SwiftUI
+import KeymojiCore
 
 @Observable
 @MainActor
 public final class FavoriteEmojisEditorViewModelMock: FavoriteEmojisEditorViewModeling {
 	public var favorites: [String]
+	public var sortMode: FavoritesSortMode
 
-	public init(favorites: [String] = ["❤️", "😀", "🚀"]) {
+	private let counts: [String: Int]
+
+	public var displayedFavorites: [String] {
+		FavoritesOrdering.ordered(favorites, counts: counts, mode: sortMode)
+	}
+
+	public init(
+		favorites: [String] = ["❤️", "😀", "🚀"],
+		sortMode: FavoritesSortMode = .manual,
+		counts: [String: Int] = [:]
+	) {
 		self.favorites = favorites
+		self.sortMode = sortMode
+		self.counts = counts
 	}
 
 	public func toggle(_ emoji: String) {
@@ -28,10 +42,13 @@ public final class FavoriteEmojisEditorViewModelMock: FavoriteEmojisEditorViewMo
 	}
 
 	public func remove(at offsets: IndexSet) {
-		favorites.remove(atOffsets: offsets)
+		let displayed = displayedFavorites
+		let removed = offsets.compactMap { displayed.indices.contains($0) ? displayed[$0] : nil }
+		favorites.removeAll { removed.contains($0) }
 	}
 
 	public func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+		guard sortMode == .manual else { return }
 		favorites.move(fromOffsets: source, toOffset: destination)
 	}
 }

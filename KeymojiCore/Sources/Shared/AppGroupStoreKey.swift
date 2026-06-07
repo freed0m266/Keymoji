@@ -12,6 +12,10 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case letterLayout
 	case recentEmojis
 	case favoriteEmojis
+	/// Favorites bar ordering (`FavoritesSortMode` raw value). Defaults to `.manual`.
+	case favoritesSortMode
+	/// JSON `{ "emoji": count }` of lifetime emoji insertion counts, driving `.frequency` ordering.
+	case emojiUsageCounts
 	case suggestionsEnabled
 	/// JSON `{ "word": count }` of the personal word-completion recents pool.
 	case wordCompletionRecents

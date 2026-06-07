@@ -11,6 +11,9 @@ public struct KeyboardView: View {
 	public let layout: KeyboardLayout
 	public let width: CGFloat
 	public let recentEmojis: [String]
+	/// Favorites in the order they should appear, shared by both the suggestion bar and the emoji
+	/// panel so the two never disagree. The caller (`KeyboardViewController`) decides the order —
+	/// manual or frequency-sorted — and freezes it while the favorites are on screen.
 	public let favoriteEmojis: [String]
 	public let searchQuery: String
 	public let suggestions: [Suggestion]

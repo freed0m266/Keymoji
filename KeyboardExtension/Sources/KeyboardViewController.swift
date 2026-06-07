@@ -13,6 +13,10 @@ import KeyboardUI
 final class KeyboardViewController: UIInputViewController {
 
 	private var state = KeyboardState()
+	/// The favorites order actually rendered in the bar/panel. Recomputed from counts only while the
+	/// favorites aren't on screen (see `refreshFavoritesDisplayOrder`) so `.frequency` never reshuffles
+	/// under the user's finger. Cleared on disappear so each appearance starts from a fresh ordering.
+	private var favoritesDisplayOrder: [String] = []
 	private var hostingController: UIHostingController<KeyboardRoot>?
 	/// Constraint that drives the keyboard's vertical footprint. Most pages keep it at the
 	/// regular iOS keyboard height (~260 pt); `.emojiSearch` mode bumps it taller so the
@@ -117,6 +121,9 @@ final class KeyboardViewController: UIInputViewController {
 		super.viewWillDisappear(animated)
 		// Last chance to learn a freshly-typed email before the field goes away.
 		commitPendingEmail()
+		// Drop the frozen favorites order: the keyboard is going away, so the next appearance can
+		// safely re-apply the latest `.frequency` ordering (seeded lazily in `makeRoot`).
+		favoritesDisplayOrder = []
 	}
 
 	override func viewDidLayoutSubviews() {
@@ -145,6 +152,9 @@ final class KeyboardViewController: UIInputViewController {
 				self?.refreshFromStore()
 			},
 			settingsNotifier.addObserver(for: .favoriteEmojis) { [weak self] in
+				self?.refreshFromStore()
+			},
+			settingsNotifier.addObserver(for: .favoritesSortMode) { [weak self] in
 				self?.refreshFromStore()
 			},
 			settingsNotifier.addObserver(for: .appearance) { [weak self] in
@@ -184,6 +194,16 @@ final class KeyboardViewController: UIInputViewController {
 		let storedFavorites = store.favoriteEmojis
 		if state.favoriteEmojis != storedFavorites {
 			state.favoriteEmojis = storedFavorites
+			changed = true
+		}
+		let storedSortMode = store.favoritesSortMode
+		if state.favoritesSortMode != storedSortMode {
+			state.favoritesSortMode = storedSortMode
+			changed = true
+		}
+		let storedUsageCounts = store.emojiUsageCounts
+		if state.emojiUsageCounts != storedUsageCounts {
+			state.emojiUsageCounts = storedUsageCounts
 			changed = true
 		}
 		let suggestionsOn = store.suggestionsEnabled
@@ -406,8 +426,13 @@ final class KeyboardViewController: UIInputViewController {
 	private func makeRoot() -> KeyboardRoot {
 		let showsBar = showsSuggestionBar
 		let suggestions = showsBar ? currentSuggestions() : []
+		// Favorites are on screen when the bar is showing them (no word/Slack suggestions occupy it)
+		// or the emoji panel is open. Freeze their order while visible so it never reshuffles mid-use.
+		let favoritesVisible = (showsBar && suggestions.isEmpty) || state.page == .emojis
+		refreshFavoritesDisplayOrder(favoritesVisible: favoritesVisible)
 		return KeyboardRoot(
 			state: state,
+			favoriteEmojis: favoritesDisplayOrder,
 			suggestions: suggestions,
 			showsSuggestionBar: showsBar,
 			dispatch: { [weak self] key in self?.handle(key) },
@@ -424,6 +449,37 @@ final class KeyboardViewController: UIInputViewController {
 				return !context.isEmpty
 			},
 			onTrackpadModeEntered: { [weak self] in self?.haptics.trackpadModeEntered() }
+		)
+	}
+
+	/// Updates `favoritesDisplayOrder` — the order shown in the bar/panel — without ever reshuffling
+	/// what the user is currently looking at:
+	/// - When the favorites are **hidden** (or on the first seed), re-apply the full ordering, so
+	///   `.frequency` picks up the latest usage counts the next time the favorites appear.
+	/// - When they're **visible**, keep the frozen order and only reconcile membership: drop emojis
+	///   that were just un-favorited and append newly-favorited ones at the end (a long-press toggle
+	///   must still take effect, but existing items stay put).
+	private func refreshFavoritesDisplayOrder(favoritesVisible: Bool) {
+		guard favoritesVisible, !favoritesDisplayOrder.isEmpty else {
+			favoritesDisplayOrder = orderedFavorites()
+			return
+		}
+		let favorites = Set(state.favoriteEmojis)
+		var reconciled = favoritesDisplayOrder.filter { favorites.contains($0) }
+		let present = Set(reconciled)
+		for emoji in state.favoriteEmojis where !present.contains(emoji) {
+			reconciled.append(emoji)
+		}
+		favoritesDisplayOrder = reconciled
+	}
+
+	/// The favorites ordered per the current sort mode and usage counts. `.manual` returns the
+	/// hand-curated order unchanged; `.frequency` sorts by count descending (stable on ties).
+	private func orderedFavorites() -> [String] {
+		FavoritesOrdering.ordered(
+			state.favoriteEmojis,
+			counts: state.emojiUsageCounts,
+			mode: state.favoritesSortMode
 		)
 	}
 
@@ -506,6 +562,10 @@ final class KeyboardViewController: UIInputViewController {
 		state.recentEmojis = updatedRecents
 		store.recentEmojis = updatedRecents
 
+		// Slack substitution doesn't synthesize an `emoji.` key, so `recordRecentEmojiIfNeeded`
+		// never sees it — bump the usage count here too (keep in sync with that path).
+		incrementEmojiUsage(emoji)
+
 		ShiftStateMachine.apply(.characterInserted, to: &state)
 
 		rebuild()
@@ -528,10 +588,15 @@ final class KeyboardViewController: UIInputViewController {
 			controller: self,
 			learning: state.suggestionsEnabled ? learningHook : nil
 		)
+		// The dispatcher updates `state.recentEmojis` directly when a typed `:shortcode:` auto-
+		// substitutes to an emoji (inserted via the proxy, not a synthesized `emoji.` key). That
+		// path bypasses `recordRecentEmojiIfNeeded` below, so detect it here by the recents change
+		// during dispatch and bump the usage count for the inserted emoji (head of recents).
+		if state.recentEmojis != recentsBefore, let inserted = state.recentEmojis.first {
+			incrementEmojiUsage(inserted)
+		}
 		recordRecentEmojiIfNeeded(key: key)
-		// The dispatcher updates `state.recentEmojis` directly when a Slack-style shortcode
-		// substitution lands (the emoji is inserted via the proxy, not a synthesized `emoji.` key,
-		// so the path above is a no-op for it). Mirror the change to the cross-process store here.
+		// Mirror any recents change (synth `emoji.` key or Slack substitution) to the cross-process store.
 		if state.recentEmojis != recentsBefore, state.recentEmojis != store.recentEmojis {
 			store.recentEmojis = state.recentEmojis
 		}
@@ -590,6 +655,21 @@ final class KeyboardViewController: UIInputViewController {
 		}
 		state.recentEmojis = updated
 		store.recentEmojis = updated
+
+		incrementEmojiUsage(emoji)
+	}
+
+	/// Bumps the lifetime usage count for `emoji` (any insertion path) and persists. Drives
+	/// `.frequency` favorites ordering. Keep in sync with the three emoji insertion sites:
+	/// `recordRecentEmojiIfNeeded` (synth `emoji.` keys — panel/recents/favorites taps & search),
+	/// `applySlackSuggestion` (tapping a Slack shortcode suggestion), and the dispatcher's typed
+	/// `:shortcode:` auto-substitution (detected in `handle`). Counts update live, but the displayed
+	/// favorites order is recomputed only while the favorites are hidden (see
+	/// `refreshFavoritesDisplayOrder`), so the bar/panel never reshuffle under the user's finger.
+	private func incrementEmojiUsage(_ emoji: String) {
+		guard !emoji.isEmpty else { return }
+		state.emojiUsageCounts[emoji, default: 0] += 1
+		store.emojiUsageCounts = state.emojiUsageCounts
 	}
 
 	private func refreshAutoCapitalization() {

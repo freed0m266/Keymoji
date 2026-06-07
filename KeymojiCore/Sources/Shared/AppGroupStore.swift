@@ -140,6 +140,34 @@ public extension AppGroupStore {
 		set { setStringArray(newValue, forKey: .favoriteEmojis) }
 	}
 
+	/// Favorites bar ordering. Defaults to `.manual` (today's hand-curated drag order). Unknown raw
+	/// values fall back to the default — defensive against corrupted defaults or future renames.
+	var favoritesSortMode: FavoritesSortMode {
+		get {
+			guard let raw = string(forKey: .favoritesSortMode) else { return .manual }
+			return FavoritesSortMode(rawValue: raw) ?? .manual
+		}
+		set { setString(newValue.rawValue, forKey: .favoritesSortMode) }
+	}
+
+	/// Per-emoji lifetime insertion counts `{ emoji: count }`, stored as JSON. Bumped by the keyboard
+	/// extension on every emoji insertion; read to drive `.frequency` favorites ordering.
+	var emojiUsageCounts: [String: Int] {
+		get {
+			guard let json = string(forKey: .emojiUsageCounts),
+				  let data = json.data(using: .utf8),
+				  let dict = try? JSONDecoder().decode([String: Int].self, from: data)
+			else { return [:] }
+			return dict
+		}
+		set {
+			guard let data = try? JSONEncoder().encode(newValue),
+				  let json = String(data: data, encoding: .utf8)
+			else { return }
+			setString(json, forKey: .emojiUsageCounts)
+		}
+	}
+
 	/// Master toggle for the word-suggestion bar. Defaults to `true` (DEF-ON) — word completion is
 	/// the headline feature; users who don't want it turn it off in Settings → Suggestions.
 	var suggestionsEnabled: Bool {

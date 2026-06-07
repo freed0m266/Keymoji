@@ -9,6 +9,7 @@
 import SwiftUI
 import EmojiCatalogPicker
 import KeyboardCore
+import KeymojiCore
 import KeymojiResources
 
 public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeling>: View {
@@ -39,7 +40,8 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 					Label(Texts.add, systemImage: "plus")
 				}
 			}
-			if !viewModel.favorites.isEmpty {
+			// Drag-to-reorder only applies to manual order — hide Edit in `.frequency`.
+			if !viewModel.favorites.isEmpty, viewModel.sortMode == .manual {
 				ToolbarItem(placement: .topBarLeading) {
 					EditButton()
 				}
@@ -71,13 +73,27 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 	private var favoritesList: some View {
 		List {
 			Section {
-				ForEach(viewModel.favorites, id: \.self) { emoji in
+				Picker(Texts.Sort.title, selection: $viewModel.sortMode) {
+					Text(Texts.Sort.manual).tag(FavoritesSortMode.manual)
+					Text(Texts.Sort.frequency).tag(FavoritesSortMode.frequency)
+				}
+				.pickerStyle(.segmented)
+				.labelsHidden()
+			}
+			Section {
+				ForEach(viewModel.displayedFavorites, id: \.self) { emoji in
 					row(for: emoji)
 				}
-				.onDelete { offsets in viewModel.remove(at: offsets) }
-				.onMove { source, destination in viewModel.move(fromOffsets: source, toOffset: destination) }
+				.onDelete {
+					offsets in viewModel.remove(at: offsets)
+				}
+				.onMove(
+					perform: viewModel.sortMode == .manual
+						? { source, destination in viewModel.move(fromOffsets: source, toOffset: destination) }
+						: nil
+				)
 			} footer: {
-				Text(Texts.listFooter)
+				Text(viewModel.sortMode == .manual ? Texts.listFooter : Texts.frequencyFooter)
 			}
 		}
 	}
@@ -109,6 +125,19 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 	NavigationStack {
 		FavoriteEmojisEditorView(
 			viewModel: FavoriteEmojisEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🐶"])
+		)
+	}
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Frequency") {
+	NavigationStack {
+		FavoriteEmojisEditorView(
+			viewModel: FavoriteEmojisEditorViewModelMock(
+				favorites: ["❤️", "😀", "🚀", "🎉", "🐶"],
+				sortMode: .frequency,
+				counts: ["🚀": 20, "🐶": 12, "😀": 5]
+			)
 		)
 	}
 	.preferredColorScheme(.dark)

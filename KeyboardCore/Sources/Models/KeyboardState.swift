@@ -46,6 +46,15 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `AppGroupStore` and updated when the user long-presses an emoji to toggle membership.
 	public var favoriteEmojis: [String]
 
+	/// How the favorites bar is ordered. Runtime mirror of `AppGroupStore.favoritesSortMode`,
+	/// refreshed on `viewWillAppear` and on the `.favoritesSortMode` Darwin notification.
+	public var favoritesSortMode: FavoritesSortMode
+
+	/// Lifetime per-emoji insertion counts `{ emoji: count }`. Runtime mirror of
+	/// `AppGroupStore.emojiUsageCounts`, bumped live on each emoji insertion to drive
+	/// `.frequency` favorites ordering.
+	public var emojiUsageCounts: [String: Int]
+
 	/// Maximum number of emojis tracked in `recentEmojis`. Keeps the recents tab to two short
 	/// rows on iPhone portrait — long enough to be useful, short enough that it never scrolls.
 	public static let recentEmojisCapacity = 30
@@ -80,6 +89,8 @@ public struct KeyboardState: Sendable, Equatable {
 		keyboardWidth: CGFloat = 0,
 		recentEmojis: [String] = [],
 		favoriteEmojis: [String] = [],
+		favoritesSortMode: FavoritesSortMode = .manual,
+		emojiUsageCounts: [String: Int] = [:],
 		searchQuery: String = "",
 		suggestionsEnabled: Bool = true,
 		currentEligibility: SuggestionEligibility = .denied,
@@ -97,6 +108,8 @@ public struct KeyboardState: Sendable, Equatable {
 		self.keyboardWidth = keyboardWidth
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
+		self.favoritesSortMode = favoritesSortMode
+		self.emojiUsageCounts = emojiUsageCounts
 		self.searchQuery = searchQuery
 		self.suggestionsEnabled = suggestionsEnabled
 		self.currentEligibility = currentEligibility
