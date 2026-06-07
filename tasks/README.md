@@ -69,6 +69,12 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 40. [40 — Word completion suggestions (UILexicon + UITextChecker + personal recents)](40-word-completion-suggestions.md)
 48. [48 — Seznam naučených slov se správou (zobrazit + mazat jednotlivě)](48-learned-words-list-management.md)
 51. [51 — Favorites bar: řazení podle četnosti používání](51-favorites-bar-sort-by-frequency.md)
+54. [54 — Skrýt number row v landscape orientaci](54-hide-number-row-in-landscape.md)
+
+## v1.2 — Sizing & layout
+
+52. [52 — Refaktor výšky/šířky kláves: model „zdola nahoru" + jedna konstanta](52-key-sizing-bottom-up-refactor.md)
+53. [53 — Probliknutí klávesnice na max výšku při přepnutí](53-keyboard-switch-height-flash.md)
 
 ## Pre-App-Store
 
