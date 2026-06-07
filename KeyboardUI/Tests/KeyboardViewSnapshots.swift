@@ -7,6 +7,9 @@ import KeyboardCore
 final class KeyboardViewSnapshots: XCTestCase {
 
 	private static let iPhoneWidth: CGFloat = 393
+	/// iPhone landscape width (e.g. iPhone 14/15 on its side). In landscape the number row is always
+	/// dropped (`KeyboardState.effectiveShowsNumberRow` → false), so the layout is built without it.
+	private static let iPhoneLandscapeWidth: CGFloat = 852
 
 	/// Snapshot canvas sized to the keyboard's *intrinsic* height, derived from `KeyboardMetrics` —
 	/// the same formula `KeyboardView` and `KeyboardViewController` use. Keeps the test frame in lock-step
@@ -92,6 +95,20 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
+	}
+
+	// MARK: - Landscape (number row dropped)
+
+	func testLettersLower_landscape_noNumberRow() {
+		// Landscape: `effectiveShowsNumberRow` is false even though the user's preference is on, so the
+		// digit row is absent and the keyboard is shorter. Built at landscape width with the effective
+		// (false) value the controller would pass.
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
+		let view = KeyboardView(layout: layout, width: Self.iPhoneLandscapeWidth, onKey: { _ in })
+
+		let size = keyboardSize(for: layout, width: Self.iPhoneLandscapeWidth)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .light)
 	}
 
 	// MARK: - Adaptive return labels
