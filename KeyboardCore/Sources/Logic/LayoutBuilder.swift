@@ -131,14 +131,15 @@ public enum LayoutBuilder {
 			referenceWeight: 10
 		)
 		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift) }
-		// Shift / delete on the letter row use a narrower weight than the symbol row's `.wide` (1.5) so
-		// the seven letters line up with rows 1 and 2 at exactly `W/10`, edge gaps included:
-		//   1.2 (shift) + 0.3 gap + 7×1.0 (letters) + 0.3 gap + 1.2 (delete) = 10.0 weight units.
+		// Shift / delete on the letter row use `rowEdgeKeyWeight` (1.3) — shared with the symbol row C's
+		// toggle / delete so the edges never jump when toggling — so the seven letters line up with rows
+		// 1 and 2 at exactly `W/10`, edge gaps included:
+		//   1.3 (shift) + 0.2 gap + 7×1.0 (letters) + 0.2 gap + 1.3 (delete) = 10.0 weight units.
 		let row3 = KeyboardRow(
 			id: "letters.row3",
-			keys: [makeShiftKey(shift: shift, weight: letterRowEdgeKeyWeight).addingGaps(trailing: symbolEdgeGapWeight)]
+			keys: [makeShiftKey(shift: shift).addingGaps(trailing: edgeGapWeight)]
 				+ row3Letters
-				+ [makeDeleteKey(weight: letterRowEdgeKeyWeight).addingGaps(leading: symbolEdgeGapWeight)]
+				+ [makeDeleteKey().addingGaps(leading: edgeGapWeight)]
 		)
 		return [row1, row2, row3]
 	}
@@ -186,13 +187,15 @@ public enum LayoutBuilder {
 	/// Punctuation row C (shared between primary and alternate).
 	private static let symbolsRowCPunctuation: [String] = [".", ",", "?", "!", "'"]
 
-	/// Breathing room (≈ a third of a key) between the edge-hugging toggle / delete keys and the
-	/// punctuation cluster, mirroring the native symbols keyboard.
-	private static let symbolEdgeGapWeight: Double = 0.3
+	/// Breathing-room gap weight between the third-row edge keys and the middle cluster, on both the
+	/// letter row 3 and the symbol row C. Visual gap only — the gap area stays in the edge key's tap area.
+	private static let edgeGapWeight: Double = 0.2
 
 	/// Punctuation keys in row C render wider than a standard key — the space freed up by pinning
-	/// toggle / delete to the edges is handed to them. See `makeSymbolRows` for the budget.
-	private static let symbolRowCPunctuationWeight = KeyWeight(1.5)
+	/// toggle / delete to the edges is handed to them. 1.4 is dimensioned so the 5-key punctuation
+	/// cluster (5×1.4 = 7.0) matches the 7-letter cluster (7×1.0), keeping both rows' middles equal
+	/// width. See `makeSymbolRows` for the full budget.
+	private static let symbolRowCPunctuationWeight = KeyWeight(1.4)
 
 	private static func makeSymbolRows(_ page: SymbolPage, inEmojiSearch: Bool) -> [KeyboardRow] {
 		let (rowAContent, rowBContent, rowCToggle) = symbolPageContent(page, inEmojiSearch: inEmojiSearch)
@@ -210,13 +213,14 @@ public enum LayoutBuilder {
 		// Native parity: the toggle hugs the left edge and delete the right edge, each separated from
 		// the punctuation cluster by a sliver of breathing room. No `referenceWeight` — the row fills
 		// the full width proportionally, with the punctuation keys widened so the cluster stays
-		// centered between the edge keys:
-		//   1.5 (toggle) + 0.3 gap + 5×1.5 (punctuation) + 0.3 gap + 1.5 (delete) = 11.1 weight units.
+		// centered between the edge keys. Edges match the letter row 3's shift / delete so nothing
+		// jumps when toggling letters ↔ symbols:
+		//   1.3 (toggle) + 0.2 gap + 5×1.4 (punctuation) + 0.2 gap + 1.3 (delete) = 10.0 weight units.
 		let rowC = KeyboardRow(
 			id: "\(idPrefix).\(page.id).rowC",
-			keys: [rowCToggle.addingGaps(trailing: symbolEdgeGapWeight)]
+			keys: [rowCToggle.addingGaps(trailing: edgeGapWeight)]
 				+ rowCPunctuation
-				+ [makeDeleteKey().addingGaps(leading: symbolEdgeGapWeight)]
+				+ [makeDeleteKey().addingGaps(leading: edgeGapWeight)]
 		)
 		return [rowA, rowB, rowC]
 	}
@@ -236,7 +240,7 @@ public enum LayoutBuilder {
 				primary: .text("#+="),
 				alternates: [],
 				action: .switchPage(target),
-				visualWeight: .wide,
+				visualWeight: rowEdgeKeyWeight,
 				role: .system
 			)
 			return (symbolsPrimaryRowA, symbolsPrimaryRowB, toggle)
@@ -248,7 +252,7 @@ public enum LayoutBuilder {
 				primary: .text("123"),
 				alternates: [],
 				action: .switchPage(target),
-				visualWeight: .wide,
+				visualWeight: rowEdgeKeyWeight,
 				role: .system
 			)
 			return (symbolsAlternateRowA, symbolsAlternateRowB, toggle)
@@ -280,12 +284,12 @@ public enum LayoutBuilder {
 
 	// MARK: - Shared keys
 
-	/// Edge-key weight for the letter row 3 shift / delete. Narrower than `.wide` (1.5) so the seven
-	/// letters align with rows 1 / 2 at `W/10` once the `0.3` edge gaps are counted. Used *only* on the
-	/// letter row — the symbol row C keeps `.wide` (it has nothing to align with).
-	private static let letterRowEdgeKeyWeight = KeyWeight(1.2)
+	/// Width weight for the third-row edge keys — shift & delete on the letter row, and the `#+=`/`123`
+	/// toggle & delete on the symbol row C. Same on both pages so the edges never jump when toggling.
+	/// 1.3 + 0.2 gap each side + 7×1.0 letters = 10.0, so the letters stay at W/10 (aligned with rows 1/2).
+	private static let rowEdgeKeyWeight = KeyWeight(1.3)
 
-	private static func makeShiftKey(shift: ShiftState, weight: KeyWeight = .wide) -> Key {
+	private static func makeShiftKey(shift: ShiftState) -> Key {
 		let symbol: SystemSymbol
 		switch shift {
 		case .lower:        symbol = .shift
@@ -297,12 +301,12 @@ public enum LayoutBuilder {
 			primary: .symbol(symbol),
 			alternates: [],
 			action: .shift,
-			visualWeight: weight,
+			visualWeight: rowEdgeKeyWeight,
 			role: .system
 		)
 	}
 
-	private static func makeDeleteKey(weight: KeyWeight = .wide) -> Key {
+	private static func makeDeleteKey(weight: KeyWeight = rowEdgeKeyWeight) -> Key {
 		Key(
 			id: "delete",
 			primary: .symbol(.delete),
@@ -413,7 +417,9 @@ public enum LayoutBuilder {
 			visualWeight: .space,
 			role: .system
 		)
-		let delete = makeDeleteKey()
+		// Emoji bottom row has no shift / toggle to align with, so delete keeps its own `.wide` (1.5)
+		// width rather than the narrower shared edge weight used by the letter row 3 / symbol row C.
+		let delete = makeDeleteKey(weight: .wide)
 		return KeyboardRow(
 			id: "bottomRow",
 			keys: [abc, space, delete]
