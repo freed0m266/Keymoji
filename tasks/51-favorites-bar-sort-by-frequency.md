@@ -1,6 +1,6 @@
 # 51 — Řazení favorites baru podle četnosti používání
 
-**Status:** Waiting
+**Status:** Done — 2026-06-06
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** Medium
 
