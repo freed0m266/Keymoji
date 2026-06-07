@@ -414,22 +414,23 @@ final class LayoutBuilderTests: XCTestCase {
 		let alternateRow = symbolRow(at: "symbols.alternate.rowC", page: .symbols(.alternate))
 		// Row C fills the full width proportionally (no `referenceWeight`): the toggle / delete hug the
 		// edges and the punctuation cluster is widened to stay centred —
-		// 1.5 + 0.3 gap + 5×1.5 + 0.3 gap + 1.5 = 11.1 weight units. It aligns with nothing, so there's
-		// no reference inset to apply.
+		// 1.3 + 0.2 gap + 5×1.4 + 0.2 gap + 1.3 = 10.0 weight units. The proportional fill is what makes
+		// the edges line up with the letter row 3, so there's no reference inset to apply.
 		XCTAssertNil(primaryRow.referenceWeight)
 		XCTAssertNil(alternateRow.referenceWeight)
 	}
 
-	// MARK: - Letter row 3 width parity (task 52)
+	// MARK: - Letter row 3 / symbol row C edge parity (task 55)
 
-	func testLettersRow3_edgeKeysUseNarrowWeight_soLettersAlignWithRow2() {
+	func testLettersRow3_edgeKeysUseSharedWeight_soLettersAlignWithRow2() {
 		let row = letterRow(at: "letters.row3", page: .letters(.lower))
 		let shift = row.keys.first { $0.action == .shift }!
 		let delete = row.keys.first { $0.action == .backspace }!
-		// Shift / delete drop to 1.2 (not the symbol row's 1.5) so the row totals 10 weight units with
-		// the 0.3 edge gaps, putting each of the seven letters at W/10 — identical to rows 1 and 2.
-		XCTAssertEqual(shift.visualWeight.value, 1.2, accuracy: 0.0001)
-		XCTAssertEqual(delete.visualWeight.value, 1.2, accuracy: 0.0001)
+		// Shift / delete use the shared 1.3 edge weight (not the emoji row's 1.5) so the row totals 10
+		// weight units with the 0.2 edge gaps, putting each of the seven letters at W/10 — identical to
+		// rows 1 and 2.
+		XCTAssertEqual(shift.visualWeight.value, 1.3, accuracy: 0.0001)
+		XCTAssertEqual(delete.visualWeight.value, 1.3, accuracy: 0.0001)
 
 		let totalWeight = row.keys.reduce(0.0) {
 			$0 + $1.leadingGapWeight + $1.visualWeight.value + $1.trailingGapWeight
@@ -442,13 +443,40 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(letterWeights, Array(repeating: 1.0, count: 7))
 	}
 
-	func testSymbolsRowC_keepsWideEdgeKeys_notTheLetterRowWeight() {
-		// The narrower 1.2 edge weight is scoped to the letter row only — the symbol row C toggle and
-		// delete keep `.wide` (1.5), since they have nothing to align with.
+	func testSymbolsRowC_edgeKeysMatchLetterRow3_soEdgesDontJump() {
+		// Toggle and delete on the symbol row C share the same 1.3 edge weight as the letter row 3's
+		// shift / delete, so the left and right edges don't jump when toggling letters ↔ symbols.
 		let row = symbolRow(at: "symbols.primary.rowC", page: .symbols(.primary))
 		let toggle = row.keys.first!
 		let delete = row.keys.last!
-		XCTAssertEqual(toggle.visualWeight.value, 1.5, accuracy: 0.0001)
+		XCTAssertEqual(toggle.visualWeight.value, 1.3, accuracy: 0.0001)
+		XCTAssertEqual(delete.visualWeight.value, 1.3, accuracy: 0.0001)
+	}
+
+	func testSymbolsRowC_punctuationClusterMatchesLetterCluster_andRowSumsTo10() {
+		let row = symbolRow(at: "symbols.primary.rowC", page: .symbols(.primary))
+
+		// Each punctuation key is wider than a single letter (1.4 vs 1.0)…
+		let punctuation = row.keys.filter { $0.role == .character }
+		XCTAssertEqual(punctuation.map { $0.visualWeight.value }, Array(repeating: 1.4, count: 5))
+
+		// …but the 5-key punctuation cluster (5×1.4 = 7.0) matches the 7-letter cluster (7×1.0 = 7.0),
+		// so the middle of both third rows is exactly the same width.
+		let punctClusterWidth = punctuation.reduce(0.0) { $0 + $1.visualWeight.value }
+		XCTAssertEqual(punctClusterWidth, 7.0, accuracy: 0.0001)
+
+		// And the whole row sums to 10, matching the letter row 3 so the keyboard width is unchanged.
+		let totalWeight = row.keys.reduce(0.0) {
+			$0 + $1.leadingGapWeight + $1.visualWeight.value + $1.trailingGapWeight
+		}
+		XCTAssertEqual(totalWeight, 10.0, accuracy: 0.0001, "Symbol row C must sum to 10, matching letter row 3")
+	}
+
+	func testEmojiBottomRow_deleteKeepsWideWeight() {
+		// The emoji bottom row has no shift / toggle to align with, so its delete keeps the `.wide` (1.5)
+		// weight rather than the narrower shared edge weight used by the letter row 3 / symbol row C.
+		let row = bottomRow(page: .emojis)
+		let delete = row.keys.first { $0.action == .backspace }!
 		XCTAssertEqual(delete.visualWeight.value, 1.5, accuracy: 0.0001)
 	}
 
@@ -552,6 +580,11 @@ final class LayoutBuilderTests: XCTestCase {
 	private func symbolRow(at id: String, page: KeyboardPage) -> KeyboardRow {
 		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default)
 		return layout.rows.first { $0.id == id }!
+	}
+
+	private func bottomRow(page: KeyboardPage) -> KeyboardRow {
+		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default)
+		return layout.rows.first { $0.id == "bottomRow" }!
 	}
 }
 
