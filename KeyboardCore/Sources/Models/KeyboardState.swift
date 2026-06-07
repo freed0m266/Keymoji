@@ -8,6 +8,19 @@ public struct KeyboardState: Sendable, Equatable {
 	public var returnKeyType: ReturnKeyType
 	public var showNumberRow: Bool
 
+	/// Whether the keyboard is currently in landscape (iPhone compact height). Tracked by
+	/// `KeyboardViewController` from `traitCollection.verticalSizeClass`. Only affects whether the
+	/// number row is shown (see `effectiveShowsNumberRow`); the stored `showNumberRow` preference is
+	/// left untouched, so portrait restores the user's choice exactly.
+	public var isLandscape: Bool
+
+	/// The number row never appears in landscape — vertical space is too scarce, matching the native
+	/// iOS keyboard (digits stay reachable via the `123` page). This is the value **every** consumer
+	/// reads (the layout builder and both height calculations) so the host constraint and the SwiftUI
+	/// content height can never drift apart. The user's `showNumberRow` preference still governs
+	/// portrait unchanged.
+	public var effectiveShowsNumberRow: Bool { showNumberRow && !isLandscape }
+
 	/// User preference for the QWERTY/QWERTZ position of the Y and Z keys. Runtime copy of
 	/// `AppGroupStore.letterLayout`, refreshed by `KeyboardViewController.viewWillAppear`.
 	public var letterLayout: LetterLayout
@@ -80,6 +93,7 @@ public struct KeyboardState: Sendable, Equatable {
 		page: KeyboardPage = .letters(.lower),
 		returnKeyType: ReturnKeyType = .default,
 		showNumberRow: Bool = true,
+		isLandscape: Bool = false,
 		letterLayout: LetterLayout = .qwerty,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		lastInsertWasSpace: Bool = false,
@@ -99,6 +113,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.page = page
 		self.returnKeyType = returnKeyType
 		self.showNumberRow = showNumberRow
+		self.isLandscape = isLandscape
 		self.letterLayout = letterLayout
 		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.lastInsertWasSpace = lastInsertWasSpace

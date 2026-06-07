@@ -16,8 +16,11 @@ public enum LayoutBuilder {
 		// The emoji pages skip the number row entirely — digits would crowd the picker and
 		// the search results bar. Search mode reaches digits via its own bottom-row `123`
 		// toggle (which jumps into `.emojiSearchSymbols`), not via the number row.
-		// `KeyboardLayout.showsNumberRow` still propagates the user's preference so the
-		// *overall* keyboard height (260 vs 216) stays consistent when toggling between pages.
+		// `KeyboardLayout.showsNumberRow` still propagates `showNumberRow` so the *overall*
+		// keyboard height (260 vs 216) stays consistent when toggling between pages. Note this
+		// builder is pure and orientation-unaware: callers pass the *effective* value
+		// (`KeyboardState.effectiveShowsNumberRow`, already false in landscape), not the raw
+		// user preference — so landscape gets the shorter, number-row-less layout for free.
 		let includeNumberRow = showNumberRow && page != .emojis && !page.isEmojiSearch
 		if includeNumberRow {
 			rows.append(makeNumberRow())

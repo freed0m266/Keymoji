@@ -68,6 +68,12 @@ final class KeyboardViewController: UIInputViewController {
 		installHostingController()
 		installSettingsObservers()
 		installKeyboardHeightConstraint()
+		// Drop the number row in landscape the moment the height class flips. `traitCollectionDidChange`
+		// is deprecated on iOS 17+, so we use the modern trait-registration API; the initial value is
+		// also seeded in `viewDidLayoutSubviews`, where the trait collection is finalized.
+		registerForTraitChanges([UITraitVerticalSizeClass.self]) { (controller: KeyboardViewController, _: UITraitCollection) in
+			controller.refreshOrientation()
+		}
 		// Eager-touch the text checker so its first real query (the user's first keystroke) doesn't
 		// pay the init hitch (LX2), and pull in Apple's supplementary lexicon when it's ready.
 		_ = textChecker
@@ -134,6 +140,21 @@ final class KeyboardViewController: UIInputViewController {
 		let width = view.bounds.width
 		if state.keyboardWidth != width, width > 0 {
 			state.keyboardWidth = width
+			rebuild()
+		}
+		// Seed/refresh the landscape flag here too — the trait collection is finalized by layout time,
+		// so this catches the very first appearance (before any `registerForTraitChanges` callback fires).
+		refreshOrientation()
+	}
+
+	/// Mirrors the host's vertical size class into `state.isLandscape`. On iPhone, `.compact` height
+	/// means landscape — the most reliable orientation signal for a keyboard extension (it owns no
+	/// scene/window orientation API). Drives `effectiveShowsNumberRow`, so a change rebuilds the layout
+	/// and re-derives the host height constraint immediately.
+	private func refreshOrientation() {
+		let isLandscape = traitCollection.verticalSizeClass == .compact
+		if state.isLandscape != isLandscape {
+			state.isLandscape = isLandscape
 			rebuild()
 		}
 	}
@@ -404,7 +425,7 @@ final class KeyboardViewController: UIInputViewController {
 		// drift used to clip the SwiftUI content (missing search bar at the top of `.emojiSearch`).
 		let layout = KeyboardCore.makeLayout(
 			page: state.page,
-			showNumberRow: state.showNumberRow,
+			showNumberRow: state.effectiveShowsNumberRow,
 			returnKeyType: state.returnKeyType,
 			letterLayout: state.letterLayout
 		)
