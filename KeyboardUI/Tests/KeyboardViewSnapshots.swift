@@ -8,14 +8,28 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	private static let iPhoneWidth: CGFloat = 393
 
+	/// Snapshot canvas sized to the keyboard's *intrinsic* height, derived from `KeyboardMetrics` —
+	/// the same formula `KeyboardView` and `KeyboardViewController` use. Keeps the test frame in lock-step
+	/// with the bottom-up sizing model (task 52) so no hardcoded height can drift from the real keyboard.
+	private func keyboardSize(
+		for layout: KeyboardLayout,
+		showsSuggestionBar: Bool = false,
+		width: CGFloat = iPhoneWidth
+	) -> CGSize {
+		CGSize(
+			width: width,
+			height: KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: showsSuggestionBar)
+		)
+	}
+
 	// MARK: - Letters lower
 
 	func testLettersLower_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	// MARK: - Letters upper / caps lock
@@ -24,16 +38,16 @@ final class KeyboardViewSnapshots: XCTestCase {
 		let layout = KeyboardCore.makeLayout(page: .letters(.upper), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	func testLettersCapsLock_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.capsLock), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	// MARK: - QWERTZ letter layout
@@ -42,7 +56,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, letterLayout: .qwertz)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		assertKeyboardSnapshot(view, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	// MARK: - Symbols
@@ -51,24 +65,23 @@ final class KeyboardViewSnapshots: XCTestCase {
 		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	func testSymbolsAlternate_withNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	func testSymbolsPrimary_withoutNumberRow() {
 		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: false, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		let size = CGSize(width: 393, height: 216)
-		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	// MARK: - Without number row
@@ -77,31 +90,30 @@ final class KeyboardViewSnapshots: XCTestCase {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
-		let size = CGSize(width: 393, height: 216)
-		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
-		assertKeyboardSnapshot(view, size: size, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	// MARK: - Adaptive return labels
 
 	func testReturnLabel_search() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .search)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testReturnLabel_go() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .go)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testReturnLabel_done() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .done)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testReturnLabel_send() {
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .send)
-		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), colorScheme: .dark)
+		assertKeyboardSnapshot(KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in }), size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	// MARK: - Emoji page
@@ -114,8 +126,8 @@ final class KeyboardViewSnapshots: XCTestCase {
 			recentEmojis: [],
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	func testEmojis_withRecents_withNumberRow() {
@@ -126,17 +138,15 @@ final class KeyboardViewSnapshots: XCTestCase {
 			recentEmojis: ["😀", "👋", "🎉", "❤️", "🚀", "🍕", "🐶", "🌈"],
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	// MARK: - Suggestion bar (task 40)
 
-	/// Word chips coexist with the number row as a separate row above it (A2 — no mutex). The
-	/// keyboard grows by the bar footprint, so the snapshot frame is taller than the base 260.
-	private static let withBarAndNumberRowSize = CGSize(width: 393, height: 311)
-
 	func testSuggestionBar_wordChips_withNumberRow() {
+		// Word chips coexist with the number row as a separate row above it (A2 — no mutex). The
+		// keyboard grows by the bar footprint, reflected in the derived canvas height.
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
 		let suggestions: [Suggestion] = [
 			.plainChip("hello", score: 0.9),
@@ -150,8 +160,9 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .dark)
-		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .light)
+		let size = keyboardSize(for: layout, showsSuggestionBar: true)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .light)
 	}
 
 	func testSuggestionBar_slackPills_withNumberRow() {
@@ -170,7 +181,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout, showsSuggestionBar: true), colorScheme: .dark)
 	}
 
 	func testSuggestionBar_alwaysShownWhenEmpty_withNumberRow() {
@@ -183,7 +194,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.withBarAndNumberRowSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout, showsSuggestionBar: true), colorScheme: .dark)
 	}
 
 	func testEmojis_withFavorites_withNumberRow() {
@@ -195,16 +206,15 @@ final class KeyboardViewSnapshots: XCTestCase {
 			favoriteEmojis: ["❤️", "🚀", "🍕", "🐶"],
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, colorScheme: .dark)
-		assertKeyboardSnapshot(view, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	// MARK: - Emoji search page
 
-	/// Search mode stacks ~92 pt of chrome (search bar + horizontal results bar) above the
-	/// regular QWERTY rows. The view's intrinsic keyboardHeight grows accordingly; tests
-	/// have to allocate the matching frame so the bottom space/delete row isn't clipped.
-	private static let emojiSearchSize = CGSize(width: 393, height: 308)
+	/// Search mode stacks the search bar + horizontal results bar above the regular QWERTY rows. The
+	/// keyboard's intrinsic height (number row dropped + chrome added) is derived from `KeyboardMetrics`,
+	/// so the canvas grows to match and the bottom space/return row isn't clipped.
 
 	func testEmojiSearch_emptyQuery_noRecents() {
 		let layout = KeyboardCore.makeLayout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
@@ -215,7 +225,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			searchQuery: "",
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testEmojiSearch_emptyQuery_withRecents() {
@@ -227,7 +237,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			searchQuery: "",
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testEmojiSearch_query_rain() {
@@ -239,8 +249,8 @@ final class KeyboardViewSnapshots: XCTestCase {
 			searchQuery: "rain",
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
-		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .light)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
 
 	func testEmojiSearch_noResults() {
@@ -252,7 +262,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			searchQuery: "xyz123nope",
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testEmojiSearchSymbols_primary_query7() {
@@ -266,6 +276,6 @@ final class KeyboardViewSnapshots: XCTestCase {
 			searchQuery: "7",
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: Self.emojiSearchSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 }

@@ -409,13 +409,47 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertNil(row.referenceWeight)
 	}
 
-	func testSymbolsRowC_hasReferenceWeight10_onBothPages() {
+	func testSymbolsRowC_hasNoReferenceWeight_onBothPages() {
 		let primaryRow = symbolRow(at: "symbols.primary.rowC", page: .symbols(.primary))
 		let alternateRow = symbolRow(at: "symbols.alternate.rowC", page: .symbols(.alternate))
-		// Row C is 1.5 + 5*1 + 1.5 = 8 weight units. The reference brings per-key width back into
-		// alignment with rows A and B (which both naturally sum to 10).
-		XCTAssertEqual(primaryRow.referenceWeight, 10)
-		XCTAssertEqual(alternateRow.referenceWeight, 10)
+		// Row C fills the full width proportionally (no `referenceWeight`): the toggle / delete hug the
+		// edges and the punctuation cluster is widened to stay centred —
+		// 1.5 + 0.3 gap + 5×1.5 + 0.3 gap + 1.5 = 11.1 weight units. It aligns with nothing, so there's
+		// no reference inset to apply.
+		XCTAssertNil(primaryRow.referenceWeight)
+		XCTAssertNil(alternateRow.referenceWeight)
+	}
+
+	// MARK: - Letter row 3 width parity (task 52)
+
+	func testLettersRow3_edgeKeysUseNarrowWeight_soLettersAlignWithRow2() {
+		let row = letterRow(at: "letters.row3", page: .letters(.lower))
+		let shift = row.keys.first { $0.action == .shift }!
+		let delete = row.keys.first { $0.action == .backspace }!
+		// Shift / delete drop to 1.2 (not the symbol row's 1.5) so the row totals 10 weight units with
+		// the 0.3 edge gaps, putting each of the seven letters at W/10 — identical to rows 1 and 2.
+		XCTAssertEqual(shift.visualWeight.value, 1.2, accuracy: 0.0001)
+		XCTAssertEqual(delete.visualWeight.value, 1.2, accuracy: 0.0001)
+
+		let totalWeight = row.keys.reduce(0.0) {
+			$0 + $1.leadingGapWeight + $1.visualWeight.value + $1.trailingGapWeight
+		}
+		XCTAssertEqual(totalWeight, 10.0, accuracy: 0.0001, "Letter row 3 must sum to 10 so letters render at W/10")
+
+		let letterWeights = row.keys
+			.filter { $0.role == .character }
+			.map { $0.visualWeight.value }
+		XCTAssertEqual(letterWeights, Array(repeating: 1.0, count: 7))
+	}
+
+	func testSymbolsRowC_keepsWideEdgeKeys_notTheLetterRowWeight() {
+		// The narrower 1.2 edge weight is scoped to the letter row only — the symbol row C toggle and
+		// delete keep `.wide` (1.5), since they have nothing to align with.
+		let row = symbolRow(at: "symbols.primary.rowC", page: .symbols(.primary))
+		let toggle = row.keys.first!
+		let delete = row.keys.last!
+		XCTAssertEqual(toggle.visualWeight.value, 1.5, accuracy: 0.0001)
+		XCTAssertEqual(delete.visualWeight.value, 1.5, accuracy: 0.0001)
 	}
 
 	// MARK: - QWERTZ letter layout

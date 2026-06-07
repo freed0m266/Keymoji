@@ -10,7 +10,10 @@ extension XCTestCase {
 		_ view: V,
 		size: CGSize = CGSize(width: 393, height: 260),
 		colorScheme: ColorScheme = .dark,
-		record: Bool = false,
+		// `nil` lets the `SNAPSHOT_TESTING_RECORD` env var drive record mode. Passing a `Bool`/`Record`
+		// here would coerce to `.never` and silently override the env var (so `=all` re-records wouldn't
+		// take). Keep it optional so re-recording the whole suite via the env var works.
+		record: SnapshotTestingConfiguration.Record? = nil,
 		line: UInt = #line,
 		file: StaticString = #filePath,
 		function: String = #function
