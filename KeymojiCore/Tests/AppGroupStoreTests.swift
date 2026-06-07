@@ -101,4 +101,40 @@ final class AppGroupStoreTests: XCTestCase {
 		store.reset()
 		XCTAssertEqual(store.favoriteEmojis, [])
 	}
+
+	// MARK: - Favorites sort mode
+
+	func testFavoritesSortMode_defaultsToManual() {
+		XCTAssertEqual(store.favoritesSortMode, .manual)
+	}
+
+	func testFavoritesSortMode_persistsRawValue() {
+		store.favoritesSortMode = .frequency
+		XCTAssertEqual(store.favoritesSortMode, .frequency)
+		// Verify a second instance reads the same persisted raw string.
+		let other = AppGroupStore(suiteName: Self.testSuite)
+		XCTAssertEqual(other.favoritesSortMode, .frequency)
+	}
+
+	func testFavoritesSortMode_unknownRawValueFallsBackToManual() {
+		store.setString("nonsense", forKey: .favoritesSortMode)
+		XCTAssertEqual(store.favoritesSortMode, .manual)
+	}
+
+	// MARK: - Emoji usage counts
+
+	func testEmojiUsageCounts_defaultsToEmpty() {
+		XCTAssertEqual(store.emojiUsageCounts, [:])
+	}
+
+	func testEmojiUsageCounts_jsonRoundTrips() {
+		store.emojiUsageCounts = ["🚀": 3, "❤️": 7]
+		XCTAssertEqual(store.emojiUsageCounts, ["🚀": 3, "❤️": 7])
+	}
+
+	func testEmojiUsageCounts_resetClearsCounts() {
+		store.emojiUsageCounts = ["😀": 1]
+		store.reset()
+		XCTAssertEqual(store.emojiUsageCounts, [:])
+	}
 }
