@@ -1,6 +1,6 @@
 # 52 — Refaktor výšky a šířky kláves: model „zdola nahoru" + jedna konstanta
 
-**Status:** Todo
+**Status:** Done — 2026-06-07
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** High
 
