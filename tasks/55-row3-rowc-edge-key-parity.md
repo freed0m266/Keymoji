@@ -1,6 +1,6 @@
 # 55 — Shodné hrany a cluster mezi řádkem 3 (písmena) a řádkem C (symboly)
 
-**Status:** Todo
+**Status:** Done — 2026-06-07
 
 **Priorita:** v1.2 · **Úsilí:** S · **Dopad:** Medium (vizuální parita písmena ↔ symboly)
 
