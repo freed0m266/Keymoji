@@ -497,11 +497,12 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	/// Whether the suggestion bar may occupy its row right now: master toggle on, the field allows
-	/// display, and we're on a letter page (the bar is suppressed on symbol/emoji/search pages).
+	/// display, and we're not on the emoji panel or an emoji-search page (so it shows on letters
+	/// *and* symbols). Must stay identical to `KeyboardView.effectiveShowsBar` — both drive height
+	/// (this one the host constraint, that one the SwiftUI frame); if they diverge, iOS clips.
 	private var showsSuggestionBar: Bool {
 		guard state.suggestionsEnabled, state.currentEligibility.allowDisplay else { return false }
-		if case .letters = state.page { return true }
-		return false
+		return state.page != .emojis && !state.page.isEmojiSearch
 	}
 
 	/// Run the coordinator over the current document context. Slack shortcodes win wholesale when

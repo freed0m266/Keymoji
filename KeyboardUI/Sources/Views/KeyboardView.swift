@@ -87,13 +87,14 @@ public struct KeyboardView: View {
 	}
 
 	/// The suggestion bar is its own row above the number row (A2 — no mutex with the number row),
-	/// shown only on letter pages. The controller gates `showsSuggestionBar` on the master toggle
-	/// and field eligibility; this is the final view-side guard that keeps it off symbol/emoji/search
-	/// pages. Independent of `suggestions.isEmpty` (C1 — always-on when enabled, so height is stable).
+	/// shown everywhere except the emoji panel and emoji-search pages (so letters *and* symbols
+	/// get it). The controller gates `showsSuggestionBar` on the master toggle and field
+	/// eligibility; this is the final view-side guard that keeps it off emoji/search pages. Must
+	/// stay identical to `KeyboardViewController.showsSuggestionBar` or the host height and the
+	/// SwiftUI frame drift and iOS clips the content. Independent of `suggestions.isEmpty`
+	/// (C1 — always-on when enabled, so height is stable).
 	private var effectiveShowsBar: Bool {
-		guard showsSuggestionBar, !isEmojiKeyboard, !isEmojiSearchKeyboard else { return false }
-		if case .letters = layout.page { return true }
-		return false
+		showsSuggestionBar && !isEmojiKeyboard && !isEmojiSearchKeyboard
 	}
 
 	public var body: some View {
