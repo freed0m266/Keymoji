@@ -87,6 +87,25 @@ final class KeyboardViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
+	func testSymbolsPrimary_withSuggestionBar() {
+		// Task 56: the suggestion bar now occupies its row on the symbol page too (everywhere
+		// except emoji / emoji-search). Word/Slack suggestions are letter-page only, so the bar
+		// falls back to favorites here. The canvas grows by the bar footprint — the derived height
+		// must add it, proving the host and view height stay in lock-step on symbols.
+		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			favoriteEmojis: ["❤️", "🚀", "🍕", "🐶"],
+			suggestions: [],
+			showsSuggestionBar: true,
+			onKey: { _ in }
+		)
+		let size = keyboardSize(for: layout, showsSuggestionBar: true)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: size, colorScheme: .light)
+	}
+
 	// MARK: - Without number row
 
 	func testLettersLower_withoutNumberRow() {
