@@ -17,10 +17,13 @@ final class LearnedWordsEditorSnapshots: XCTestCase {
 
 	private static let size = CGSize(width: 393, height: 852)
 
+	// Stored lowercase (the store's canonical form); the row renders each with a leading capital,
+	// including the accented "čauko" → "Čauko".
 	private static let sampleWords: [LearnedWord] = [
 		LearnedWord(word: "keyboard", count: 12, lastUsed: 1_700_000_300),
 		LearnedWord(word: "emoji", count: 8, lastUsed: 1_700_000_500),
 		LearnedWord(word: "hello", count: 5, lastUsed: 1_700_000_100),
+		LearnedWord(word: "čauko", count: 4, lastUsed: 1_700_000_600),
 		LearnedWord(word: "suggestion", count: 3, lastUsed: 1_700_000_400),
 		LearnedWord(word: "typing", count: 2, lastUsed: 1_700_000_200)
 	]
