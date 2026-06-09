@@ -4,7 +4,11 @@ import KeymojiCore
 /// Read access to the personal recents pool. The completion provider depends only on this narrow
 /// protocol so it can be mocked in tests without touching `AppGroupStore`.
 public protocol PersonalRecentsReading: Sendable {
-	/// Words whose case-insensitive form starts with `prefix`, paired with their learned count.
+	/// Stored words that `prefix` matches, paired with their learned count. Matching is
+	/// case-insensitive and *directionally* diacritic-tolerant: a prefix character written **without**
+	/// a diacritic matches any word character with the same base letter (`c` → `c` or `č`), while a
+	/// prefix character written **with** a diacritic matches only that exact accented letter
+	/// (`č` → `č`, never `c`). Words are stored lowercased, so there are no case duplicates.
 	func matches(prefix: String) -> [(word: String, count: Int)]
 }
 
@@ -52,11 +56,41 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 
 	// MARK: - Read
 
+	/// Fixed locale for diacritic folding. Deliberately *not* the user's locale: a Turkish locale
+	/// folds `i`/`İ` and `ı`/`I` differently, which would make matching depend on device settings.
+	private static let foldLocale = Locale(identifier: "en_US_POSIX")
+
+	/// Lowercased, diacritic-stripped form of `s` (`"Čauko"` → `"cauko"`).
+	private static func fold(_ s: String) -> String {
+		s.folding(options: .diacriticInsensitive, locale: foldLocale).lowercased()
+	}
+
+	/// True when `prefix` matches the start of `word` under directional diacritic tolerance:
+	///  - a prefix character without a diacritic matches any word character sharing its base letter
+	///    (`c` → `c` or `č`),
+	///  - a prefix character with a diacritic matches only that exact accented letter, case-insensitively
+	///    (`č` → `č`/`Č`, never `c`).
+	/// Comparison is per-`Character`; Czech accented letters are precomposed single grapheme clusters,
+	/// so folding decomposes them to their base (`č`→`c`).
+	private static func directionalPrefixMatch(prefix: String, word: String) -> Bool {
+		let p = Array(prefix), w = Array(word)
+		guard w.count >= p.count else { return false }
+		for i in p.indices {
+			let pc = p[i], wc = w[i]
+			let pcFolded = fold(String(pc))
+			guard pcFolded == fold(String(wc)) else { return false }      // base letter must match
+			let pcLower = String(pc).lowercased()
+			if pcLower != pcFolded && pcLower != String(wc).lowercased() { // prefix carries a diacritic → strict
+				return false
+			}
+		}
+		return true
+	}
+
 	public func matches(prefix: String) -> [(word: String, count: Int)] {
 		guard !prefix.isEmpty else { return [] }
-		let loweredPrefix = prefix.lowercased()
 		return loadCounts()
-			.filter { $0.key.lowercased().hasPrefix(loweredPrefix) }
+			.filter { Self.directionalPrefixMatch(prefix: prefix, word: $0.key) }
 			.map { (word: $0.key, count: $0.value) }
 	}
 
@@ -77,14 +111,19 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 	/// Learn one word. Idempotent: a repeat increments its count and refreshes its last-used time.
 	/// Silently no-ops when the word fails the context's filters. Evicts the lowest-priority entry
 	/// when the pool would exceed `capacity`.
+	///
+	/// The word is canonicalized to **lowercase (diacritics preserved)** before storage, so "Ale"
+	/// and "ale" collapse to a single "ale" entry while "rada" and "ráda" stay distinct. This is the
+	/// store's invariant — both learning paths (prose and email) funnel through here.
 	public func learn(_ word: String, fromContextType context: TextContextType, now: Date = Date()) {
-		guard passesFilters(word, context: context) else { return }
+		let key = word.lowercased()
+		guard passesFilters(key, context: context) else { return }
 
 		var counts = loadCounts()
 		var lastUsed = loadLastUsed()
 
-		counts[word, default: 0] += 1
-		lastUsed[word] = now.timeIntervalSince1970
+		counts[key, default: 0] += 1
+		lastUsed[key] = now.timeIntervalSince1970
 
 		evictIfNeeded(counts: &counts, lastUsed: &lastUsed)
 

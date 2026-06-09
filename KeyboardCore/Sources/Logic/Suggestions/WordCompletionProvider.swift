@@ -58,8 +58,9 @@ public struct WordCompletionProvider: SuggestionProviding {
 		let language = context.primaryLanguage ?? "en"
 
 		// Case-insensitive merge keyed on the lowercased word. The first writer's casing becomes
-		// the base (recents run first, so a learned proper-noun casing survives); later sources
-		// only raise the score. Display casing is reapplied per-prefix at build time.
+		// the base (recents run first), but recents are now stored lowercase, so the base is
+		// effectively lowercase for learned words; later sources only raise the score. Display
+		// casing is reapplied per-prefix at build time, mirroring what the user is typing.
 		var merged: [String: (score: Double, base: String)] = [:]
 		func consider(_ word: String, score: Double) {
 			guard !word.isEmpty else { return }
@@ -132,15 +133,5 @@ public struct WordCompletionProvider: SuggestionProviding {
 		}
 
 		return candidate
-	}
-}
-
-private extension String {
-	/// Uppercases only the first character, leaving the remainder untouched (so "iPhone"-style
-	/// internal capitals in a learned word survive). Distinct from `.capitalized`, which lowercases
-	/// the tail.
-	func capitalizedFirstLetter() -> String {
-		guard let first else { return self }
-		return first.uppercased() + dropFirst()
 	}
 }
