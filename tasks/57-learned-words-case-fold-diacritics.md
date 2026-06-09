@@ -1,6 +1,6 @@
 # 57 — Learned words: lowercase kanonizace + diakriticky tolerantní hledání
 
-**Status:** Todo
+**Status:** Done — 2026-06-08
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** Medium (kvalita learned words + návrhů; odstraní case duplicity, zlepší hledání s/bez diakritiky)
 
