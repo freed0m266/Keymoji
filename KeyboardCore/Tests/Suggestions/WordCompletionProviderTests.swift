@@ -110,6 +110,37 @@ final class WordCompletionProviderTests: XCTestCase {
 		XCTAssertEqual(provider.suggestions(for: .test(before: "hel")).first?.displayText, "hello")
 	}
 
+	// MARK: - Lowercase base + directional diacritic variants
+
+	/// Builds a provider whose recents return `fixed` for any non-empty prefix — models the real
+	/// store's folded matches (which the provider consumes verbatim).
+	private func provider(recentsFixed fixed: [(word: String, count: Int)]) -> WordCompletionProvider {
+		WordCompletionProvider(
+			textChecker: MockTextChecker(),
+			systemLexicon: MockSystemLexicon(),
+			recents: MockRecents(fixedMatches: fixed)
+		)
+	}
+
+	func testDiacriticVariants_bothOffered_lowercaseMidSentence() {
+		let result = provider(recentsFixed: [("rada", 2), ("ráda", 1)])
+			.suggestions(for: .test(before: "rad"))
+		XCTAssertEqual(Set(result.map(\.displayText)), ["rada", "ráda"], "both variants, lowercase display")
+	}
+
+	func testTypedIdenticalWord_dropsOnlyThatVariant_keepsAccentedOne() {
+		// Typing the exact "rada" self-match-drops "rada" but leaves the accented "ráda" to offer.
+		let result = provider(recentsFixed: [("rada", 2), ("ráda", 1)])
+			.suggestions(for: .test(before: "rada"))
+		XCTAssertEqual(result.map(\.displayText), ["ráda"])
+	}
+
+	func testStartOfSentence_capitalizesBothVariants() {
+		let result = provider(recentsFixed: [("rada", 2), ("ráda", 1)])
+			.suggestions(for: .test(before: "Rad", page: .letters(.upper)))
+		XCTAssertEqual(Set(result.map(\.displayText)), ["Rada", "Ráda"], "leading capital by sentence position")
+	}
+
 	// MARK: - Language fallback
 
 	func testLanguageFallback_usesEnWhenNil() {

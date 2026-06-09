@@ -25,9 +25,14 @@ struct MockSystemLexicon: SystemLexiconProviding {
 /// Prefix-filters a fixed `(word, count)` list, mirroring `PersonalRecentsStore.matches`.
 struct MockRecents: PersonalRecentsReading {
 	var entries: [(word: String, count: Int)] = []
+	/// When set, returned verbatim for any non-empty prefix. Lets a test model the real store's
+	/// directional diacritic fold (e.g. "rad" → both "rada" and "ráda") without reimplementing it.
+	var fixedMatches: [(word: String, count: Int)]?
 
 	func matches(prefix: String) -> [(word: String, count: Int)] {
-		entries.filter { $0.word.lowercased().hasPrefix(prefix.lowercased()) }
+		guard !prefix.isEmpty else { return [] }
+		if let fixedMatches { return fixedMatches }
+		return entries.filter { $0.word.lowercased().hasPrefix(prefix.lowercased()) }
 	}
 }
 

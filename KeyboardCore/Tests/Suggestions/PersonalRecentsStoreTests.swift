@@ -42,14 +42,64 @@ final class PersonalRecentsStoreTests: XCTestCase {
 	}
 
 	func testMatch_isCaseInsensitive() {
+		// Stored lowercase regardless of typed casing; prefix matches case-insensitively.
 		store.learn("Hello", fromContextType: .prose)
-		XCTAssertEqual(store.matches(prefix: "hel").map(\.word), ["Hello"])
-		XCTAssertEqual(store.matches(prefix: "HE").map(\.word), ["Hello"])
+		XCTAssertEqual(store.matches(prefix: "hel").map(\.word), ["hello"])
+		XCTAssertEqual(store.matches(prefix: "HE").map(\.word), ["hello"])
 	}
 
 	func testMatch_emptyPrefix_returnsNothing() {
 		store.learn("hello", fromContextType: .prose)
 		XCTAssertTrue(store.matches(prefix: "").isEmpty)
+	}
+
+	// MARK: - Lowercase canonicalization (no case duplicates)
+
+	func testLearn_caseVariants_collapseToOneLowercaseEntry() {
+		store.learn("Ale", fromContextType: .prose)
+		store.learn("ale", fromContextType: .prose)
+		XCTAssertEqual(store.count, 1)
+		let matches = store.matches(prefix: "al")
+		XCTAssertEqual(matches.map(\.word), ["ale"])
+		XCTAssertEqual(matches.first?.count, 2)
+	}
+
+	func testLearn_storesDiacriticsLowercased() {
+		store.learn("Čauko", fromContextType: .prose)
+		XCTAssertEqual(store.allLearnedWords().map(\.word), ["čauko"])
+	}
+
+	// MARK: - Directional diacritic-tolerant matching
+
+	func testMatch_prefixWithoutDiacritics_isLenient() {
+		store.learn("čauko", fromContextType: .prose)
+		XCTAssertEqual(store.matches(prefix: "cauk").map(\.word), ["čauko"])
+	}
+
+	func testMatch_prefixWithDiacritics_isStrict() {
+		store.learn("čauko", fromContextType: .prose)
+		store.learn("cauko", fromContextType: .prose)
+		// Accented prefix must match only the accented stored form.
+		XCTAssertEqual(store.matches(prefix: "čauk").map(\.word), ["čauko"])
+	}
+
+	func testMatch_baselinePrefix_returnsBothDiacriticVariants() {
+		store.learn("rada", fromContextType: .prose)
+		store.learn("ráda", fromContextType: .prose)
+		XCTAssertEqual(Set(store.matches(prefix: "rad").map(\.word)), ["rada", "ráda"])
+	}
+
+	func testMatch_uppercaseAccentlessPrefix_stillMatchesAccentedWord() {
+		store.learn("čauko", fromContextType: .prose)
+		XCTAssertEqual(store.matches(prefix: "CAU").map(\.word), ["čauko"])
+	}
+
+	func testMatch_asciiPrefix_unaffectedByFold() {
+		// Regression: pure-ASCII matching behaves exactly as before, now on lowercase keys.
+		store.learn("Hello", fromContextType: .prose)
+		store.learn("help", fromContextType: .prose)
+		XCTAssertEqual(Set(store.matches(prefix: "hel").map(\.word)), ["hello", "help"])
+		XCTAssertTrue(store.matches(prefix: "wor").isEmpty)
 	}
 
 	// MARK: - Filters
