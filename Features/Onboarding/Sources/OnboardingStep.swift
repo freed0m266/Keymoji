@@ -11,7 +11,7 @@ import Foundation
 /// Steps shown in the onboarding flow. The first three are manual actions the user has to take in
 /// iOS Settings before Keymoji is usable; the fourth is a feature tour that surfaces capabilities
 /// the user wouldn't otherwise discover from the keyboard layout.
-public enum OnboardingStep: Sendable, Hashable, CaseIterable {
+public enum OnboardingStep: Int, CaseIterable, Identifiable {
 	/// Settings → General → Keyboards → Keyboards → Add New Keyboard → Keymoji
 	case addKeyboard
 	/// Settings → General → Keyboards → Keymoji → Allow Full Access
@@ -20,4 +20,6 @@ public enum OnboardingStep: Sendable, Hashable, CaseIterable {
 	case selectKeyboard
 	/// Discovery screen — see [[FeatureHighlight]] for the rendered list.
 	case featureTour
+
+	public var id: Int { rawValue }
 }

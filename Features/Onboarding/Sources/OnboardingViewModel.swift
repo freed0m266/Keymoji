@@ -76,7 +76,7 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	private func startPollingKeyboardStatus() {
 		pollTask = Task { [weak self] in
 			while !Task.isCancelled {
-				await self?.refreshKeyboardStatus()
+				self?.refreshKeyboardStatus()
 				try? await Task.sleep(for: .seconds(1))
 			}
 		}

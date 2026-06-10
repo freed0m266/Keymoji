@@ -28,15 +28,13 @@ public extension FeatureHighlight {
 	typealias Texts = L10n.Onboarding.Tour
 
 	/// Curated, ordered list of non-obvious user-facing capabilities the tour shows.
-	/// Limited to ~7 items by design — see task 38, scope §1.
 	static let all: [FeatureHighlight] = [
 		FeatureHighlight(
-			id: "diacritics",
-			symbol: "character.cursor.ibeam",
-			title: Texts.Diacritics.title,
-			description: Texts.Diacritics.description
+			id: "favorites",
+			symbol: "heart.fill",
+			title: Texts.Favorites.title,
+			description: Texts.Favorites.description
 		),
-		// Placed second so the privacy angle ("learns on this iPhone") is visible early (task 40).
 		FeatureHighlight(
 			id: "suggestions",
 			symbol: "text.cursor",
@@ -48,12 +46,6 @@ public extension FeatureHighlight {
 			symbol: "face.smiling",
 			title: Texts.Slack.title,
 			description: Texts.Slack.description
-		),
-		FeatureHighlight(
-			id: "favorites",
-			symbol: "heart.fill",
-			title: Texts.Favorites.title,
-			description: Texts.Favorites.description
 		),
 		FeatureHighlight(
 			id: "emojiCodes",
@@ -68,14 +60,10 @@ public extension FeatureHighlight {
 			description: Texts.Trackpad.description
 		),
 		FeatureHighlight(
-			id: "deleteWord",
-			symbol: "delete.left",
-			title: Texts.DeleteWord.title,
-			description: Texts.DeleteWord.description
+			id: "diacritics",
+			symbol: "character.cursor.ibeam",
+			title: Texts.Diacritics.title,
+			description: Texts.Diacritics.description
 		)
-		// `customize` was dropped to keep the tour at 7 items (task 38 cap) when `suggestions` was
-		// added (task 40). It was the most self-discoverable entry — Settings toggles, unlike the
-		// other tour items, are easy to stumble on — so it was the least valuable in a tour of
-		// non-obvious features. Its `Onboarding.Tour.Customize.*` strings are left in place.
 	]
 }

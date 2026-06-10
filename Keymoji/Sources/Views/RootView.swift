@@ -18,7 +18,7 @@ struct RootView<OnboardingVM: OnboardingViewModeling, SettingsVM: SettingsViewMo
 	// polling task on every `body` recomputation. Codex P2 from task 11.
 	@State private var onboardingViewModel: OnboardingVM
 	@State private var settingsViewModel: SettingsVM
-	@State private var hasFinishedOnboarding: Bool = OnboardingPreferences().isOnboardingComplete
+	@State private var hasFinishedOnboarding = false
 
 	init(onboardingViewModel: OnboardingVM, settingsViewModel: SettingsVM) {
 		_onboardingViewModel = State(initialValue: onboardingViewModel)
@@ -30,9 +30,9 @@ struct RootView<OnboardingVM: OnboardingViewModeling, SettingsVM: SettingsViewMo
 			SettingsView(viewModel: settingsViewModel)
 				.preferredColorScheme(.dark)
 		} else {
-			OnboardingView(viewModel: onboardingViewModel, onFinish: {
+			OnboardingView(viewModel: onboardingViewModel) {
 				hasFinishedOnboarding = true
-			})
+			}
 		}
 	}
 }
