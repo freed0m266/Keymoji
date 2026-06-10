@@ -36,28 +36,28 @@ public extension Icon {
 }
 
 public extension Icon {
-	/// keyboard.badge.eye
-	static var keyboardBadgeEye: Icon = "keyboard.badge.eye"
-
-	/// lock.shield
-	static var lockShield: Icon = "lock.shield"
-
+	/// chevron.right
+	static var chevronRight: Icon = "chevron.right"
 	/// globe
 	static var globe: Icon = "globe"
+	/// keyboard.badge.eye
+	static var keyboardBadgeEye: Icon = "keyboard.badge.eye"
+	/// lock.shield
+	static var lockShield: Icon = "lock.shield"
 }
 
 #Preview {
 	VStack(spacing: 40) {
+		Icon.chevronRight
+			.size(24)
+
+		Icon.globe
+			.size(24)
+
 		Icon.keyboardBadgeEye
 			.size(24)
 
 		Icon.lockShield
-			.size(24)
-
-		Icon.globe
-			.size(24)
-
-		Icon.globe
 			.size(24)
 	}
 	.frame(maxWidth: 300, maxHeight: 300)

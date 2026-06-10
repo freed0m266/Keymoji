@@ -16,6 +16,10 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 
 	typealias Texts = L10n.About
 
+	private var currentYear: String {
+		String(Calendar.current.component(.year, from: .now))
+	}
+
 	public init(viewModel: ViewModel) {
 		_viewModel = State(wrappedValue: viewModel)
 	}
@@ -55,47 +59,42 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 
 	private var privacySection: some View {
 		Section {
-			Text(Texts.Privacy.statement)
+			Text(Texts.privacyStatement)
 				.font(.callout)
 				.foregroundStyle(.secondary)
 		} header: {
-			Text(Texts.Privacy.header)
+			Text(Texts.privacyHeader)
 		}
 	}
 
 	private var legalSection: some View {
 		Section {
-			Button(action: viewModel.openPrivacyPolicy) {
-				LabeledChevronRow(title: Texts.Legal.privacyPolicyLink)
+			chevronRow(title: Texts.privacyPolicyLink) {
+				viewModel.openPrivacyPolicy()
 			}
-			Button(action: viewModel.openSourceCode) {
-				LabeledChevronRow(title: Texts.Legal.sourceCodeLink)
+			chevronRow(title: Texts.support) {
+				viewModel.openSupportEmail()
 			}
 		} header: {
-			Text(Texts.Legal.header)
+			Text(Texts.legalHeader)
 		} footer: {
-			Text(Texts.Legal.copyright(currentYear))
+			Text(Texts.copyright(currentYear))
 		}
 	}
 
-	private var currentYear: String {
-		String(Calendar.current.component(.year, from: Date()))
-	}
-}
-
-/// Lightweight row used by AboutView for external link items. Lives here for v1.0; if a similar
-/// pattern shows up elsewhere we can hoist it into `KeymojiUI`.
-private struct LabeledChevronRow: View {
-	let title: String
-
-	var body: some View {
-		HStack {
-			Text(title)
-				.foregroundStyle(.primary)
-			Spacer()
-			Image(systemName: "chevron.right")
-				.font(.footnote.weight(.semibold))
-				.foregroundStyle(.tertiary)
+	@ViewBuilder
+	private func chevronRow(title: String, action: @escaping () -> Void) -> some View {
+		Button(action: action) {
+			HStack {
+				Text(title)
+					.foregroundStyle(.primary)
+				
+				Spacer()
+				
+				Icon.chevronRight
+					.font(.footnote.weight(.semibold))
+					.foregroundStyle(.tertiary)
+			}
 		}
 	}
 }

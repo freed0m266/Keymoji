@@ -122,9 +122,9 @@
 
 "about.title" = "About";
 "about.versionLabel" = "Version %@";
-"about.privacy.header" = "Privacy";
-"about.privacy.statement" = "Keymoji runs entirely on-device with no network access, no analytics, and no third-party SDKs — nothing you type is ever sent off your iPhone. To improve word suggestions, Keymoji remembers words you frequently type, stored only on this device; clear them anytime in Settings → Suggestions. Allow Full Access is required only for haptic feedback.";
-"about.legal.header" = "Legal";
-"about.legal.privacyPolicyLink" = "Full privacy policy";
-"about.legal.sourceCodeLink" = "Source code on GitHub";
-"about.legal.copyright" = "© %@ Freedom Martin, s.r.o.";
+"about.privacyHeader" = "Privacy";
+"about.privacyStatement" = "Keymoji runs entirely on-device with no network access, no analytics, and no third-party SDKs — nothing you type is ever sent off your iPhone. To improve word suggestions, Keymoji remembers words you frequently type, stored only on this device; clear them anytime in Settings → Suggestions. Allow Full Access is required only for haptic feedback.";
+"about.legalHeader" = "Legal & support";
+"about.privacyPolicyLink" = "Full privacy policy";
+"about.copyright" = "© %@ Freedom Martin, s.r.o.";
+"about.support" = "Contact support";

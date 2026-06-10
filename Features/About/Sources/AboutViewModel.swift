@@ -13,8 +13,9 @@ import KeymojiCore
 @MainActor
 public protocol AboutViewModeling: Observable, AnyObject {
 	var versionString: String { get }
+
 	func openPrivacyPolicy()
-	func openSourceCode()
+	func openSupportEmail()
 }
 
 @MainActor
@@ -32,8 +33,8 @@ final class AboutViewModel: BaseViewModel, AboutViewModeling {
 		UIApplication.shared.open(url)
 	}
 
-	func openSourceCode() {
-		guard let url = URL(string: KeymojiURLs.sourceCode) else { return }
+	func openSupportEmail() {
+		guard let url = URL(string: KeymojiURLs.supportEmail) else { return }
 		UIApplication.shared.open(url)
 	}
 }

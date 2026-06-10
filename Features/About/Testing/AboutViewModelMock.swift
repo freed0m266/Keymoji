@@ -11,14 +11,10 @@ import Foundation
 
 @Observable
 @MainActor
-public final class AboutViewModelMock: AboutViewModeling {
-	public var versionString: String = "1.0 (1)"
-	public var openPrivacyPolicyCallCount = 0
-	public var openSourceCodeCallCount = 0
+final class AboutViewModelMock: AboutViewModeling {
+	var versionString: String = "1.0 (1)"
 
-	public init() {}
-
-	public func openPrivacyPolicy() { openPrivacyPolicyCallCount += 1 }
-	public func openSourceCode() { openSourceCodeCallCount += 1 }
+	func openPrivacyPolicy() {}
+	func openSupportEmail() {}
 }
 #endif
