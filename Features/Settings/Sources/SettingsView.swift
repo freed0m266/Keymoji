@@ -160,7 +160,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			NavigationLink {
 				FavoriteEmojisEditorView(viewModel: favoriteEmojisEditorVM())
 			} label: {
-				Text(Texts.Favorites.row)
+				Text("⭐️ \(Texts.Favorites.row)")
 			}
 		} footer: {
 			Text(Texts.Favorites.footer)
@@ -172,7 +172,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			NavigationLink {
 				EmojiCodesView(viewModel: emojiCodesVM())
 			} label: {
-				Text(Texts.EmojiCodes.row)
+				Text("📖 \(Texts.EmojiCodes.row)")
 			}
 		} footer: {
 			Text(Texts.EmojiCodes.footer)
