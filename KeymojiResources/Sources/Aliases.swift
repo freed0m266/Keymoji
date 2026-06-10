@@ -7,3 +7,4 @@
 //
 
 public typealias L10n = KeymojiResourcesStrings
+public typealias Assets = KeymojiResourcesAsset

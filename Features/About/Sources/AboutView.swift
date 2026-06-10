@@ -32,19 +32,21 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 	private var headerSection: some View {
 		Section {
 			VStack(spacing: 12) {
-				Image(systemName: "keyboard")
+				Assets.keymojiLogo.swiftUIImage
 					.resizable()
 					.scaledToFit()
-					.frame(width: 64, height: 64)
+					.frame(width: 80, height: 80)
 					.foregroundStyle(.tint)
+
 				Text(L10n.General.title)
 					.font(.title2.weight(.bold))
+
 				Text(Texts.versionLabel(viewModel.versionString))
 					.font(.caption)
 					.foregroundStyle(.secondary)
 			}
 			.frame(maxWidth: .infinity)
-			.padding(.vertical, 12)
+			.padding(.bottom, 12)
 			.listRowBackground(Color.clear)
 		}
 	}
