@@ -13,23 +13,28 @@ public extension View {
 		self
 			.scrollContentBackground(.hidden)
 			.background {
-				LinearGradient(
-					colors: [
-						Color(hexString: "5F7EFF").opacity(0.4),
-						Color(hexString: "5A39AD").opacity(0.2),
-						Color.black,
-						Color.black
+				MeshGradient(
+					width: 2,
+					height: 2,
+					points: [
+						[0.0, 0.0], [0.5, 0.0], [1.0, 0.0], [0.0, 1.0]
 					],
-					startPoint: .top,
-					endPoint: .bottom
+					colors: [
+						Color(hexString: "060913"),
+						Color(hexString: "111A3A"),
+						Color(hexString: "3A145F"),
+						Color(hexString: "090B10")
+					]
 				)
+				.opacity(0.8)
+				.blur(radius: 100)
 				.ignoresSafeArea()
 			}
 	}
 }
 
 public extension View {
-	func tappable<S>(_ shape: S = .rect) -> some View where S : Shape {
+	func tappable<S>(_ shape: S = .rect) -> some View where S: Shape {
 		self
 			.contentShape(shape)
 			.background(Color.black.opacity(0.001))

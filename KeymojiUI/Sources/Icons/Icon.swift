@@ -29,28 +29,36 @@ extension Icon: ExpressibleByStringLiteral {
 public extension Icon {
 	func size(_ size: CGFloat, weight: Font.Weight? = nil) -> some View {
 		image
-			.font(.system(size: size, weight: weight))
+			.resizable()
+			.scaledToFit()
+			.frame(width: size, height: size)
 	}
 }
 
 public extension Icon {
-	/// checkmark.circle.fill
-	static var checkmarkCircleFill: Icon = "checkmark.circle.fill"
-	/// circle
-	static var circle: Icon = "circle"
-	/// xmark.circle.fill
-	static var xmarkCircleFill: Icon = "xmark.circle.fill"
+	/// keyboard.badge.eye
+	static var keyboardBadgeEye: Icon = "keyboard.badge.eye"
+
+	/// lock.shield
+	static var lockShield: Icon = "lock.shield"
+
+	/// globe
+	static var globe: Icon = "globe"
 }
 
 #Preview {
 	VStack(spacing: 40) {
-		Icon.checkmarkCircleFill
+		Icon.keyboardBadgeEye
 			.size(24)
-			.foregroundColor(.green)
 
-		Icon.xmarkCircleFill
+		Icon.lockShield
 			.size(24)
-			.foregroundColor(.red)
+
+		Icon.globe
+			.size(24)
+
+		Icon.globe
+			.size(24)
 	}
 	.frame(maxWidth: 300, maxHeight: 300)
 	.padding(16)
