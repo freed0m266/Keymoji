@@ -43,11 +43,6 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		startPollingKeyboardStatus()
 	}
 
-	// No deinit cancel — Swift 6 prohibits touching `@MainActor` state from `deinit`. The polling
-	// task already captures `self` weakly, so once the VM deallocates the body becomes a no-op.
-	// The resulting 1s/iter idle wake-up is negligible; proper view-lifecycle cancellation can
-	// be wired in later if it ever shows up in profiles.
-
 	// MARK: - Public API
 
 	func didConfirmKeyboardAdded() {

@@ -51,7 +51,6 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 					case .featureTour:
 						OnboardingView(
 							viewModel: onboardingVM(),
-							initialStep: .featureTour,
 							onFinish: { sheet = nil }
 						)
 					}

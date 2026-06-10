@@ -17,15 +17,10 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 
 	typealias Texts = L10n.Onboarding
 
-	@MainActor
 	public init(
 		viewModel: ViewModel,
-		initialStep: OnboardingStep? = nil,
 		onFinish: @escaping () -> Void = {}
 	) {
-		if let initialStep {
-			viewModel.currentStep = initialStep
-		}
 		_viewModel = State(wrappedValue: viewModel)
 		self.onFinish = onFinish
 	}

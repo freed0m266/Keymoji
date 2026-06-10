@@ -10,7 +10,7 @@ import Foundation
 import KeymojiResources
 
 /// One item shown in the post-activation feature tour.
-public struct FeatureHighlight: Sendable, Hashable, Identifiable {
+public struct FeatureHighlight: Identifiable, Sendable {
 	public let id: String
 	public let symbol: String
 	public let title: String
