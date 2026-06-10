@@ -27,5 +27,6 @@ public final class OnboardingViewModelMock: OnboardingViewModeling {
 	public func didConfirmFullAccess() { currentStep = .selectKeyboard }
 	public func didFinishOnboarding() { didFinishCallCount += 1 }
 	public func openSettings() { openSettingsCallCount += 1 }
+	public func refreshKeyboardStatus() { }
 }
 #endif

@@ -12,17 +12,17 @@ import KeymojiCore
 
 @Observable
 @MainActor
-public final class SettingsViewModelMock: SettingsViewModeling {
-	public var showNumberRow: Bool
-	public var hapticFeedbackEnabled: Bool
-	public var keyClickSoundEnabled: Bool
-	public var appearance: AppearancePreference
-	public var spaceDoubleTapAction: SpaceDoubleTapAction
-	public var letterLayout: LetterLayout
-	public var suggestionsEnabled: Bool
-	public private(set) var learnedWordCount: Int
+final class SettingsViewModelMock: SettingsViewModeling {
+	var showNumberRow: Bool
+	var hapticFeedbackEnabled: Bool
+	var keyClickSoundEnabled: Bool
+	var appearance: AppearancePreference
+	var spaceDoubleTapAction: SpaceDoubleTapAction
+	var letterLayout: LetterLayout
+	var suggestionsEnabled: Bool
+	private(set) var learnedWordCount: Int
 
-	public init(
+	init(
 		showNumberRow: Bool = true,
 		hapticFeedbackEnabled: Bool = true,
 		keyClickSoundEnabled: Bool = false,
@@ -42,6 +42,6 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 		self.learnedWordCount = learnedWordCount
 	}
 
-	public func refreshLearnedWordCount() {}
+	func refreshLearnedWordCount() {}
 }
 #endif

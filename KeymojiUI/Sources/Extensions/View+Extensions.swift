@@ -60,3 +60,15 @@ public extension View {
 			.background(Color.black.opacity(0.001))
 	}
 }
+
+public extension View {
+	/// When app did enter foreground
+	func onForeground(action: @escaping () -> Void) -> some View {
+		onReceive(
+			NotificationCenter.default.publisher(
+				for: UIApplication.didBecomeActiveNotification
+			),
+			perform: { _ in action() }
+		)
+	}
+}

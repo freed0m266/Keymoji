@@ -42,18 +42,10 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			.navigationTitle(Texts.title)
 			.sheet(item: $sheet) { kind in
 				NavigationStack {
-					switch kind {
-					case .onboarding:
-						OnboardingView(
-							viewModel: onboardingVM(),
-							onFinish: { sheet = nil }
-						)
-					case .featureTour:
-						OnboardingView(
-							viewModel: onboardingVM(),
-							onFinish: { sheet = nil }
-						)
-					}
+					OnboardingView(
+						viewModel: onboardingVM(initialStep: kind.initialStep),
+						onFinish: { sheet = nil }
+					)
 				}
 				.preferredColorScheme(.dark)
 			}
@@ -204,6 +196,13 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		case featureTour
 
 		var id: Self { self }
+
+		var initialStep: OnboardingStep {
+			switch self {
+			case .onboarding: .addKeyboard
+			case .featureTour: .featureTour
+			}
+		}
 	}
 }
 

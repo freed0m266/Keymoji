@@ -19,17 +19,18 @@ public protocol OnboardingViewModeling: Observable, AnyObject {
 	func didConfirmFullAccess()
 	func didFinishOnboarding()
 	func openSettings()
+	func refreshKeyboardStatus()
 }
 
 @MainActor
-public func onboardingVM() -> some OnboardingViewModeling {
-	OnboardingViewModel(dependencies: dependencies.onboarding)
+public func onboardingVM(initialStep: OnboardingStep = .addKeyboard) -> some OnboardingViewModeling {
+	OnboardingViewModel(dependencies: dependencies.onboarding, initialStep: initialStep)
 }
 
 @Observable
 final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 
-	var currentStep: OnboardingStep = .addKeyboard
+	var currentStep: OnboardingStep
 	private(set) var isKeyboardActivated: Bool = false
 
 	private let dependencies: OnboardingDependencies
@@ -37,10 +38,11 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 
 	// MARK: - Init
 
-	init(dependencies: OnboardingDependencies) {
+	init(dependencies: OnboardingDependencies, initialStep: OnboardingStep) {
 		self.dependencies = dependencies
+		self.currentStep = initialStep
 		super.init()
-		startPollingKeyboardStatus()
+		refreshKeyboardStatus()
 	}
 
 	// MARK: - Public API
@@ -62,34 +64,19 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		UIApplication.shared.open(url)
 	}
 
-	// MARK: - Private API
+	/// `UITextInputMode.activeInputModes` is the only reliable way
+	///  to detect that the user has added our keyboard via iOS Settings.
+	func refreshKeyboardStatus() {
+		let detected = detectKeyboardActivated()
 
-	/// `UITextInputMode.activeInputModes` is the only reliable way to detect that the user has
-	/// added our keyboard via iOS Settings. We probe each input mode's KVC `identifier` for the
-	/// extension's bundle ID. iOS Settings can be entered/exited at any moment, so we poll
-	/// every second while the onboarding view is alive.
-	private func startPollingKeyboardStatus() {
-		pollTask = Task { [weak self] in
-			while !Task.isCancelled {
-				self?.refreshKeyboardStatus()
-				try? await Task.sleep(for: .seconds(1))
-			}
-		}
-	}
-
-	@MainActor
-	private func refreshKeyboardStatus() {
-		let detected = Self.detectKeyboardActivated()
 		if detected != isKeyboardActivated {
 			isKeyboardActivated = detected
-			// Auto-advance only from the first step — never roll users back.
-			if detected, currentStep == .addKeyboard {
-				currentStep = .allowFullAccess
-			}
 		}
 	}
 
-	private static func detectKeyboardActivated() -> Bool {
+	// MARK: - Private API
+
+	private func detectKeyboardActivated() -> Bool {
 		UITextInputMode.activeInputModes
 			.compactMap { $0.value(forKey: "identifier") as? String }
 			.contains { $0.contains("com.freedommartin.keymoji.keyboard") }

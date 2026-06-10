@@ -47,7 +47,9 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 				.padding(.bottom, 16)
 		}
 		.ignoresSafeArea(edges: .top)
-		.mainBackground()
+		.onForeground {
+			viewModel.refreshKeyboardStatus()
+		}
 		.preferredColorScheme(.dark)
 	}
 
@@ -162,6 +164,19 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 			.padding(.top, 56)
 		}
 		.scrollIndicators(.hidden)
+		.mask(
+			LinearGradient(
+				colors: [
+					.black,
+					.black,
+					.black,
+					.black,
+					.clear
+				],
+				startPoint: .top,
+				endPoint: .bottom
+			)
+		)
 		.overlay(alignment: .bottom) {
 			VStack(spacing: 12) {
 				PrimaryButton(Texts.Tour.cta) {
@@ -175,13 +190,6 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 					.foregroundStyle(.tertiary)
 					.multilineTextAlignment(.center)
 					.padding(.horizontal, 32)
-			}
-			.background {
-				LinearGradient(
-					colors: [.black, .clear],
-					startPoint: .bottom,
-					endPoint: .top
-				)
 			}
 		}
 	}

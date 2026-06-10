@@ -28,11 +28,11 @@ struct RootView<OnboardingVM: OnboardingViewModeling, SettingsVM: SettingsViewMo
 	var body: some View {
 		if hasFinishedOnboarding {
 			SettingsView(viewModel: settingsViewModel)
-				.preferredColorScheme(.dark)
 		} else {
 			OnboardingView(viewModel: onboardingViewModel) {
 				hasFinishedOnboarding = true
 			}
+			.mainBackground()
 		}
 	}
 }
