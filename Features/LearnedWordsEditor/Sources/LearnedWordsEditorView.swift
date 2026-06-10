@@ -78,18 +78,14 @@ public struct LearnedWordsEditorView<ViewModel: LearnedWordsEditorViewModeling>:
 	}
 
 	private func row(for word: LearnedWord) -> some View {
-		// Words are stored lowercase (the store's canonical form); show them with a leading capital
-		// purely for display. `word.word` stays raw lowercase so delete still keys the stored entry.
-		let display = word.word.capitalizedFirstLetter()
-
-		return HStack {
-			Text(display)
+		HStack {
+			Text(word.word)
 			Spacer()
 			Text(Texts.count(word.count))
 				.foregroundStyle(.secondary)
 		}
 		.accessibilityElement()
-		.accessibilityLabel(Texts.accessibilityLabel(display, word.count))
+		.accessibilityLabel(Texts.accessibilityLabel(word.word, word.count))
 	}
 }
 
