@@ -31,6 +31,26 @@ public extension View {
 				.ignoresSafeArea()
 			}
 	}
+
+	func aboutBackground() -> some View {
+		self
+			.scrollContentBackground(.hidden)
+			.background {
+				MeshGradient(
+					width: 2,
+					height: 2,
+					points: [
+						[0.6, 0.0], [0.5, 0.0], [1.0, 0.0], [0.0, 1.0]
+					],
+					colors: [
+						.indigo
+					],
+				)
+				.opacity(0.8)
+				.blur(radius: 100)
+				.ignoresSafeArea()
+			}
+	}
 }
 
 public extension View {

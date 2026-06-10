@@ -8,6 +8,7 @@
 
 import SwiftUI
 import KeymojiCore
+import KeymojiUI
 import KeymojiResources
 
 public struct AboutView<ViewModel: AboutViewModeling>: View {
@@ -25,6 +26,7 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 			privacySection
 			legalSection
 		}
+		.aboutBackground()
 		.navigationTitle(Texts.title)
 		.navigationBarTitleDisplayMode(.inline)
 	}
