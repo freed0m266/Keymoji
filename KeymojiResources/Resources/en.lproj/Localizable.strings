@@ -58,7 +58,7 @@
 "settings.title" = "Settings";
 "settings.setupInstructions" = "Setup instructions";
 "settings.about" = "About";
-"settings.version" = "Version";
+"settings.aboutHeader" = "App";
 "settings.keyboard.header" = "Keyboard";
 "settings.keyboard.showNumberRow" = "Always show number row";
 "settings.keyboard.hapticFeedback" = "Haptic feedback";

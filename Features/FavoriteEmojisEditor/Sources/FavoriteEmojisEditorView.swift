@@ -84,8 +84,8 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 				ForEach(viewModel.displayedFavorites, id: \.self) { emoji in
 					row(for: emoji)
 				}
-				.onDelete {
-					offsets in viewModel.remove(at: offsets)
+				.onDelete { offsets in
+					viewModel.remove(at: offsets)
 				}
 				.onMove(
 					perform: viewModel.sortMode == .manual

@@ -4,6 +4,7 @@ import SwiftUI
 import KeymojiCore
 import KeyboardCore
 
+@MainActor 
 final class KeyboardViewSnapshots: XCTestCase {
 
 	private static let iPhoneWidth: CGFloat = 393

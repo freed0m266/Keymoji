@@ -44,15 +44,16 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				NavigationStack {
 					switch kind {
 					case .onboarding:
-						OnboardingView(viewModel: onboardingVM(), onFinish: { sheet = nil })
+						OnboardingView(
+							viewModel: onboardingVM(),
+							onFinish: { sheet = nil }
+						)
 					case .featureTour:
 						OnboardingView(
 							viewModel: onboardingVM(),
 							initialStep: .featureTour,
 							onFinish: { sheet = nil }
 						)
-					case .about:
-						AboutView(viewModel: aboutVM())
 					}
 				}
 				.preferredColorScheme(.dark)
@@ -188,21 +189,22 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 
 	private var aboutSection: some View {
 		Section {
-			Button(Texts.about) { sheet = .about }
-			HStack {
-				Text(Texts.version)
-					.foregroundStyle(.secondary)
-				Spacer()
-				Text(viewModel.versionString)
-					.foregroundStyle(.tertiary)
+			NavigationLink {
+				AboutView(viewModel: aboutVM())
+			} label: {
+				Text(Texts.about)
+					.font(.body.weight(.semibold))
 			}
-			.font(.footnote)
+		} header: {
+			Text(Texts.aboutHeader)
 		}
 	}
 
-	private enum SheetKind: Identifiable {
-		case onboarding, featureTour, about
-		var id: String { String(describing: self) }
+	private enum SheetKind: Int, Identifiable {
+		case onboarding
+		case featureTour
+
+		var id: Self { self }
 	}
 }
 

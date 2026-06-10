@@ -21,7 +21,6 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 	public var letterLayout: LetterLayout
 	public var suggestionsEnabled: Bool
 	public private(set) var learnedWordCount: Int
-	public var versionString: String
 
 	public init(
 		showNumberRow: Bool = true,
@@ -32,7 +31,6 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 		letterLayout: LetterLayout = .qwerty,
 		suggestionsEnabled: Bool = true,
 		learnedWordCount: Int = 128,
-		versionString: String = "1.0 (1)"
 	) {
 		self.showNumberRow = showNumberRow
 		self.hapticFeedbackEnabled = hapticFeedbackEnabled
@@ -42,7 +40,6 @@ public final class SettingsViewModelMock: SettingsViewModeling {
 		self.letterLayout = letterLayout
 		self.suggestionsEnabled = suggestionsEnabled
 		self.learnedWordCount = learnedWordCount
-		self.versionString = versionString
 	}
 
 	public func refreshLearnedWordCount() {}
