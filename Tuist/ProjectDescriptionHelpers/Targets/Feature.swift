@@ -40,10 +40,19 @@ public struct Feature: Sendable {
 			sources: "Features/\(name)/Tests/**",
 			dependencies: [
 				.target(target),
-				.target(testing)
+				.target(testing),
+				.target(name: "Keymoji")
 			],
 			settings: .settings(
-				base: ["APPLICATION_EXTENSION_API_ONLY": false]
+				base: [
+					"APPLICATION_EXTENSION_API_ONLY": false,
+					// Host unit tests inside Keymoji.app so snapshot tests can use
+					// drawHierarchyInKeyWindow: true — required for views relying on
+					// UIVisualEffectView (Liquid Glass), which can't sample a backdrop
+					// when rendered offscreen.
+					"BUNDLE_LOADER": "$(TEST_HOST)",
+					"TEST_HOST": "$(BUILT_PRODUCTS_DIR)/Keymoji.app/Keymoji"
+				]
 			)
 		)
 	}

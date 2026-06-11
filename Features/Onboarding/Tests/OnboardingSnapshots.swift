@@ -73,7 +73,7 @@ final class OnboardingSnapshots: XCTestCase {
 		assertSnapshot(
 			of: host,
 			as: .image(
-				drawHierarchyInKeyWindow: false,
+				drawHierarchyInKeyWindow: true,
 				perceptualPrecision: 0.93,
 				layout: .fixed(width: size.width, height: size.height),
 				traits: .init(userInterfaceStyle: .dark)
