@@ -63,6 +63,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 42. [42 — Kliknutí do mezery mezi klávesami nesmí propadnout](42-inter-key-gap-hit-areas.md)
 45. [45 — Přepínání QWERTY / QWERTZ layoutu](45-qwerty-qwertz-switch.md)
 49. [49 — Favorites bar: TabView paging místo free-scroll](49-favorites-bar-tabview-paging.md)
+50. [60 — Favorites editor: název emoji místo shortcode + odvozené názvy vlajek](60-favorites-show-emoji-name.md)
 
 ## v1.2 — Word suggestions
 
