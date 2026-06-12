@@ -18,7 +18,7 @@ public func AssertSnapshot<View: SwiftUI.View>(
 	layout: SwiftUISnapshotLayout? = nil,
 	record: Bool = false,
 	line: UInt = #line,
-	file: StaticString = #file,
+	file: StaticString = #filePath,
 	function: String = #function,
 	perceptualPrecision: Float = 0.93,
 	longContentSnapshotHeight: CGFloat? = nil
