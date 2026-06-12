@@ -10,6 +10,9 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case appearance
 	case spaceDoubleTapAction
 	case letterLayout
+	/// Active long-press diacritic set (`LetterAlternateSet` raw value). When unset, the typed
+	/// accessor derives a default from the device locale instead of returning a fixed value.
+	case letterAlternateSet
 	case recentEmojis
 	case favoriteEmojis
 	/// Favorites bar ordering (`FavoritesSortMode` raw value). Defaults to `.manual`.

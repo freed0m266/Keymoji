@@ -121,6 +121,33 @@ final class AppGroupStoreTests: XCTestCase {
 		XCTAssertEqual(store.favoritesSortMode, .manual)
 	}
 
+	// MARK: - Letter alternate set
+
+	func testLetterAlternateSet_unset_returnsDetectedDefault() {
+		// No stored value → the getter computes the locale-derived default rather than a fixed one.
+		// (Migration path for existing users: absence of the key means "follow detection".)
+		XCTAssertEqual(store.letterAlternateSet, LetterAlternateSet.detectedDefault())
+	}
+
+	func testLetterAlternateSet_roundTrip() {
+		store.letterAlternateSet = .german
+		XCTAssertEqual(store.letterAlternateSet, .german)
+		// A second instance reads the same persisted raw string.
+		let other = AppGroupStore(suiteName: Self.testSuite)
+		XCTAssertEqual(other.letterAlternateSet, .german)
+	}
+
+	func testLetterAlternateSet_unknownRawValue_returnsDetectedDefault() {
+		store.setString("nonsense", forKey: .letterAlternateSet)
+		XCTAssertEqual(store.letterAlternateSet, LetterAlternateSet.detectedDefault())
+	}
+
+	func testLetterAlternateSet_resetRestoresDetectedDefault() {
+		store.letterAlternateSet = .french
+		store.reset()
+		XCTAssertEqual(store.letterAlternateSet, LetterAlternateSet.detectedDefault())
+	}
+
 	// MARK: - Emoji usage counts
 
 	func testEmojiUsageCounts_defaultsToEmpty() {

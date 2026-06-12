@@ -9,7 +9,8 @@ public enum LayoutBuilder {
 		page: KeyboardPage,
 		showNumberRow: Bool,
 		returnKeyType: ReturnKeyType,
-		letterLayout: LetterLayout = .qwerty
+		letterLayout: LetterLayout = .qwerty,
+		alternateSet: LetterAlternateSet = .all
 	) -> KeyboardLayout {
 		var rows: [KeyboardRow] = []
 
@@ -28,7 +29,7 @@ public enum LayoutBuilder {
 
 		switch page {
 		case .letters(let shift):
-			rows.append(contentsOf: makeLetterRows(shift: shift, letterLayout: letterLayout))
+			rows.append(contentsOf: makeLetterRows(shift: shift, letterLayout: letterLayout, alternateSet: alternateSet))
 		case .symbols(let symbolPage):
 			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: false))
 		case .emojis:
@@ -39,7 +40,7 @@ public enum LayoutBuilder {
 			// Search mode: full QWERTY/QWERTZ for typing the query. Always lowercase — query is
 			// case-insensitive at match time, so a Shift key would only add noise. Honors the
 			// user's letter-layout choice so the search keyboard matches the typing keyboard.
-			rows.append(contentsOf: makeLetterRows(shift: .lower, letterLayout: letterLayout))
+			rows.append(contentsOf: makeLetterRows(shift: .lower, letterLayout: letterLayout, alternateSet: alternateSet))
 		case .emojiSearchSymbols(let symbolPage):
 			// Symbols variant of search mode — same row content as the regular `.symbols`
 			// layout, but the in-row `#+=` / `123` toggle keeps the user in the search-mode
@@ -80,9 +81,55 @@ public enum LayoutBuilder {
 
 	// MARK: - Letters
 
-	/// Long-press accent variants per base letter. Czech diacritics first, then common Western European.
-	/// Lowercase form here; uppercase variants are derived via `String.uppercased(with:)`.
-	private static let letterAlternates: [Character: [String]] = [
+	/// Long-press accent variants per base letter, scoped to the user's active `LetterAlternateSet`.
+	/// Each map holds **only the accents** (lowercase) for that language, ordered by in-language
+	/// frequency — the base letter is prepended later in `makeLetterKey`, and uppercase variants are
+	/// derived via `posixUppercased()`. A letter absent from the map has no accents (→ no popup).
+	private static func letterAlternates(for set: LetterAlternateSet) -> [Character: [String]] {
+		switch set {
+		case .czech:   return czechAlternates
+		case .slovak:  return slovakAlternates
+		case .german:  return germanAlternates
+		case .polish:  return polishAlternates
+		case .french:  return frenchAlternates
+		case .spanish: return spanishAlternates
+		case .all:     return allAlternates
+		}
+	}
+
+	private static let czechAlternates: [Character: [String]] = [
+		"a": ["á"], "c": ["č"], "d": ["ď"], "e": ["é", "ě"], "i": ["í"],
+		"n": ["ň"], "o": ["ó"], "r": ["ř"], "s": ["š"], "t": ["ť"],
+		"u": ["ú", "ů"], "y": ["ý"], "z": ["ž"]
+	]
+
+	private static let slovakAlternates: [Character: [String]] = [
+		"a": ["á", "ä"], "c": ["č"], "d": ["ď"], "e": ["é"], "i": ["í"],
+		"l": ["ľ", "ĺ"], "n": ["ň"], "o": ["ó", "ô"], "r": ["ŕ"], "s": ["š"],
+		"t": ["ť"], "u": ["ú"], "y": ["ý"], "z": ["ž"]
+	]
+
+	private static let germanAlternates: [Character: [String]] = [
+		"a": ["ä"], "o": ["ö"], "u": ["ü"]      // no ß (see task decision — avoids ß→SS uppercasing)
+	]
+
+	private static let polishAlternates: [Character: [String]] = [
+		"a": ["ą"], "c": ["ć"], "e": ["ę"], "l": ["ł"], "n": ["ń"],
+		"o": ["ó"], "s": ["ś"], "z": ["ż", "ź"]
+	]
+
+	private static let frenchAlternates: [Character: [String]] = [
+		"a": ["à", "â", "æ"], "c": ["ç"], "e": ["é", "è", "ê", "ë"],
+		"i": ["î", "ï"], "o": ["ô", "œ"], "u": ["ù", "û", "ü"], "y": ["ÿ"]
+	]
+
+	private static let spanishAlternates: [Character: [String]] = [
+		"a": ["á"], "e": ["é"], "i": ["í"], "n": ["ñ"], "o": ["ó"], "u": ["ú", "ü"]
+	]
+
+	/// `.all` — the comprehensive union (today's legacy map). Czech diacritics first, then common
+	/// Western European. Fallback for bilingual users and unsupported locales.
+	private static let allAlternates: [Character: [String]] = [
 		"a": ["á", "à", "â", "ä", "ã", "å", "ā", "æ"],
 		"c": ["č", "ç", "ć", "ĉ"],
 		"d": ["ď"],
@@ -118,19 +165,19 @@ public enum LayoutBuilder {
 		}
 	}
 
-	private static func makeLetterRows(shift: ShiftState, letterLayout: LetterLayout) -> [KeyboardRow] {
+	private static func makeLetterRows(shift: ShiftState, letterLayout: LetterLayout, alternateSet: LetterAlternateSet) -> [KeyboardRow] {
 		let row1 = KeyboardRow(
 			id: "letters.row1",
-			keys: letterRow1(letterLayout).map { makeLetterKey($0, shift: shift) }
+			keys: letterRow1(letterLayout).map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) }
 		)
 		// Row 2 has 9 letters (asdf…l). To keep each key the same width as row 1's 10 keys,
 		// we reserve half-a-key of inset on each side via `referenceWeight: 10`.
 		let row2 = KeyboardRow(
 			id: "letters.row2",
-			keys: letterRow2.map { makeLetterKey($0, shift: shift) },
+			keys: letterRow2.map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) },
 			referenceWeight: 10
 		)
-		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift) }
+		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) }
 		// Shift / delete on the letter row use `rowEdgeKeyWeight` (1.3) — shared with the symbol row C's
 		// toggle / delete so the edges never jump when toggling — so the seven letters line up with rows
 		// 1 and 2 at exactly `W/10`, edge gaps included:
@@ -144,13 +191,18 @@ public enum LayoutBuilder {
 		return [row1, row2, row3]
 	}
 
-	private static func makeLetterKey(_ char: Character, shift: ShiftState) -> Key {
+	private static func makeLetterKey(_ char: Character, shift: ShiftState, alternateSet: LetterAlternateSet) -> Key {
 		let lower = String(char)
 		let displayed = shouldUppercase(shift) ? lower.posixUppercased() : lower
-		let rawAlternates = letterAlternates[char] ?? []
-		let alternates = rawAlternates.map { alt -> KeyContent in
-			.text(shouldUppercase(shift) ? alt.posixUppercased() : alt)
-		}
+		let accents = letterAlternates(for: alternateSet)[char] ?? []
+		// No accents in the active set → empty alternates → no popup (releasing inserts the base via
+		// the regular tap). With ≥1 accent the popup always shows, and cell 0 is the (cased) base
+		// letter — so a hold + release without sliding inserts the base letter, exactly like a tap;
+		// the accent is reached by sliding. `KeyView`'s `count == 1` auto-commit branch is therefore
+		// never hit by letters (they're either 0 or ≥2 alternates); it stays reserved for the number row.
+		let alternates: [KeyContent] = accents.isEmpty
+			? []
+			: [.text(displayed)] + accents.map { .text(shouldUppercase(shift) ? $0.posixUppercased() : $0) }
 		return Key(
 			id: "letter.\(lower)",
 			primary: .text(displayed),

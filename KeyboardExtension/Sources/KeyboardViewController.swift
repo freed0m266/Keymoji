@@ -172,6 +172,9 @@ final class KeyboardViewController: UIInputViewController {
 			settingsNotifier.addObserver(for: .letterLayout) { [weak self] in
 				self?.refreshFromStore()
 			},
+			settingsNotifier.addObserver(for: .letterAlternateSet) { [weak self] in
+				self?.refreshFromStore()
+			},
 			settingsNotifier.addObserver(for: .favoriteEmojis) { [weak self] in
 				self?.refreshFromStore()
 			},
@@ -205,6 +208,11 @@ final class KeyboardViewController: UIInputViewController {
 		let layout = store.letterLayout
 		if state.letterLayout != layout {
 			state.letterLayout = layout
+			changed = true
+		}
+		let alternateSet = store.letterAlternateSet
+		if state.letterAlternateSet != alternateSet {
+			state.letterAlternateSet = alternateSet
 			changed = true
 		}
 		let storedRecents = store.recentEmojis
@@ -427,7 +435,8 @@ final class KeyboardViewController: UIInputViewController {
 			page: state.page,
 			showNumberRow: state.effectiveShowsNumberRow,
 			returnKeyType: state.returnKeyType,
-			letterLayout: state.letterLayout
+			letterLayout: state.letterLayout,
+			alternateSet: state.letterAlternateSet
 		)
 		return KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: showsSuggestionBar)
 	}

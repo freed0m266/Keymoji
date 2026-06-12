@@ -25,6 +25,10 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `AppGroupStore.letterLayout`, refreshed by `KeyboardViewController.viewWillAppear`.
 	public var letterLayout: LetterLayout
 
+	/// Active long-press diacritic set. Runtime copy of `AppGroupStore.letterAlternateSet`, refreshed
+	/// by `KeyboardViewController.viewWillAppear` and the `.letterAlternateSet` Darwin notification.
+	public var letterAlternateSet: LetterAlternateSet
+
 	/// User preference for what a double-tap on space does. Runtime copy of
 	/// `AppGroupStore.spaceDoubleTapAction`, refreshed by `KeyboardViewController.viewWillAppear`.
 	public var spaceDoubleTapAction: SpaceDoubleTapAction
@@ -95,6 +99,7 @@ public struct KeyboardState: Sendable, Equatable {
 		showNumberRow: Bool = true,
 		isLandscape: Bool = false,
 		letterLayout: LetterLayout = .qwerty,
+		letterAlternateSet: LetterAlternateSet = .all,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
@@ -115,6 +120,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.showNumberRow = showNumberRow
 		self.isLandscape = isLandscape
 		self.letterLayout = letterLayout
+		self.letterAlternateSet = letterAlternateSet
 		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt

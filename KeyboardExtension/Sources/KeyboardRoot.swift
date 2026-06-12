@@ -27,7 +27,8 @@ struct KeyboardRoot: View {
 			page: state.page,
 			showNumberRow: state.effectiveShowsNumberRow,
 			returnKeyType: state.returnKeyType,
-			letterLayout: state.letterLayout
+			letterLayout: state.letterLayout,
+			alternateSet: state.letterAlternateSet
 		)
 		KeyboardView(
 			layout: layout,

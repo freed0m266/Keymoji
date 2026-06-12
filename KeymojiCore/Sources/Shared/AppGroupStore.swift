@@ -125,6 +125,20 @@ public extension AppGroupStore {
 		set { setString(newValue.rawValue, forKey: .letterLayout) }
 	}
 
+	/// Active long-press diacritic set. Unlike other prefs, the default is **dynamic** — when unset,
+	/// it's derived from the device locale (language → region → `.all`). Writing happens only on an
+	/// explicit user choice, so the absence of a stored value means "follow detection". Existing
+	/// users without a stored key therefore get the detected set on upgrade (silent migration).
+	var letterAlternateSet: LetterAlternateSet {
+		get {
+			guard let raw = string(forKey: .letterAlternateSet),
+				  let set = LetterAlternateSet(rawValue: raw)
+			else { return LetterAlternateSet.detectedDefault() }
+			return set
+		}
+		set { setString(newValue.rawValue, forKey: .letterAlternateSet) }
+	}
+
 	/// Most-recently-used emojis, newest first. Updated by the keyboard extension after each
 	/// emoji insertion; read by the extension on `viewWillAppear` to seed the recents tab.
 	var recentEmojis: [String] {
