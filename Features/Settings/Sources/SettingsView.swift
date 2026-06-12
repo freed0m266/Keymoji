@@ -87,6 +87,17 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 
 		Section {
+			Picker(Texts.Keyboard.letterAlternateSet, selection: $viewModel.letterAlternateSet) {
+				ForEach(LetterAlternateSet.allCases, id: \.self) { set in
+					Text(label(for: set)).tag(set)
+				}
+			}
+			.pickerStyle(.menu)
+		} footer: {
+			Text(Texts.Keyboard.letterAlternateSetFooter)
+		}
+
+		Section {
 			Picker(Texts.Keyboard.spaceDoubleTapAction, selection: $viewModel.spaceDoubleTapAction) {
 				ForEach(SpaceDoubleTapAction.allCases, id: \.self) { action in
 					Text(label(for: action)).tag(action)
@@ -144,6 +155,20 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		switch layout {
 		case .qwerty: return Texts.Keyboard.LetterLayout.qwerty
 		case .qwertz: return Texts.Keyboard.LetterLayout.qwertz
+		}
+	}
+
+	/// Language names are endonyms (not localized — a Czech speaker browsing a German UI still
+	/// recognizes "Čeština"); only the catch-all "All" set goes through L10n.
+	private func label(for set: LetterAlternateSet) -> String {
+		switch set {
+		case .czech:   return "Čeština"
+		case .slovak:  return "Slovenčina"
+		case .german:  return "Deutsch"
+		case .polish:  return "Polski"
+		case .french:  return "Français"
+		case .spanish: return "Español"
+		case .all:     return Texts.Keyboard.LetterAlternateSet.all
 		}
 	}
 

@@ -19,6 +19,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 	var appearance: AppearancePreference
 	var spaceDoubleTapAction: SpaceDoubleTapAction
 	var letterLayout: LetterLayout
+	var letterAlternateSet: LetterAlternateSet
 	var suggestionsEnabled: Bool
 	private(set) var learnedWordCount: Int
 
@@ -29,6 +30,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		appearance: AppearancePreference = .system,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		letterLayout: LetterLayout = .qwerty,
+		letterAlternateSet: LetterAlternateSet = .czech,
 		suggestionsEnabled: Bool = true,
 		learnedWordCount: Int = 128,
 	) {
@@ -38,6 +40,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		self.appearance = appearance
 		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.letterLayout = letterLayout
+		self.letterAlternateSet = letterAlternateSet
 		self.suggestionsEnabled = suggestionsEnabled
 		self.learnedWordCount = learnedWordCount
 	}

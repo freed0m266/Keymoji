@@ -18,6 +18,7 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var appearance: AppearancePreference { get set }
 	var spaceDoubleTapAction: SpaceDoubleTapAction { get set }
 	var letterLayout: LetterLayout { get set }
+	var letterAlternateSet: LetterAlternateSet { get set }
 	var suggestionsEnabled: Bool { get set }
 	var learnedWordCount: Int { get }
 
@@ -76,6 +77,13 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		}
 	}
 
+	var letterAlternateSet: LetterAlternateSet {
+		didSet {
+			store.letterAlternateSet = letterAlternateSet
+			notifier.post(.letterAlternateSet)
+		}
+	}
+
 	var suggestionsEnabled: Bool {
 		didSet {
 			store.suggestionsEnabled = suggestionsEnabled
@@ -104,6 +112,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.appearance = store.appearance
 		self.spaceDoubleTapAction = store.spaceDoubleTapAction
 		self.letterLayout = store.letterLayout
+		self.letterAlternateSet = store.letterAlternateSet
 		self.suggestionsEnabled = store.suggestionsEnabled
 		super.init()
 		self.learnedWordCount = recentsStore.count

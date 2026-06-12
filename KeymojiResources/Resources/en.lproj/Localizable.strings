@@ -73,6 +73,9 @@
 "settings.keyboard.letterLayout.qwerty" = "QWERTY";
 "settings.keyboard.letterLayout.qwertz" = "QWERTZ";
 "settings.keyboard.letterLayoutFooter" = "QWERTZ swaps the Y and Z keys, matching Central-European keyboards.";
+"settings.keyboard.letterAlternateSet" = "Accent set";
+"settings.keyboard.letterAlternateSet.all" = "All";
+"settings.keyboard.letterAlternateSetFooter" = "Choose which language's accents appear when you press and hold a letter.";
 "settings.keyboard.spaceDoubleTapAction" = "Double-tap space";
 "settings.keyboard.spaceDoubleTap.insertPeriod" = "Insert “. ”";
 "settings.keyboard.spaceDoubleTap.dismissKeyboard" = "Hide keyboard";
