@@ -64,6 +64,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 45. [45 — Přepínání QWERTY / QWERTZ layoutu](45-qwerty-qwertz-switch.md)
 49. [49 — Favorites bar: TabView paging místo free-scroll](49-favorites-bar-tabview-paging.md)
 50. [60 — Favorites editor: název emoji místo shortcode + odvozené názvy vlajek](60-favorites-show-emoji-name.md)
+62. [62 — Onboarding: výběr oblíbených emoji (s garantovaným ne-prázdným fallbackem)](62-onboarding-pick-favorites.md)
 
 ## v1.2 — Word suggestions
 
