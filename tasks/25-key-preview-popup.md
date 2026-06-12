@@ -16,6 +16,7 @@ Apple iOS klávesnice zobrazuje malou „popup bublinu" se zvětšeným znakem n
 - Settings toggle „Show key previews".
 - Edge cases: u edge keys (q, p) horizontální offset.
 - Pozor: nesmí interferovat s long-press popoverem (task 07). Jeden ovládá short-tap, druhý long-hold.
+- **Top-row clipping:** preview bublina (~92 pt nad klávesou) je vyšší než long-press popover (~56 pt), takže na top row trpí clippingem ještě víc. [Task 61](61-constant-height-top-region.md) (vždy-rezervovaný `topRegion` 42 pt) headroom pomáhá, ale na bublinu **nestačí** ani s number row (`90 < 92`, těsně) — plný fix je pořád resize `inputView` ([task 21](21-popover-top-row-clipping.md)). Tj. tenhle preview popup nezavádět dřív, než je task 21 hotový, jinak bude nahoře ořezaný.
 
 ## Závislosti
 

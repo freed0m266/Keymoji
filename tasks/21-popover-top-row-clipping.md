@@ -12,6 +12,8 @@ Apple iOS toto řeší rozšířením `inputView` o oblast popoveru nahoru (tran
 
 **Pozn.:** Po dokončení tasku 25 (key preview bublina) trpí stejným clippingem i preview popup — jeho vertikální offset (~92 pt) je dokonce větší než long-press popoveru (52 pt). Tj. fix musí pokrývat oba overlay typy.
 
+**Pozn. (task 61):** [Task 61](61-constant-height-top-region.md) (konstantní výška + vždy-rezervovaný `topRegion`) tenhle clipping **na default nastavení (number row ON) vyřeší úplně** — QWERTY top row má nově nad sebou `48 (number row) + 42 (region) = 90 pt ≥ 56 pt`. Zbývá řešit už **jen no-number-row top row** (uživatel si number row vypnul, nebo landscape): region 42 pt < popover 56 pt → reziduum ~14 pt. Tj. po tasku 61 je scope tohoto tasku užší — plný fix potřebuje pořád resize `inputView` (a kvůli preview bublině ~92 pt tak jako tak).
+
 ## Scope (až přijde čas)
 
 Tři možné cesty:
