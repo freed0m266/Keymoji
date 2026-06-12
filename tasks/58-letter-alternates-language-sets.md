@@ -1,6 +1,6 @@
 # 58 — Jazykové sady letterAlternates + popup vždy se základním písmenem
 
-**Status:** Todo
+**Status:** Done — 2026-06-12
 
 **Priorita:** v1.x · **Úsilí:** M · **Dopad:** High (daily typing flow pro neanglické jazyky)
 
