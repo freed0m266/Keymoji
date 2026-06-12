@@ -77,6 +77,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 52. [52 — Refaktor výšky/šířky kláves: model „zdola nahoru" + jedna konstanta](52-key-sizing-bottom-up-refactor.md)
 53. [53 — Probliknutí klávesnice na max výšku při přepnutí](53-keyboard-switch-height-flash.md)
 55. [55 — Shodné hrany a cluster mezi řádkem 3 a řádkem C](55-row3-rowc-edge-key-parity.md)
+59. [59 — Auto numberpad pro číselná pole (numberPad / decimalPad)](59-auto-numberpad-for-numeric-fields.md)
 
 ## v1.x — Typing & diakritika
 
