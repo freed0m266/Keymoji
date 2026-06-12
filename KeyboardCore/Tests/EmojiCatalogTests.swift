@@ -44,6 +44,42 @@ final class EmojiCatalogTests: XCTestCase {
 		}
 	}
 
+	// MARK: - Glyph lookup
+
+	func testEmojiForGlyph_returnsEntry() {
+		let rocket = EmojiCatalog.emoji(for: "🚀")
+		XCTAssertEqual(rocket?.glyph, "🚀")
+		XCTAssertEqual(rocket?.name, "rocket")
+	}
+
+	func testEmojiForGlyph_unknownGlyph_returnsNil() {
+		// A favorite that somehow isn't in the bundled catalog must surface as a clean miss,
+		// not crash the lookup — the editor falls back to shortcode / bare glyph in that case.
+		XCTAssertNil(EmojiCatalog.emoji(for: "definitely not an emoji"))
+		XCTAssertNil(EmojiCatalog.emoji(for: ""))
+	}
+
+	// MARK: - Flag names
+
+	func testFlag_countryName_derivedFromRegionCode() {
+		// Regional-indicator pairs decode to an ISO code that `Locale` resolves to a country
+		// name (lowercased to match the CLDR convention). `Locale` can phrase a few countries
+		// differently across SDK versions (e.g. "Czechia" vs "Czech Republic"), so assert
+		// loosely there and exactly on the stable ones.
+		XCTAssertEqual(EmojiCatalog.emoji(for: "🇸🇰")?.name, "slovakia")
+		XCTAssertEqual(EmojiCatalog.emoji(for: "🇪🇺")?.name, "european union")
+		let czechia = EmojiCatalog.emoji(for: "🇨🇿")?.name
+		XCTAssertTrue(czechia?.contains("czech") == true, "🇨🇿 name was \(czechia ?? "nil")")
+	}
+
+	func testFlag_specialFlag_nameFromTable() {
+		// Non-country flags (single glyphs / ZWJ sequences) fall through the region decoder to
+		// the curated table — fully deterministic, so assert exactly.
+		XCTAssertEqual(EmojiCatalog.emoji(for: "🏴‍☠️")?.name, "pirate flag")
+		XCTAssertEqual(EmojiCatalog.emoji(for: "🏳️‍🌈")?.name, "rainbow flag")
+		XCTAssertEqual(EmojiCatalog.emoji(for: "🚩")?.name, "triangular flag")
+	}
+
 	// MARK: - Favorites / recents helpers
 
 	func testFavoritesAndRecents_returnEmptyFromCatalog() {
