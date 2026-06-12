@@ -85,22 +85,21 @@ public struct EmojiPanelView: View {
 		VStack(spacing: 0) {
 			searchBarTrigger
 			grid
+				.mask(
+					LinearGradient(
+						colors: [
+							.black,
+							.black,
+							.clear
+						],
+						startPoint: .top,
+						endPoint: .bottom
+					)
+					.allowsHitTesting(false)
+				)
 				.overlay(alignment: .bottom) {
 					categoryTabs
 						.padding(.top, 52)
-						.background {
-							LinearGradient(
-								// TODO: Replace color
-								colors: [
-									Color(hexString: "171719"),
-									Color(hexString: "171719").opacity(0.8),
-									Color.clear
-								],
-								startPoint: .bottom,
-								endPoint: .top
-							)
-							.allowsHitTesting(false)
-						}
 				}
 		}
 		// Snap away from `.favorites`/`.recents` if the user empties the list while it's the
@@ -187,10 +186,10 @@ public struct EmojiPanelView: View {
 				.font(.system(size: Self.tabIconSize))
 				.frame(maxWidth: .infinity)
 				.frame(minHeight: 44)
-				.background(
+				.background {
 					Circle()
-						.fill(Color(.systemGray3).opacity(isSelected ? 1 : 0.01))
-				)
+						.fill(Color(.systemGray3).opacity(isSelected ? 1 : 0.001))
+				}
 
 		}
 		.buttonStyle(.plain)
@@ -230,10 +229,11 @@ public struct EmojiPanelView: View {
 			Image(systemName: iconName)
 				.foregroundStyle(.secondary)
 				.padding(.horizontal, 4)
-				.background(
+				.frame(minHeight: 36)
+				.background {
 					Rectangle()
-						.fill(Color(.systemGray3).opacity(0.01))
-				)
+						.fill(Color(.systemGray3).opacity(0.001))
+				}
 		}
 		.buttonStyle(.plain)
 	}
