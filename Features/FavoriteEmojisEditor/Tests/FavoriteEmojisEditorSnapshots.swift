@@ -19,7 +19,9 @@ final class FavoriteEmojisEditorSnapshots: XCTestCase {
 	func testFavoriteEmojisEditor_withFavorites_dark() {
 		let view = NavigationStack {
 			FavoriteEmojisEditorView(
-				viewModel: FavoriteEmojisEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🐶"])
+				// Includes a flag (🇨🇿) so the snapshot documents the derived country name alongside
+				// regular CLDR names.
+				viewModel: FavoriteEmojisEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🇨🇿"])
 			)
 		}
 		.preferredColorScheme(.dark)
