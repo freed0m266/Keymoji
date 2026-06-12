@@ -99,24 +99,29 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 	}
 
 	private func row(for emoji: String) -> some View {
+		// Prefer the human-readable catalog name (covers ~every glyph incl. flags); fall back to
+		// the Slack shortcode for the rare entry that has one but no name.
+		let name = EmojiCatalog.emoji(for: emoji)?.name
 		let shortcode = SlackEmojiTable.shortcode(for: emoji)
+		let label = name.flatMap { $0.isEmpty ? nil : $0.capitalized }
 		return HStack(spacing: 12) {
 			Text(emoji)
 				.font(.system(size: 28))
 				.frame(width: 40, alignment: .center)
-			if let shortcode {
-				Text(":\(shortcode):")
-					.font(.body.monospaced())
+			if let label {
+				Text(label)
+					.font(.body)
 					.foregroundStyle(.primary)
 					.lineLimit(1)
-			} else {
-				Text(Texts.noShortcode)
-					.font(.body.italic())
+			} else if let shortcode {
+				Text(":\(shortcode):")
+					.font(.body.monospaced())
 					.foregroundStyle(.secondary)
+					.lineLimit(1)
 			}
 		}
 		.accessibilityElement()
-		.accessibilityLabel(shortcode.map { "\(emoji), :\($0):" } ?? emoji)
+		.accessibilityLabel(label.map { "\(emoji), \($0)" } ?? shortcode.map { "\(emoji), :\($0):" } ?? emoji)
 	}
 }
 
@@ -124,7 +129,7 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 #Preview("With favorites") {
 	NavigationStack {
 		FavoriteEmojisEditorView(
-			viewModel: FavoriteEmojisEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🐶"])
+			viewModel: FavoriteEmojisEditorViewModelMock(favorites: ["❤️", "😀", "🚀", "🎉", "🇨🇿"])
 		)
 	}
 	.preferredColorScheme(.dark)
