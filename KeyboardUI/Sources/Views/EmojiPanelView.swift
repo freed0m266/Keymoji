@@ -95,10 +95,13 @@ public struct EmojiPanelView: View {
 						startPoint: .top,
 						endPoint: .bottom
 					)
-					.allowsHitTesting(false)
 				)
 				.overlay(alignment: .bottom) {
 					categoryTabs
+						.background {
+							Color.black.opacity(0.001)
+								.allowsTightening(false)
+						}
 						.padding(.top, 52)
 				}
 		}
