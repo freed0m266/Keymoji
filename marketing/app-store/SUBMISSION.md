@@ -14,10 +14,10 @@ before pasting to confirm every field still fits its character limit.
 
 ## App information
 
-- [ ] **Name / Subtitle / Keywords / Promotional text / Description** — paste from the
-      listing file.
+- [ ] **Name / Subtitle / Keywords / Promotional text / Description** — pushed by
+      `fastlane ios upload_metadata` (mirrors the listing file), or paste from it.
 - [ ] **Primary category:** Utilities · **Secondary:** Productivity
-- [ ] **Support URL:** `https://github.com/freed0m266/Keymoji`
+- [ ] **Support URL:** `https://martinfreedom.com`
 - [ ] **Marketing URL** (optional): `https://martinfreedom.com/keymoji`
 - [ ] **Privacy Policy URL:** `https://martinfreedom.com/keymoji/privacy.html`
 - [ ] Localizations: **English**.

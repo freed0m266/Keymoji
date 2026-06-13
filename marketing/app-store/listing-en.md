@@ -63,7 +63,7 @@ EMOJI, YOUR WAY
 • Pick your favorite emoji and arrange them in your own order
 • An emoji row sits right above the keys — your top emoji, always one tap away
 • Search any emoji by name — just type what you mean
-• Slack-style shortcodes — type :smile: and get 😄
+• Slack-style shortcodes — type :smile: and get the matching emoji
 • The full single-character emoji catalog, built in
 
 A KEYBOARD THAT GETS OUT OF YOUR WAY
