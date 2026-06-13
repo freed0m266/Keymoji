@@ -225,3 +225,15 @@ public enum EmojiCatalog {
 			.map(String.init)
 	}
 }
+
+public extension EmojiCatalog {
+	/// Curated starter set shown in the onboarding favorites grid and used as the silent fallback
+	/// written to `favoriteEmojis` when the user skips the step or selects nothing — so the
+	/// favorites bar is never empty after onboarding. One source of truth for both the grid and the
+	/// fallback keeps the glyph strings (incl. variation selectors) consistent, which is what the
+	/// `contains` checkmark match and the bar renderer both rely on. Order = order in the favorites
+	/// bar (manual sort). Global and locale-agnostic.
+	static let defaultFavorites: [String] = [
+		"❤️", "😂", "👍", "🙏", "😍", "🔥", "🎉", "😭", "🥰", "😎", "👌", "✨"
+	]
+}

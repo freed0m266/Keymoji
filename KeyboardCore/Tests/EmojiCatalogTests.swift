@@ -88,4 +88,25 @@ final class EmojiCatalogTests: XCTestCase {
 		XCTAssertEqual(EmojiCatalog.emojis(for: .favorites), [])
 		XCTAssertEqual(EmojiCatalog.emojis(for: .recents), [])
 	}
+
+	// MARK: - Default favorites (onboarding starter set / fallback)
+
+	func testDefaultFavorites_hasTwelveDistinctGlyphs() {
+		// The onboarding grid and the silent fallback share this constant — the count and
+		// uniqueness anchor both the layout (12 cells) and the "never empty" invariant.
+		XCTAssertEqual(EmojiCatalog.defaultFavorites.count, 12)
+		XCTAssertEqual(Set(EmojiCatalog.defaultFavorites).count, 12, "duplicate glyph in defaultFavorites")
+	}
+
+	func testDefaultFavorites_everyGlyphExistsInCatalog() {
+		// Favorites are matched by glyph string everywhere (grid checkmark, bar rendering). A
+		// variation-selector mismatch or typo would make a default "vanish" from the grid and
+		// possibly render differently in the bar — assert each glyph round-trips to a catalog entry.
+		for glyph in EmojiCatalog.defaultFavorites {
+			XCTAssertNotNil(
+				EmojiCatalog.emoji(for: glyph),
+				"defaultFavorites glyph \(glyph) is not present in EmojiCatalog.all (variation-selector / typo?)"
+			)
+		}
+	}
 }
