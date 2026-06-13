@@ -1,6 +1,8 @@
 # 62 — Onboarding: výběr oblíbených emoji (s garantovaným ne-prázdným fallbackem)
 
-**Status:** Todo
+**Status:** Done — 2026-06-13
+
+**Status (původní):** Todo
 
 **Priorita:** v1.1 · **Úsilí:** M · **Dopad:** Medium (cold-start — favorites bar má hned smysluplný obsah místo prázdna; lepší první dojem)
 
