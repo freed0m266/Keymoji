@@ -1,6 +1,8 @@
 # 61 — Konstantní výška klávesnice + generalizovaný `topRegion`
 
-**Status:** Todo
+**Status:** Done — 2026-06-13
+
+**Status (původní):** Todo
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** Medium (UX — klávesnice neposkakuje při přepínání stránek; víc místa pro emoji panel; popover headroom na default nastavení)
 
