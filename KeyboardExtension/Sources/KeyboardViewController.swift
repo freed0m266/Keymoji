@@ -430,7 +430,10 @@ final class KeyboardViewController: UIInputViewController {
 	private func desiredKeyboardHeight() -> CGFloat {
 		// Build the same layout `makeRoot` renders, then ask `KeyboardMetrics` for its height. The host
 		// UIInputView constraint and the SwiftUI frame therefore come from one formula and can't drift —
-		// drift used to clip the SwiftUI content (missing search bar at the top of `.emojiSearch`).
+		// drift used to clip the SwiftUI content (missing search bar at the top of `.emojiSearch`). The
+		// height no longer depends on `showsSuggestionBar` (task 61): the top region is reserved on every
+		// page regardless of the suggestions toggle / field eligibility, so the keyboard never changes
+		// height when the bar appears or disappears.
 		let layout = KeyboardCore.makeLayout(
 			page: state.page,
 			showNumberRow: state.effectiveShowsNumberRow,
@@ -438,7 +441,7 @@ final class KeyboardViewController: UIInputViewController {
 			letterLayout: state.letterLayout,
 			alternateSet: state.letterAlternateSet
 		)
-		return KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: showsSuggestionBar)
+		return KeyboardMetrics.keyboardHeight(for: layout)
 	}
 
 	/// Build the SwiftUI root with the current state and the live suggestion list. Suggestions are
@@ -505,10 +508,11 @@ final class KeyboardViewController: UIInputViewController {
 		)
 	}
 
-	/// Whether the suggestion bar may occupy its row right now: master toggle on, the field allows
-	/// display, and we're not on the emoji panel or an emoji-search page (so it shows on letters
-	/// *and* symbols). Must stay identical to `KeyboardView.effectiveShowsBar` — both drive height
-	/// (this one the host constraint, that one the SwiftUI frame); if they diverge, iOS clips.
+	/// Whether the suggestion bar may occupy the top region right now: master toggle on, the field
+	/// allows display, and we're not on the emoji panel or an emoji-search page (so it shows on letters
+	/// *and* symbols). This is a pure **content** gate (task 61) — it decides whether suggestions are
+	/// computed and the bar is rendered, but no longer drives height (the top region is reserved
+	/// unconditionally), so it can't cause host/view drift the way it used to.
 	private var showsSuggestionBar: Bool {
 		guard state.suggestionsEnabled, state.currentEligibility.allowDisplay else { return false }
 		return state.page != .emojis && !state.page.isEmojiSearch

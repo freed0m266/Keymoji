@@ -17,9 +17,10 @@ public struct KeyboardView: View {
 	public let favoriteEmojis: [String]
 	public let searchQuery: String
 	public let suggestions: [Suggestion]
-	/// Whether the suggestion bar may occupy its row. The controller computes this from the
-	/// master toggle + field eligibility; on letter pages an enabled, allowed field shows the bar
-	/// even when `suggestions` is empty (C1 — always-on, visually silent, keeps height constant).
+	/// Whether the suggestion bar should fill the reserved top region. The controller computes this from
+	/// the master toggle + field eligibility; on letter pages an enabled, allowed field shows the bar even
+	/// when `suggestions` is empty (C1 — always-on, visually silent). Content-only gate (task 61): the top
+	/// region (and thus the keyboard height) is reserved whether or not this is true.
 	public let showsSuggestionBar: Bool
 	public let onKey: (Key) -> Void
 	public let onToggleFavoriteEmoji: (String) -> Void
@@ -86,34 +87,24 @@ public struct KeyboardView: View {
 		layout.page.isEmojiSearch
 	}
 
-	/// The suggestion bar is its own row above the number row (A2 — no mutex with the number row),
-	/// shown everywhere except the emoji panel and emoji-search pages (so letters *and* symbols
-	/// get it). The controller gates `showsSuggestionBar` on the master toggle and field
-	/// eligibility; this is the final view-side guard that keeps it off emoji/search pages. Must
-	/// stay identical to `KeyboardViewController.showsSuggestionBar` or the host height and the
-	/// SwiftUI frame drift and iOS clips the content. Independent of `suggestions.isEmpty`
-	/// (C1 — always-on when enabled, so height is stable).
-	private var effectiveShowsBar: Bool {
+	/// Whether the `topRegion` should render the suggestion bar as its content (vs. stay empty). The
+	/// controller gates `showsSuggestionBar` on the master toggle and field eligibility; this is the
+	/// final view-side guard that keeps the bar off emoji/search pages (which have no `topRegion`).
+	/// This drives only *content*, never height (task 61 — the region is reserved regardless), so it no
+	/// longer needs to stay byte-for-byte in lock-step with the host: height can't drift on it anymore.
+	/// Independent of `suggestions.isEmpty` (C1 — always-on when enabled, so the bar is visually silent
+	/// rather than collapsing).
+	private var showsBarContent: Bool {
 		showsSuggestionBar && !isEmojiKeyboard && !isEmojiSearchKeyboard
 	}
 
 	public var body: some View {
 		VStack(spacing: 0) {
-			if effectiveShowsBar {
-				SuggestionBarView(
-					suggestions: suggestions,
-					favoriteEmojis: favoriteEmojis,
-					totalWidth: max(0, width - horizontalPadding * 2),
-					onSelect: onSelectSuggestion,
-					onSelectEmoji: { emoji in insertEmojiKey(emoji) },
-					onKeyTapHaptic: onKeyTapHaptic,
-					onKeyClick: { onKeyClick(.character) }
-				)
-				// Explicit gap below the bar (decision #6). `keyboardHeight` counts `suggestionBarGap` in
-				// the frame, so this spacer must render it — otherwise the VStack is shorter than the
-				// frame and SwiftUI centres it, splitting the gap as stray blank above the bar and below
-				// the last row instead of placing it under the bar.
-				Color.clear.frame(height: KeyboardMetrics.suggestionBarGap)
+			// letters/symbols reserve the `topRegion` above the keys; emoji and emoji-search fill the
+			// canonical height with their own content (the panel grows, the search chrome expands), so
+			// they get no separate region slot.
+			if !isEmojiKeyboard && !isEmojiSearchKeyboard {
+				topRegion
 			}
 
 			if isEmojiKeyboard {
@@ -130,6 +121,33 @@ public struct KeyboardView: View {
 		// where the keys recede so the surface visually becomes a trackpad.
 		.opacity(isInTrackpadMode ? 0.45 : 1.0)
 		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
+	}
+
+	/// The reserved region above the keys on letter/symbol pages (task 61). Fixed at
+	/// `KeyboardMetrics.topRegionHeight` whether or not it has content, so the keyboard's height is
+	/// identical with the suggestion bar shown or hidden — switching pages or toggling suggestions off
+	/// never makes it jump. Today the only content is the `SuggestionBarView` (shown per `showsBarContent`);
+	/// a future top-region content type would slot into the same fixed-height container. When there's no
+	/// content the region is simply empty (visually silent), holding its space.
+	@ViewBuilder
+	private var topRegion: some View {
+		VStack(spacing: 0) {
+			if showsBarContent {
+				SuggestionBarView(
+					suggestions: suggestions,
+					favoriteEmojis: favoriteEmojis,
+					totalWidth: max(0, width - horizontalPadding * 2),
+					onSelect: onSelectSuggestion,
+					onSelectEmoji: { emoji in insertEmojiKey(emoji) },
+					onKeyTapHaptic: onKeyTapHaptic,
+					onKeyClick: { onKeyClick(.character) }
+				)
+				// Explicit gap below the bar (decision #6), so the bar (40) + gap (2) exactly fill the
+				// region's 42pt — the bar sits flush at the top with the gap below it, above the first row.
+				Color.clear.frame(height: KeyboardMetrics.suggestionBarGap)
+			}
+		}
+		.frame(height: KeyboardMetrics.topRegionHeight)
 	}
 
 	/// Builds the transient emoji-insert `Key` and routes it through `onKey`, so emoji taps from the
@@ -250,12 +268,13 @@ public struct KeyboardView: View {
 		layout.rows
 	}
 
-	/// Total keyboard height, derived bottom-up from `KeyboardMetrics` (cap heights + row gaps + bar +
-	/// emoji-search chrome). The same `KeyboardMetrics.keyboardHeight(for:showsSuggestionBar:)` drives the
-	/// host UIInputView constraint in `KeyboardViewController`, so the SwiftUI frame and the host can't
-	/// drift (drift used to clip the emoji-search bar — task 39 / task 52).
+	/// Total keyboard height, derived bottom-up from `KeyboardMetrics` (cap heights + row gaps + the
+	/// reserved `topRegion` + emoji-search chrome). The same `KeyboardMetrics.keyboardHeight(for:)` drives
+	/// the host UIInputView constraint in `KeyboardViewController`, so the SwiftUI frame and the host can't
+	/// drift (drift used to clip the emoji-search bar — task 39 / task 52). It takes no `showsSuggestionBar`
+	/// flag (task 61): the region is reserved unconditionally, so height depends only on page + number row.
 	private var keyboardHeight: CGFloat {
-		KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: effectiveShowsBar)
+		KeyboardMetrics.keyboardHeight(for: layout)
 	}
 }
 

@@ -2,10 +2,25 @@ import XCTest
 import KeymojiCore
 @testable import KeyboardCore
 
-/// Bottom-up sizing model (task 52): cap heights are fixed and the total keyboard height is *derived*.
-/// These tests pin the derivation so the SwiftUI frame and the host UIInputView constraint — both of
-/// which call `KeyboardMetrics.keyboardHeight` — stay in agreement and can't silently drift.
+/// Bottom-up sizing model (task 52) generalized to a constant per-setting keyboard height (task 61):
+/// cap heights are fixed, every page is sized to one `canonicalHeight`, and the total is *derived* with
+/// no `showsSuggestionBar` term. These tests pin the derivation so the SwiftUI frame and the host
+/// UIInputView constraint — both of which call `KeyboardMetrics.keyboardHeight` — stay in agreement and
+/// can't silently drift, and so the height is decoupled from whether the suggestion bar is shown.
 final class KeyboardMetricsTests: XCTestCase {
+
+	/// All pages a real keyboard can be on, at both number-row preferences. The exhaustive matrix the
+	/// host-vs-view and constant-height tests sweep.
+	private static let allPages: [KeyboardPage] = [
+		.letters(.lower), .letters(.upper), .letters(.capsLock),
+		.symbols(.primary), .symbols(.alternate),
+		.emojis,
+		.emojiSearch, .emojiSearchSymbols(.primary)
+	]
+
+	private func layout(_ page: KeyboardPage, showNumberRow: Bool) -> KeyboardLayout {
+		LayoutBuilder.layout(page: page, showNumberRow: showNumberRow, returnKeyType: .default)
+	}
 
 	// MARK: - Row slots
 
@@ -17,89 +32,150 @@ final class KeyboardMetricsTests: XCTestCase {
 		XCTAssertLessThan(number, standard, "Number row is intentionally a touch shorter")
 	}
 
-	func testSuggestionBarFootprint_isBarHeightPlusGap() {
+	func testTopRegionHeight_isBarHeightPlusGap() {
+		// The bar (40) + gap (2) are an internal detail of how the suggestion bar fills the 42pt region.
 		XCTAssertEqual(
-			KeyboardMetrics.suggestionBarFootprint,
+			KeyboardMetrics.topRegionHeight,
 			KeyboardMetrics.suggestionBarHeight + KeyboardMetrics.suggestionBarGap
 		)
 	}
 
+	// MARK: - canonicalHeight
+
+	func testCanonicalHeight_isNumberRowPlusQwertyRowsPlusTopRegion() {
+		let withRow = KeyboardMetrics.canonicalHeight(showsNumberRow: true)
+		let withoutRow = KeyboardMetrics.canonicalHeight(showsNumberRow: false)
+		XCTAssertEqual(
+			withRow,
+			KeyboardMetrics.rowSlotHeight(isNumberRow: true)
+				+ KeyboardMetrics.qwertyRowsHeight
+				+ KeyboardMetrics.topRegionHeight
+		)
+		XCTAssertEqual(withoutRow, KeyboardMetrics.qwertyRowsHeight + KeyboardMetrics.topRegionHeight)
+		XCTAssertEqual(withRow - withoutRow, KeyboardMetrics.rowSlotHeight(isNumberRow: true),
+			"The only difference between the two is the number-row slot")
+	}
+
+	func testQwertyRowsHeight_isFourStandardRowSlots() {
+		XCTAssertEqual(KeyboardMetrics.qwertyRowsHeight, 4 * KeyboardMetrics.rowSlotHeight(isNumberRow: false))
+	}
+
 	// MARK: - keyboardHeight derivation
 
-	func testKeyboardHeight_lettersWithNumberRow_sumsAllRowSlots() {
-		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
-		// number + 3 letter rows + bottom row.
+	func testKeyboardHeight_lettersWithNumberRow_isCanonical() {
+		let letters = layout(.letters(.lower), showNumberRow: true)
+		// number + 3 letter rows + bottom row + reserved top region.
 		let expected = KeyboardMetrics.rowSlotHeight(isNumberRow: true)
 			+ 4 * KeyboardMetrics.rowSlotHeight(isNumberRow: false)
-		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: false), expected)
+			+ KeyboardMetrics.topRegionHeight
+		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: letters), expected)
+		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: letters), KeyboardMetrics.canonicalHeight(showsNumberRow: true))
 	}
 
-	func testKeyboardHeight_lettersWithoutNumberRow_sumsBodyAndBottom() {
-		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
-		// 3 letter rows + bottom row.
-		let expected = 4 * KeyboardMetrics.rowSlotHeight(isNumberRow: false)
-		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: false), expected)
+	func testKeyboardHeight_lettersWithoutNumberRow_isCanonical() {
+		let letters = layout(.letters(.lower), showNumberRow: false)
+		// 3 letter rows + bottom row + reserved top region (no number row).
+		let expected = 4 * KeyboardMetrics.rowSlotHeight(isNumberRow: false) + KeyboardMetrics.topRegionHeight
+		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: letters), expected)
+		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: letters), KeyboardMetrics.canonicalHeight(showsNumberRow: false))
 	}
 
-	func testKeyboardHeight_suggestionBarAddsItsFootprint() {
-		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
-		let without = KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: false)
-		let with = KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: true)
-		XCTAssertEqual(with - without, KeyboardMetrics.suggestionBarFootprint)
-	}
+	// MARK: - Constant height across pages (task 61)
 
-	func testKeyboardHeight_lettersAndSymbolsAreEqual_whenNoBar() {
-		// Same row count, same cap heights — the keys are now the same height across pages. The only
-		// resting difference between letters and symbols is the bar (which symbols never show).
+	func testKeyboardHeight_lettersSymbolsEmojiAreEqual_perNumberRowState() {
+		// The headline invariant: letters == symbols == emoji at a given number-row preference, so
+		// switching pages never makes the keyboard jump.
 		for showNumber in [true, false] {
-			let letters = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: showNumber, returnKeyType: .default)
-			let symbols = LayoutBuilder.layout(page: .symbols(.primary), showNumberRow: showNumber, returnKeyType: .default)
-			XCTAssertEqual(
-				KeyboardMetrics.keyboardHeight(for: letters, showsSuggestionBar: false),
-				KeyboardMetrics.keyboardHeight(for: symbols, showsSuggestionBar: false)
-			)
+			let letters = KeyboardMetrics.keyboardHeight(for: layout(.letters(.lower), showNumberRow: showNumber))
+			let symbols = KeyboardMetrics.keyboardHeight(for: layout(.symbols(.primary), showNumberRow: showNumber))
+			let emoji = KeyboardMetrics.keyboardHeight(for: layout(.emojis, showNumberRow: showNumber))
+			XCTAssertEqual(letters, symbols, "letters and symbols must match (number row \(showNumber))")
+			XCTAssertEqual(letters, emoji, "emoji must match letters (number row \(showNumber))")
+			XCTAssertEqual(letters, KeyboardMetrics.canonicalHeight(showsNumberRow: showNumber))
 		}
 	}
 
-	func testKeyboardHeight_emojiSearch_dropsNumberRowAndAddsChrome() {
-		let layout = LayoutBuilder.layout(page: .emojiSearch, showNumberRow: true, returnKeyType: .default)
-		// Number row is dropped in search mode → 3 letter rows + bottom row, plus the search chrome.
-		let expected = 4 * KeyboardMetrics.rowSlotHeight(isNumberRow: false)
-			+ KeyboardMetrics.emojiSearchChromeHeight
-		XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: false), expected)
-	}
-
-	func testKeyboardHeight_emojiPage_matchesLettersPageOfSameNumberRowPreference() {
-		// The emoji page renders a panel in place of the letter rows, but its height must match a
-		// letters page (sans bar) so the panel keeps today's footprint — even though `layout.rows`
-		// only carries the bottom row.
+	func testKeyboardHeight_emojiPage_growsToCanonical_overOldPanelOnlyHeight() {
+		// Task 61 raises the emoji page by the top-region footprint (+42) vs. its old panel-only height,
+		// and that space goes into the panel. Assert it now equals the canonical letters height exactly.
 		for showNumber in [true, false] {
-			let emoji = LayoutBuilder.layout(page: .emojis, showNumberRow: showNumber, returnKeyType: .default)
-			let letters = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: showNumber, returnKeyType: .default)
-			XCTAssertEqual(
-				KeyboardMetrics.keyboardHeight(for: emoji, showsSuggestionBar: false),
-				KeyboardMetrics.keyboardHeight(for: letters, showsSuggestionBar: false),
-				"Emoji page (showNumberRow: \(showNumber)) must size like the equivalent letters page"
-			)
+			let emoji = KeyboardMetrics.keyboardHeight(for: layout(.emojis, showNumberRow: showNumber))
+			let oldPanelOnly = KeyboardMetrics.canonicalHeight(showsNumberRow: showNumber) - KeyboardMetrics.topRegionHeight
+			XCTAssertEqual(emoji - oldPanelOnly, KeyboardMetrics.topRegionHeight,
+				"Emoji page gains exactly the top-region footprint (number row \(showNumber))")
 		}
 	}
 
-	func testKeyboardHeight_emojiPage_ignoresSuggestionBar() {
-		// The emoji page never shows the suggestion bar, so the flag must not change its height.
-		let layout = LayoutBuilder.layout(page: .emojis, showNumberRow: true, returnKeyType: .default)
-		XCTAssertEqual(
-			KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: true),
-			KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: false)
-		)
+	// MARK: - Emoji-search
+
+	func testKeyboardHeight_emojiSearchWithNumberRow_matchesCanonical() {
+		// Number row ON gives the chrome enough headroom (90 ≥ 86 floor) to expand so emoji-search sits
+		// at exactly the canonical height — the old 4pt drift vs. letters disappears.
+		for page: KeyboardPage in [.emojiSearch, .emojiSearchSymbols(.primary)] {
+			let search = KeyboardMetrics.keyboardHeight(for: layout(page, showNumberRow: true))
+			XCTAssertEqual(search, KeyboardMetrics.canonicalHeight(showsNumberRow: true),
+				"emoji-search must match the canonical height when the number row is on (\(page))")
+		}
 	}
+
+	func testKeyboardHeight_emojiSearchWithoutNumberRow_floorsAtMinChrome_andIsTaller() {
+		// Number row OFF leaves only 42pt above the rows — less than the irreducible 86pt chrome — so the
+		// chrome floors at its minimum and emoji-search is the one page allowed to be taller than letters.
+		let search = KeyboardMetrics.keyboardHeight(for: layout(.emojiSearch, showNumberRow: false))
+		let expected = KeyboardMetrics.qwertyRowsHeight + KeyboardMetrics.emojiSearchMinChrome
+		XCTAssertEqual(search, expected)
+		XCTAssertGreaterThan(search, KeyboardMetrics.canonicalHeight(showsNumberRow: false),
+			"With no number row, emoji-search exceeds letters by the chrome's irreducible minimum")
+	}
+
+	func testKeyboardHeight_emojiSearchChrome_neverShrinksBelowFloor() {
+		// Whatever the number-row state, the derived chrome is at least the floor — never clipped short.
+		for showNumber in [true, false] {
+			let search = KeyboardMetrics.keyboardHeight(for: layout(.emojiSearch, showNumberRow: showNumber))
+			let chrome = search - KeyboardMetrics.qwertyRowsHeight
+			XCTAssertGreaterThanOrEqual(chrome, KeyboardMetrics.emojiSearchMinChrome)
+		}
+	}
+
+	// MARK: - Decoupling from the suggestion bar (task 61)
+
+	func testKeyboardHeight_isIndependentOfSuggestionFieldState() {
+		// The height formula no longer takes a `showsSuggestionBar` flag — there is a single value per
+		// (page, number row), so it is by construction the same whether suggestions are enabled, disabled,
+		// or the field is ineligible. Pin that there's exactly one height for the canonical letters page.
+		for showNumber in [true, false] {
+			let letters = layout(.letters(.lower), showNumberRow: showNumber)
+			XCTAssertEqual(KeyboardMetrics.keyboardHeight(for: letters), KeyboardMetrics.canonicalHeight(showsNumberRow: showNumber))
+		}
+	}
+
+	// MARK: - Host == view (anti-drift)
+
+	func testKeyboardHeight_isPureFunctionOfLayout_acrossEveryPageAndNumberRowState() {
+		// The host constraint (`desiredKeyboardHeight`) and the SwiftUI frame both call this single
+		// function with the same built layout, so equal layouts must yield equal heights — the structural
+		// guarantee that replaced the old fragile `showsSuggestionBar` parity. Sweep the full matrix.
+		for page in Self.allPages {
+			for showNumber in [true, false] {
+				let a = KeyboardMetrics.keyboardHeight(for: layout(page, showNumberRow: showNumber))
+				let b = KeyboardMetrics.keyboardHeight(for: layout(page, showNumberRow: showNumber))
+				XCTAssertEqual(a, b, "Height must be a pure function of the layout (\(page), number row \(showNumber))")
+				XCTAssertGreaterThan(a, 0)
+			}
+		}
+	}
+
+	// MARK: - Bottom-up contract
 
 	func testKeyboardHeight_scalesWithCapHeight() {
-		// Total height is a pure sum of row slots (+ bar / chrome), so it tracks `keyCapHeight` directly:
-		// raising the cap by `delta` raises every standard row slot — and the total — by the same delta
-		// per standard row. This pins the bottom-up contract without mutating the constant.
-		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
-		let standardRows = layout.rows.filter { !$0.isNumberRow }.count
-		let total = KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: false)
-		XCTAssertEqual(total, CGFloat(standardRows) * (KeyboardMetrics.keyCapHeight + KeyboardMetrics.rowGap))
+		// Total height is a pure sum of row slots (+ top region), so it tracks `keyCapHeight` directly:
+		// raising the cap raises every standard row slot — and the total — by the same delta per row.
+		let letters = layout(.letters(.lower), showNumberRow: false)
+		let standardRows = letters.rows.filter { !$0.isNumberRow }.count
+		let total = KeyboardMetrics.keyboardHeight(for: letters)
+		XCTAssertEqual(
+			total,
+			CGFloat(standardRows) * (KeyboardMetrics.keyCapHeight + KeyboardMetrics.rowGap) + KeyboardMetrics.topRegionHeight
+		)
 	}
 }

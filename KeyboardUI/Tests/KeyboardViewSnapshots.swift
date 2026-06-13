@@ -14,15 +14,16 @@ final class KeyboardViewSnapshots: XCTestCase {
 
 	/// Snapshot canvas sized to the keyboard's *intrinsic* height, derived from `KeyboardMetrics` —
 	/// the same formula `KeyboardView` and `KeyboardViewController` use. Keeps the test frame in lock-step
-	/// with the bottom-up sizing model (task 52) so no hardcoded height can drift from the real keyboard.
+	/// with the constant-height model (task 52 / task 61) so no hardcoded height can drift from the real
+	/// keyboard. Height is independent of whether the suggestion bar is shown — the top region is always
+	/// reserved — so there's no `showsSuggestionBar` term here anymore.
 	private func keyboardSize(
 		for layout: KeyboardLayout,
-		showsSuggestionBar: Bool = false,
 		width: CGFloat = iPhoneWidth
 	) -> CGSize {
 		CGSize(
 			width: width,
-			height: KeyboardMetrics.keyboardHeight(for: layout, showsSuggestionBar: showsSuggestionBar)
+			height: KeyboardMetrics.keyboardHeight(for: layout)
 		)
 	}
 
@@ -89,10 +90,10 @@ final class KeyboardViewSnapshots: XCTestCase {
 	}
 
 	func testSymbolsPrimary_withSuggestionBar() {
-		// Task 56: the suggestion bar now occupies its row on the symbol page too (everywhere
-		// except emoji / emoji-search). Word/Slack suggestions are letter-page only, so the bar
-		// falls back to favorites here. The canvas grows by the bar footprint — the derived height
-		// must add it, proving the host and view height stay in lock-step on symbols.
+		// Task 56: the suggestion bar occupies the top region on the symbol page too (everywhere except
+		// emoji / emoji-search). Word/Slack suggestions are letter-page only, so the bar falls back to
+		// favorites here. Task 61: the region is reserved regardless, so the canvas is the same canonical
+		// height as the empty-region symbols snapshot — only the region's *content* differs.
 		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(
 			layout: layout,
@@ -102,7 +103,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		let size = keyboardSize(for: layout, showsSuggestionBar: true)
+		let size = keyboardSize(for: layout)
 		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
 		assertKeyboardSnapshot(view, size: size, colorScheme: .light)
 	}
@@ -182,8 +183,8 @@ final class KeyboardViewSnapshots: XCTestCase {
 	// MARK: - Suggestion bar (task 40)
 
 	func testSuggestionBar_wordChips_withNumberRow() {
-		// Word chips coexist with the number row as a separate row above it (A2 — no mutex). The
-		// keyboard grows by the bar footprint, reflected in the derived canvas height.
+		// Word chips render in the reserved top region above the number row (A2 — no mutex). Task 61: the
+		// region is always reserved, so the canvas is the canonical height — the chips fill it, not grow it.
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
 		let suggestions: [Suggestion] = [
 			.plainChip("hello", score: 0.9),
@@ -197,7 +198,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		let size = keyboardSize(for: layout, showsSuggestionBar: true)
+		let size = keyboardSize(for: layout)
 		assertKeyboardSnapshot(view, size: size, colorScheme: .dark)
 		assertKeyboardSnapshot(view, size: size, colorScheme: .light)
 	}
@@ -218,7 +219,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: keyboardSize(for: layout, showsSuggestionBar: true), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testSuggestionBar_alwaysShownWhenEmpty_withNumberRow() {
@@ -231,7 +232,7 @@ final class KeyboardViewSnapshots: XCTestCase {
 			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
-		assertKeyboardSnapshot(view, size: keyboardSize(for: layout, showsSuggestionBar: true), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
 	func testEmojis_withFavorites_withNumberRow() {

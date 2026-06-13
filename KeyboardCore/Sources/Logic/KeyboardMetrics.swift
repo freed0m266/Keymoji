@@ -16,21 +16,29 @@ public enum KeyboardMetrics {
 	/// gap stays inside the key's hit area (task 42). Row slot height = cap + rowGap.
 	public static let rowGap: CGFloat = 12
 
-	/// Suggestion bar's own height (the chips/favorites strip).
+	/// Suggestion bar's own height (the chips/favorites strip). Internal detail of how the bar fills the
+	/// `topRegion` — the bar (40) + `suggestionBarGap` (2) add up to `topRegionHeight`. Height of the
+	/// keyboard no longer depends on whether the bar is shown (task 61); `topRegion` is reserved always.
 	public static let suggestionBarHeight: CGFloat = 40
-	/// Gap below the suggestion bar, above the first key row.
-	public static let suggestionBarGap: CGFloat = 2   // 40 + 2 = today's footprint of 42
+	/// Gap below the suggestion bar, above the first key row. Internal detail of the bar's fill (see above).
+	public static let suggestionBarGap: CGFloat = 2   // 40 + 2 = topRegionHeight of 42
 
 	/// Horizontal padding on the keyboard VStack (outside the emoji panel).
 	public static let horizontalPadding: CGFloat = 3
 
-	/// Emoji-search chrome (search bar + results bar + intra-row gap) stacked above the QWERTY rows.
-	public static let emojiSearchChromeHeight: CGFloat = 86   // 32 + 44 + 4 + 6 (today's breakdown)
+	/// Floor for the emoji-search chrome (search field + horizontal results bar + intra-row gaps) stacked
+	/// above the QWERTY rows. The chrome is otherwise *derived* (see `keyboardHeight`) so emoji-search
+	/// matches the canonical height — but it can never shrink below this irreducible minimum.
+	public static let emojiSearchMinChrome: CGFloat = 86   // 32 + 44 + 4 + 6 (today's breakdown)
 
 	// MARK: - Derived
 
-	/// Vertical footprint the suggestion bar adds when shown: the bar plus the gap above the keys below.
-	public static var suggestionBarFootprint: CGFloat {
+	/// Reserved height of the region above the keyboard rows (task 61). Today it hosts the
+	/// `SuggestionBarView`, but the region is reserved on *every* page (letters, symbols, emoji,
+	/// emoji-search) and at all times — independent of the suggestions toggle and field eligibility,
+	/// which now gate only the region's *content* (bar vs empty), not its existence or height. Equal to
+	/// the suggestion bar's old footprint (`suggestionBarHeight` 40 + `suggestionBarGap` 2 = 42).
+	public static var topRegionHeight: CGFloat {
 		suggestionBarHeight + suggestionBarGap
 	}
 
@@ -39,31 +47,49 @@ public enum KeyboardMetrics {
 		(isNumberRow ? numberRowCapHeight : keyCapHeight) + rowGap
 	}
 
-	/// Total host/input-view height for a built layout. SINGLE place that computes it — both the SwiftUI
-	/// frame and the UIInputView height constraint call this, so they can't drift.
-	///
-	/// The emoji page is special-cased: it renders an `EmojiPanelView` in place of the letter/symbol
-	/// rows, so `layout.rows` carries only the bottom row. To keep the panel the same size it has today,
-	/// we size the emoji page like a letters page (three body rows + bottom, plus the number row when the
-	/// user's preference is on) rather than summing its single real row.
-	public static func keyboardHeight(for layout: KeyboardLayout, showsSuggestionBar: Bool) -> CGFloat {
-		if layout.page == .emojis {
-			return emojiPageHeight(showsNumberRow: layout.showsNumberRow)
-		}
-		let rows = layout.rows.reduce(0) { $0 + rowSlotHeight(isNumberRow: $1.isNumberRow) }
-		let bar = showsSuggestionBar ? suggestionBarFootprint : 0
-		let chrome = layout.page.isEmojiSearch ? emojiSearchChromeHeight : 0
-		return rows + bar + chrome
+	/// The four standard rows every page is sized around: three letter/symbol body rows + the bottom row.
+	/// The emoji page swaps the body rows for a panel and emoji-search stacks chrome above them, but both
+	/// occupy this same vertical budget for the rows themselves.
+	public static var qwertyRowsHeight: CGFloat {
+		4 * rowSlotHeight(isNumberRow: false)
 	}
 
-	/// Height of the emoji page: mirrors a letters page (3 body rows + bottom row, plus the number row
-	/// when enabled) so the `EmojiPanelView` keeps today's footprint. The emoji page never shows the
-	/// suggestion bar, so no bar term here.
-	private static func emojiPageHeight(showsNumberRow: Bool) -> CGFloat {
-		let bodyRowCount = 3
-		let bodyRows = CGFloat(bodyRowCount) * rowSlotHeight(isNumberRow: false)
-		let bottomRow = rowSlotHeight(isNumberRow: false)
+	/// The single canonical keyboard height for a given number-row preference (task 61): the number row
+	/// (when on) + the four standard rows + the reserved `topRegion`. Letters, symbols and emoji are
+	/// *always* exactly this tall, and emoji-search too whenever the number row leaves it enough headroom
+	/// (see `keyboardHeight`). Constant *across pages* so switching letters → symbols → emoji → search
+	/// never makes the keyboard jump; it still varies with the number-row toggle and landscape, which is
+	/// an explicit user/space trade-off intentionally outside the "constant" guarantee.
+	public static func canonicalHeight(showsNumberRow: Bool) -> CGFloat {
 		let numberRow = showsNumberRow ? rowSlotHeight(isNumberRow: true) : 0
-		return numberRow + bodyRows + bottomRow
+		return numberRow + qwertyRowsHeight + topRegionHeight
+	}
+
+	/// Total host/input-view height for a built layout. SINGLE place that computes it — both the SwiftUI
+	/// frame and the UIInputView height constraint call this, so they can't drift. The result no longer
+	/// depends on whether the suggestion bar is shown (task 61): the `topRegion` is reserved
+	/// unconditionally, so this takes no `showsSuggestionBar` flag and drift between the two callers is
+	/// structurally impossible.
+	///
+	/// - **letters / symbols:** the page's own rows + the reserved `topRegion` = `canonicalHeight`.
+	/// - **emoji:** `canonicalHeight` — the `EmojiPanelView` fills it; `layout.rows` carries only the
+	///   bottom row, so we can't sum it and size from the number-row preference instead.
+	/// - **emoji-search:** the QWERTY rows + derived chrome. The chrome normally expands so the page
+	///   matches `canonicalHeight`, but never shrinks below `emojiSearchMinChrome`. So when the number row
+	///   is off (user choice or landscape) and `canonicalHeight` is short, emoji-search is the one page
+	///   allowed to stay taller — its search field + results bar are irreducible and bigger than the bar.
+	public static func keyboardHeight(for layout: KeyboardLayout) -> CGFloat {
+		let canonical = canonicalHeight(showsNumberRow: layout.showsNumberRow)
+		if layout.page == .emojis {
+			return canonical
+		}
+		let rows = layout.rows.reduce(0) { $0 + rowSlotHeight(isNumberRow: $1.isNumberRow) }
+		if layout.page.isEmojiSearch {
+			// `rows` here is the QWERTY rows only (the number row is dropped on search pages), so the
+			// chrome fills whatever the canonical height leaves above them — floored at the minimum.
+			let chrome = max(emojiSearchMinChrome, canonical - rows)
+			return rows + chrome
+		}
+		return rows + topRegionHeight
 	}
 }
