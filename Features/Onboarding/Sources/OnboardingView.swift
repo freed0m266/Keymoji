@@ -18,10 +18,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 
 	typealias Texts = L10n.Onboarding
 
-	public init(
-		viewModel: ViewModel,
-		onFinish: @escaping () -> Void = {}
-	) {
+	public init(viewModel: ViewModel, onFinish: @escaping () -> Void = {}) {
 		_viewModel = State(wrappedValue: viewModel)
 		self.onFinish = onFinish
 	}
@@ -253,13 +250,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 		.scrollIndicators(.hidden)
 		.mask(
 			LinearGradient(
-				colors: [
-					.black,
-					.black,
-					.black,
-					.black,
-					.clear
-				],
+				colors: [ .black, .black, .black, .black, .clear ],
 				startPoint: .top,
 				endPoint: .bottom
 			)
@@ -295,7 +286,6 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 		.cornerRadius(12)
 	}
 
-	@ViewBuilder
 	private func highlightRow(_ highlight: FeatureHighlight) -> some View {
 		HStack(alignment: .top, spacing: 14) {
 			Image(systemName: highlight.symbol)
