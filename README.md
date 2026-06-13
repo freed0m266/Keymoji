@@ -1,17 +1,54 @@
 # Keymoji
 
-A simple, private, on-device custom iOS keyboard. Built as a personal replacement for SwiftKey, with an eye on App Store release.
+The iPhone keyboard for people who live in emoji — personalized emoji one tap away, on top of a fast, native-feeling QWERTY. Built as a personal replacement for SwiftKey, now heading to the App Store.
 
-- **No account.** No login, no sync, no analytics, no third-party SDKs.
-- **No network.** The keyboard never connects to the internet — everything runs on-device.
-- **Built for Czech + English** typing: US QWERTY layout with long-press diacritic popovers (`á č ě š ř ž …`).
+- **Emoji-first.** Pin favorites in your own order, reach them from an emoji row above the keys, and search any emoji by name or `:shortcode:`.
+- **Feels native.** Designed to match the iOS keyboard, with the conveniences you'd expect from SwiftKey — minus the bloat.
+- **Private by default.** No network code at all, no accounts, no analytics, no third-party SDKs. What you type never leaves the device.
+- **English layout**, US QWERTY (optional QWERTZ), with long-press diacritics for Czech, Slovak, German, Polish, French, Spanish (`á č ě š ř ž …`).
 - **iPhone only** (portrait + landscape), iOS 26+.
 
 ## Status
 
-v1.0 feature-complete. 15 tasks done; usable end-to-end on device. Pre-App-Store polish (real icon, hosted privacy policy URL) tracked in [`tasks/27-app-icon.md`](tasks/27-app-icon.md).
+**Beta-bound.** Feature-complete for the first release — 58 of 62 tasks done. Next step is a TestFlight beta, then a final polish pass and App Store submission.
 
-See [`tasks/README.md`](tasks/README.md) for the full roadmap including v1.1 follow-ups (emoji panel, light/dark override, trackpad mode, …).
+The 4 remaining tasks are post-beta polish, not blockers: top-row popover clipping ([21](tasks/21-popover-top-row-clipping.md)), Apple-style key preview bubble ([25](tasks/25-key-preview-popup.md)), keyboard-switch height flash ([53](tasks/53-keyboard-switch-height-flash.md)), and auto numberpad for numeric fields ([59](tasks/59-auto-numberpad-for-numeric-fields.md)).
+
+App Store readiness is in place: real app icon ([28](tasks/28-app-icon.md)), and EN+CZ listing copy + submission checklist in [`marketing/app-store/`](marketing/app-store/) ([47](tasks/47-app-store-listing.md)). Screenshots and the App Store Connect upload remain manual.
+
+See [`tasks/README.md`](tasks/README.md) for the full roadmap and [`tasks/dashboard.html`](tasks/dashboard.html) for a live Kanban snapshot (`python3 scripts/generate_dashboard.py`).
+
+## Features
+
+**Emoji**
+- Favorites bar above the keys — your top emoji in your own order, with TabView paging and an optional most-used-first sort.
+- Favorites editor in the host app: pick emoji, reorder, and see each one's name (flag names derived automatically).
+- Dedicated emoji page with the full single-codepoint Unicode catalog plus recents.
+- In-keyboard emoji search — type a name and pick from a results bar; falls back to recents when empty.
+- Slack-style shortcodes: type `:smile:` and get 😄.
+- Emoji codes reference screen in the host app (tap to copy a shortcode).
+
+**Typing**
+- Smart word suggestions that learn the words you actually use — personal recents → `UILexicon` → `UITextChecker`, on-device only, with a managed learned-words list (sort, swipe-to-delete, bulk clear).
+- Long-press any key for accents/diacritics; selectable language alternate sets (CZ / SK / DE / PL / FR / ES / All).
+- Shift state machine with caps lock, and auto-capitalization at sentence starts.
+- QWERTY ↔ QWERTZ positional toggle.
+- Always-on number row (auto-hidden in landscape to save vertical space).
+- Two symbol pages at parity with the native keyboard.
+
+**Feel & gestures**
+- Native look: three-tier key shading, spacing, and typography tuned for parity with iOS.
+- Haptic feedback and key click sounds (distinct space/delete sounds), fully toggleable.
+- Trackpad cursor — long-press the space bar to move the caret precisely.
+- Delete word-by-word on a long hold; delete repeat-on-hold.
+- Configurable double-tap-space action (period / dismiss / nothing).
+- Light/Dark appearance override, independent of the system.
+- Constant keyboard height across letters, symbols, emoji, and search pages.
+
+**Host app**
+- 4-step onboarding with live activation detection, a favorites picker, and a feature tour.
+- Settings: number row, haptics, sound, suggestions, double-tap action, layout (QWERTY/QWERTZ), accent set, appearance.
+- About screen with version, privacy statement, and external links.
 
 ## Requirements
 
@@ -40,7 +77,7 @@ open Keymoji.xcworkspace
 To use Keymoji as your iOS keyboard after building & installing:
 
 1. Settings → General → Keyboard → Keyboards → Add New Keyboard → Keymoji
-2. Tap Keymoji in the list → enable **Allow Full Access** (required by iOS for haptic feedback; Keymoji doesn't use it for anything else — see [Privacy](#privacy))
+2. Tap Keymoji in the list → enable **Allow Full Access** (required by iOS for haptic feedback and key click sounds; Keymoji doesn't use it for anything else — see [Privacy](#privacy))
 3. In any text field, tap the globe icon and pick Keymoji
 
 The host app's onboarding screen walks through these steps with live status detection.
@@ -59,35 +96,46 @@ Keymoji/
 │       ├── KeyboardViewController  # Principal class, hosts SwiftUI via UIHostingController
 │       ├── KeyboardRoot            # SwiftUI root that re-builds layout from KeyboardState
 │       ├── TextProxyAdapter        # Bridges UITextDocumentProxy → KeyboardCore protocol
+│       ├── SuggestionProviderAdapters  # Wires UILexicon/UITextChecker into the core
 │       ├── UIKitHaptics            # Real haptic implementation (needs Full Access)
+│       ├── UIKitClickSound         # Key click / space / delete sounds
 │       └── *Mapping.swift          # UIKit enum ↔ KeyboardCore enum bridges
 ├── KeyboardCore/                   # Pure-Swift keyboard logic (no UIKit)
 │   ├── Sources/
-│   │   ├── Models/                 # Key, KeyboardLayout, KeyboardPage, ShiftState…
-│   │   ├── Logic/                  # LayoutBuilder, ShiftStateMachine, AutoCapitalizer, InputDispatcher
-│   │   └── Public/                 # Protocols (TextDocumentProxying, HapticFeedbackProviding)
-│   └── Tests/                      # ~85 unit tests
+│   │   ├── Models/                 # Key, KeyboardLayout, KeyboardPage, KeyboardState, Emoji…
+│   │   ├── Logic/                  # LayoutBuilder, ShiftStateMachine, AutoCapitalizer, InputDispatcher,
+│   │   │   │                       #   KeyboardMetrics, EmojiSearchIndex, SlackEmoji*
+│   │   │   └── Suggestions/        # SuggestionCoordinator, WordCompletionProvider, eligibility…
+│   │   ├── Storage/                # PersonalRecentsStore (learned words)
+│   │   └── Public/                 # Protocols (TextDocumentProxying, HapticFeedbackProviding…)
+│   └── Tests/                      # ~340 unit tests
 ├── KeyboardUI/                     # SwiftUI rendering of the keyboard
 │   ├── Sources/
-│   │   ├── Views/                  # KeyboardView, KeyRowView, KeyView, LongPressPopoverView
+│   │   ├── Views/                  # KeyboardView, KeyRowView, KeyView, SuggestionBarView,
+│   │   │                           #   LongPressPopoverView, emoji panels
 │   │   └── Style/                  # KeyStyle (semantic colors)
 │   └── Tests/                      # Snapshot tests (light + dark)
 ├── KeymojiCore/                      # Cross-target shared utilities
 │   └── Sources/
 │       ├── Dependencies/           # AppDependency container
-│       ├── Shared/                 # AppGroupStore, BaseViewModel, Logger, KeymojiURLs
+│       ├── Shared/                 # AppGroupStore, settings keys, FavoritesOrdering,
+│       │                           #   LetterAlternateSet, SpaceDoubleTapAction, Logger, KeymojiURLs
 │       ├── Services/               # NetworkService scaffold (unused; legacy from template)
 │       └── Extensions/             # Foundation extensions
 ├── KeymojiUI/                        # Design system for the host app
 ├── KeymojiResources/                 # Localization (L10n alias, en.lproj)
 ├── KeymojiTesting/                   # AssertSnapshot helper
 ├── Features/                       # Host-app feature frameworks
-│   ├── Example/                    # Template leftover (unused)
-│   ├── Onboarding/                 # 3-step setup flow with live activation detection
-│   ├── Settings/                   # Toggles for number row + haptic feedback
-│   └── About/                      # Version, privacy statement, external links
-├── marketing/                      # Privacy policy HTML (hosted externally)
-├── tasks/                          # Implementation roadmap (Czech)
+│   ├── Onboarding/                 # 4-step setup: activation, favorites picker, feature tour
+│   ├── Settings/                   # Toggles for number row, haptics, sound, layout, accents, appearance
+│   ├── FavoriteEmojisEditor/       # Pick + reorder favorite emoji
+│   ├── EmojiCatalogPicker/         # Full Unicode emoji catalog browser
+│   ├── EmojiCodes/                 # Slack shortcode reference (tap to copy)
+│   ├── LearnedWordsEditor/         # View / sort / delete learned words
+│   ├── About/                      # Version, privacy statement, external links
+│   └── Example/                    # Template leftover (unused)
+├── marketing/                      # Privacy policy HTML + App Store listing copy
+├── tasks/                          # Implementation roadmap (Czech) + status dashboard
 └── Tuist/
     └── ProjectDescriptionHelpers/  # Target manifests
 ```
@@ -106,30 +154,31 @@ KeyboardExtension                Host app
 
 - Every `ViewModel` is backed by a `*ViewModeling` `@MainActor` protocol; concrete impls inherit `BaseViewModel`.
 - Views are generic over their VM protocol: `struct OnboardingView<ViewModel: OnboardingViewModeling>: View`.
-- Cross-process state (host ↔ keyboard) lives in an App Group `UserDefaults` via `AppGroupStore`.
+- Cross-process state (host ↔ keyboard) lives in an App Group `UserDefaults` via `AppGroupStore`, with change observation across processes (Darwin notifications).
 - Mocks under `Features/<Name>/Testing/` (wrapped `#if DEBUG`) drive snapshot tests and SwiftUI previews.
 
 Keyboard logic is split:
 
-- **`KeyboardCore`** (pure Swift, no UIKit) — layout model, shift state machine, input dispatcher, auto-cap. Unit-tested in isolation.
-- **`KeyboardUI`** (SwiftUI) — view rendering only. Snapshot-tested at 393×260.
-- **`KeyboardExtension`** (`.appex`) — wires the two via `UIHostingController` inside `UIInputViewController`. Reads `view.bounds.width` to size the SwiftUI keyboard authoritatively.
+- **`KeyboardCore`** (pure Swift, no UIKit) — layout model, shift state machine, input dispatcher, auto-cap, sizing metrics, emoji search, and the suggestions pipeline. Unit-tested in isolation.
+- **`KeyboardUI`** (SwiftUI) — view rendering only. Snapshot-tested in light + dark.
+- **`KeyboardExtension`** (`.appex`) — wires the two via `UIHostingController` inside `UIInputViewController`, and supplies the UIKit-backed haptics, sounds, and suggestion providers. Reads `view.bounds.width` to size the SwiftUI keyboard authoritatively.
 
 ## Privacy
 
-Keymoji's `marketing/privacy-policy.html` is the source of truth — hosted at the URL in `KeymojiCore/Sources/Shared/KeymojiURLs.swift`. Summary:
+Keymoji's `marketing/privacy-policy.html` is the source of truth — hosted at the URL in [`KeymojiCore/Sources/Shared/KeymojiURLs.swift`](KeymojiCore/Sources/Shared/KeymojiURLs.swift). Summary:
 
 - **Nothing collected.** No typing data, words, phrases, device identifiers, or analytics.
-- **No network access.** The extension never makes URL requests.
+- **No network access.** The extension contains no networking code and makes no URL requests.
+- **Learned words stay local.** Words used to speed up typing live in a private App Group container only Keymoji can read — never uploaded, not even to Apple.
 - **No third-party SDKs that exfiltrate data.** SwiftyBeaver console logging only.
-- **"Allow Full Access" is required only for haptic feedback** — iOS sandbox restriction, not a data-collection mechanism.
+- **"Allow Full Access" is required only for haptics and key click sounds** — an iOS sandbox restriction, not a data-collection mechanism. Leave it off and the rest of the keyboard works the same.
 
 ## Tests
 
-- `KeyboardCore_Tests` — ~85 unit tests covering layout builder, shift state machine, auto-cap, input dispatch.
-- `KeyboardUI_Tests` — 16 snapshot tests (light + dark variants).
-- `KeymojiCore_Tests` — `AppGroupStore` tests with isolated `UserDefaults` suite.
-- `Onboarding_Tests`, `Settings_Tests`, `About_Tests` — feature snapshot tests.
+- `KeyboardCore_Tests` — ~340 unit tests covering layout builder, shift state machine, auto-cap, input dispatch, sizing metrics, emoji search/catalog, and the suggestions pipeline.
+- `KeyboardUI_Tests` — snapshot tests for the keyboard, suggestion bar, and long-press popover (light + dark variants).
+- `KeymojiCore_Tests` — `AppGroupStore` and shared-state tests with isolated `UserDefaults` suites.
+- `Onboarding_Tests`, `Settings_Tests`, `About_Tests`, `EmojiCatalogPicker_Tests`, `EmojiCodes_Tests`, … — feature snapshot tests.
 
 Snapshots use [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) with `#filePath` so references live next to the test source files, not in the simulator sandbox.
 
@@ -145,7 +194,7 @@ tuist generate
 ## Workflow
 
 - Work on `main`, incremental commits, gitmoji prefix (`✨` feat, `🐛` fix, `📝` docs, `💄` polish, `📸` snapshots, `🧱` infra, `♻️` refactor).
-- `tasks/` holds the roadmap. Each numbered task has Scope / Mimo scope / Hotovo když / Rizika / Reference sections.
+- `tasks/` holds the roadmap. Each numbered task has Scope / Mimo scope / Hotovo když / Rizika / Reference sections and a `**Status:**` line; `python3 scripts/generate_dashboard.py` regenerates [`tasks/dashboard.html`](tasks/dashboard.html).
 - Key tasks (those marked **Codex review: Ano**) get a `codex review --uncommitted` pass before closing commit.
 
 ## Dependencies
