@@ -1,0 +1,44 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Upload App Store metadata (no binary, no screenshots) via App Store Connect API key."
+  desc "Reads ASC_KEY_ID / ASC_ISSUER_ID / ASC_KEY_FILEPATH from fastlane/.env."
+  lane :upload_metadata do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_filepath: ENV.fetch("ASC_KEY_FILEPATH")
+    )
+
+    # skip_binary_upload / skip_screenshots / categories live in the Deliverfile.
+    deliver(
+      api_key: api_key,
+      force: true, # skip the interactive HTML metadata-preview confirmation
+      run_precheck_before_submit: false # precheck can't run with an API key, and we don't submit here
+    )
+  end
+
+  desc "Diagnostic: print the app's reserved name, primary locale, and existing localizations."
+  lane :inspect_app do
+    require "spaceship"
+    Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      filepath: File.absolute_path(ENV.fetch("ASC_KEY_FILEPATH"))
+    )
+
+    app = Spaceship::ConnectAPI::App.find("com.freedommartin.keymoji")
+    UI.message("App id=#{app.id} reference_name=#{app.name.inspect} primary_locale=#{app.primary_locale}")
+
+    version = app.get_edit_app_store_version
+    if version
+      UI.message("editVersion #{version.version_string} state=#{version.app_store_state}")
+      version.get_app_store_version_localizations.each do |loc|
+        UI.message("version[#{loc.locale}] desc=#{loc.description.to_s.length}c keywords=#{loc.keywords.inspect}")
+        UI.message("version[#{loc.locale}] promo=#{loc.promotional_text.to_s.length}c support=#{loc.support_url} marketing=#{loc.marketing_url}")
+      end
+    else
+      UI.message("No editable version found")
+    end
+  end
+end

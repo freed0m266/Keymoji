@@ -36,6 +36,21 @@ Pods/
 __pycache__/
 *.pyc
 
+# fastlane / App Store Connect secrets
+fastlane/.env
+*.p8
+AuthKey_*.p8
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+
+# App Review contact details are personal info — keep them local, not in a
+# public repo. notes.txt (the Full Access explanation) is fine to commit.
+fastlane/metadata/review_information/first_name.txt
+fastlane/metadata/review_information/last_name.txt
+fastlane/metadata/review_information/email_address.txt
+fastlane/metadata/review_information/phone_number.txt
+
 # Misc
 .DS_Store
 *.swp

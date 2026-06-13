@@ -1,0 +1,3 @@
+Keymoji requests "Allow Full Access" solely to use the haptic feedback and key click sound APIs, which iOS gates behind Full Access for keyboard extensions. The app contains no networking code, makes no network requests, and collects no data. Full Access is optional — all typing features work without it.
+
+No demo account is needed: the app has no login, accounts, or server. Just add the Keymoji keyboard in Settings → General → Keyboard → Keyboards → Add New Keyboard, then optionally enable Allow Full Access to hear/feel key clicks.

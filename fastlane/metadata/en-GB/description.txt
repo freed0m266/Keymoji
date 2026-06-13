@@ -1,0 +1,44 @@
+Keymoji is the iPhone keyboard for people who live in emoji.
+
+You know the handful of emoji you reach for ten times a day. So why scroll past hundreds to find them? Keymoji puts your favorites one tap away — in the order YOU choose — on top of a fast, familiar keyboard that feels just like the one you already use.
+
+EMOJI, YOUR WAY
+
+• Pick your favorite emoji and arrange them in your own order
+• An emoji row sits right above the keys — your top emoji, always one tap away
+• Search any emoji by name — just type what you mean
+• Slack-style shortcodes — type :smile: and get the matching emoji
+• The full single-character emoji catalog, built in
+
+A KEYBOARD THAT GETS OUT OF YOUR WAY
+
+• Native look and feel — no jarring redesign to relearn
+• Always-on number row — digits without switching layouts
+• QWERTY or QWERTZ, switchable in a tap
+• Smart suggestions that learn the words you actually type
+• Long-press any key for accents and diacritics
+• Trackpad cursor — long-press the space bar to move the caret precisely
+• Delete word-by-word on a long hold
+• Haptics and key click sounds, fully adjustable
+• Light or Dark, independent of your system setting
+
+NEVER REWRITES WHAT YOU TYPE
+
+No silent autocorrect. Keymoji suggests — it never swaps your words behind your back or "fixes" a name into something it isn't. What you type is what you get; tap a suggestion only when you actually want it.
+
+PRIVATE BECAUSE IT'S SIMPLE
+
+Keymoji makes no network requests at all — there is literally no networking code in the app — so what you type never leaves your iPhone. No analytics, no tracking, no accounts, no third-party SDKs. The words it learns to speed you up stay in a private container only Keymoji can read, never uploaded, not even to Apple. Don't take our word for it: the source code is public on GitHub.
+
+ABOUT "ALLOW FULL ACCESS"
+
+iOS makes every custom keyboard request "Allow Full Access" before it can play haptics or key click sounds. That's an iOS sandbox rule — not a data switch. Keymoji uses it for exactly two things:
+
+• Haptic feedback (vibration) when you type
+• Key click sounds
+
+Nothing else — no networking, no contacts, no location (there's no networking code to do any of it with). Prefer it off? Leave it off, and every typing feature still works — just silent.
+
+Built by one developer who wanted a fast, private keyboard with emoji done right — and uses it every day.
+
+iPhone only. English keyboard.

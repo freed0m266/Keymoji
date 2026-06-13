@@ -1,0 +1,1 @@
+smileys,qwerty,qwertz,accents,unicode,symbols,haptic,native,typing,private,offline,suggestions

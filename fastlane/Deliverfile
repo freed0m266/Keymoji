@@ -1,0 +1,17 @@
+# Defaults shared by the deliver action. The upload_metadata lane in the
+# Fastfile passes the API key and the skip_* flags; this file holds the
+# app-level metadata that has no per-locale .txt file.
+
+app_identifier("com.freedommartin.keymoji")
+
+# Categories (App Store Connect → App Information)
+primary_category("UTILITIES")
+secondary_category("PRODUCTIVITY")
+
+# Metadata-only upload: no binary, no screenshots (added later).
+skip_binary_upload(true)
+skip_screenshots(true)
+skip_metadata(false)
+
+# Don't auto-submit; we review the result in ASC and submit by hand.
+submit_for_review(false)

@@ -1,0 +1,5 @@
+app_identifier("com.freedommartin.keymoji")
+team_id("DSKL7YS6PW") # Apple Developer team (DEVELOPMENT_TEAM in Project.swift)
+
+# Apple ID / itc_team_id are not needed: auth is via App Store Connect API key
+# (see fastlane/.env, loaded by the upload_metadata lane).
