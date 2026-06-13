@@ -17,10 +17,11 @@ public struct KeyboardView: View {
 	public let favoriteEmojis: [String]
 	public let searchQuery: String
 	public let suggestions: [Suggestion]
-	/// Whether the suggestion bar should fill the reserved top region. The controller computes this from
-	/// the master toggle + field eligibility; on letter pages an enabled, allowed field shows the bar even
-	/// when `suggestions` is empty (C1 — always-on, visually silent). Content-only gate (task 61): the top
-	/// region (and thus the keyboard height) is reserved whether or not this is true.
+	/// Host signal for whether word/Slack *suggestions* are active (master toggle + field eligibility).
+	/// It no longer drives this view's rendering: because the favorites baseline is always available
+	/// (guaranteed non-empty after onboarding — task 62), the top region shows bar content on every
+	/// letter/symbol page regardless of this flag (see `showsBarContent`). Kept on the API for the host's
+	/// bookkeeping and a possible future top-region content type — `KeyboardView` itself ignores it.
 	public let showsSuggestionBar: Bool
 	public let onKey: (Key) -> Void
 	public let onToggleFavoriteEmoji: (String) -> Void
@@ -87,15 +88,16 @@ public struct KeyboardView: View {
 		layout.page.isEmojiSearch
 	}
 
-	/// Whether the `topRegion` should render the suggestion bar as its content (vs. stay empty). The
-	/// controller gates `showsSuggestionBar` on the master toggle and field eligibility; this is the
-	/// final view-side guard that keeps the bar off emoji/search pages (which have no `topRegion`).
-	/// This drives only *content*, never height (task 61 — the region is reserved regardless), so it no
-	/// longer needs to stay byte-for-byte in lock-step with the host: height can't drift on it anymore.
-	/// Independent of `suggestions.isEmpty` (C1 — always-on when enabled, so the bar is visually silent
-	/// rather than collapsing).
+	/// Whether the `topRegion` renders bar content. True on every letter/symbol page; false only on the
+	/// emoji panel / emoji-search pages (which have no `topRegion`). Deliberately decoupled from
+	/// `showsSuggestionBar`: the bar's baseline is the user's favorites — guaranteed non-empty after
+	/// onboarding (task 62) — so the top region always shows *something* (emoji quick-access), and word/
+	/// Slack suggestions only take it over transiently while typing. The suggestions master toggle and
+	/// field eligibility therefore no longer make the bar disappear; they only gate whether word/Slack
+	/// suggestions are computed (controller-side). Content-only (task 61): drives content, never height —
+	/// the region is reserved regardless, so this can't cause host/view height drift.
 	private var showsBarContent: Bool {
-		showsSuggestionBar && !isEmojiKeyboard && !isEmojiSearchKeyboard
+		!isEmojiKeyboard && !isEmojiSearchKeyboard
 	}
 
 	public var body: some View {
@@ -125,11 +127,12 @@ public struct KeyboardView: View {
 
 	/// The reserved region above the keys on letter/symbol pages (task 61). Fixed at
 	/// `KeyboardMetrics.topRegionHeight` whether or not it has content, so the keyboard's height is
-	/// identical with the suggestion bar shown or hidden — switching pages or toggling suggestions off
-	/// never makes it jump. Today the only content is the `SuggestionBarView` (shown per `showsBarContent`);
-	/// a future top-region content type would slot into the same fixed-height container. When there's no
-	/// content the region is simply empty (visually silent), holding its space.
-	@ViewBuilder
+	/// identical whatever the bar shows — switching pages or toggling suggestions off never makes it jump.
+	/// On these pages it always renders the `SuggestionBarView` (`showsBarContent` is true here, so the
+	/// inner guard is effectively unconditional): the bar shows word/Slack suggestions while typing and
+	/// otherwise falls back to the favorites quick-access row. A future top-region content type would slot
+	/// into the same fixed-height container. The bar only draws nothing in the rare case of no suggestions
+	/// *and* no favorites (visually silent, still holding its space).
 	private var topRegion: some View {
 		VStack(spacing: 0) {
 			if showsBarContent {

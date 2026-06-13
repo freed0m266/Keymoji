@@ -451,9 +451,14 @@ final class KeyboardViewController: UIInputViewController {
 	private func makeRoot() -> KeyboardRoot {
 		let showsBar = showsSuggestionBar
 		let suggestions = showsBar ? currentSuggestions() : []
-		// Favorites are on screen when the bar is showing them (no word/Slack suggestions occupy it)
-		// or the emoji panel is open. Freeze their order while visible so it never reshuffles mid-use.
-		let favoritesVisible = (showsBar && suggestions.isEmpty) || state.page == .emojis
+		// The favorites bar is on screen whenever word/Slack suggestions aren't occupying the top bar —
+		// i.e. any letter/symbol page with no suggestions — or the emoji panel is open. Freeze their
+		// order while visible so it never reshuffles mid-use. Note this is decoupled from `showsBar`:
+		// with the suggestions toggle off (or a non-eligible field like a password) `suggestions` is
+		// empty but the favorites baseline still shows (see `KeyboardView.showsBarContent`), so it must
+		// still be frozen — otherwise `.frequency` would reshuffle live as usage counts change.
+		let onTextPage = state.page != .emojis && !state.page.isEmojiSearch
+		let favoritesVisible = (onTextPage && suggestions.isEmpty) || state.page == .emojis
 		refreshFavoritesDisplayOrder(favoritesVisible: favoritesVisible)
 		return KeyboardRoot(
 			state: state,
@@ -508,11 +513,12 @@ final class KeyboardViewController: UIInputViewController {
 		)
 	}
 
-	/// Whether the suggestion bar may occupy the top region right now: master toggle on, the field
-	/// allows display, and we're not on the emoji panel or an emoji-search page (so it shows on letters
-	/// *and* symbols). This is a pure **content** gate (task 61) — it decides whether suggestions are
-	/// computed and the bar is rendered, but no longer drives height (the top region is reserved
-	/// unconditionally), so it can't cause host/view drift the way it used to.
+	/// Whether word/Slack *suggestions* may occupy the top bar right now: master toggle on, the field
+	/// allows display, and we're not on the emoji panel or an emoji-search page (so it applies on letters
+	/// *and* symbols). This gates only suggestion *computation* — not whether the bar is shown: the bar
+	/// always renders the favorites quick-access baseline on letter/symbol pages regardless (see
+	/// `KeyboardView.showsBarContent`), so when this is false the user still gets their favorites, just no
+	/// word/Slack chips. Content-only (task 61) — never drives height, so it can't cause host/view drift.
 	private var showsSuggestionBar: Bool {
 		guard state.suggestionsEnabled, state.currentEligibility.allowDisplay else { return false }
 		return state.page != .emojis && !state.page.isEmojiSearch

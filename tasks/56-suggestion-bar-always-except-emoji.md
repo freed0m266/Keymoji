@@ -2,6 +2,14 @@
 
 **Status:** Done — 2026-06-08
 
+> **Aktualizace 2026-06-13 (task 62 / favorites baseline):** Sekce „Co zůstává beze změny" níže
+> už **neplatí** pro viditelnost baru. `KeyboardView.showsBarContent` je nově **odpojené** od
+> `showsSuggestionBar` (master toggle + eligibilita): protože favorites jsou po onboardingu vždy
+> neprázdné (task 62), top region na letter/symbol stránkách **vždy** ukazuje obsah — buď word/Slack
+> suggestions při psaní, jinak fallback na favorites quick-access. Master toggle a `allowDisplay`
+> teď gateují **jen výpočet word/Slack suggestions**, ne renderování baru (favorites se ukážou i ve
+> secure poli). Viz `KeyboardView.showsBarContent` a `KeyboardViewController.showsSuggestionBar`.
+
 **Priorita:** v1.2 · **Úsilí:** S · **Dopad:** Medium (UX — bar dostupný i na symbol page)
 
 ## Cíl
