@@ -105,6 +105,10 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		if detected != isKeyboardActivated {
 			isKeyboardActivated = detected
 		}
+
+		if detected {
+			currentStep = .allowFullAccess
+		}
 	}
 
 	// MARK: - Private API
