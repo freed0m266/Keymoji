@@ -39,7 +39,7 @@ Mít připravený App Store listing, screenshoty a klíčová slova před první
 - **Support URL** → osobní web / GitHub repo (task 13 `sourceCode`).
 - **App Privacy „Nutrition Label" v App Store Connect:** vyplnit jako **„Data Not Collected"** — žádná kategorie. Musí matchovat privacy policy doslova.
 - **Category:** Primary „Utilities", Secondary „Productivity".
-- Lokalizovaná metadata: **EN primary**, CZ secondary minimum.
+- Lokalizovaná metadata: **EN only.** (CZ lokalizace zrušena — případně future task.)
 
 ## Závislosti
 

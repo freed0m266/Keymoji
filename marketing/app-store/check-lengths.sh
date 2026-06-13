@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Verify App Store metadata fields fit their character limits.
-# Parses listing-en.md / listing-cs.md: every "## <field> (max N..." heading is
+# Parses listing-en.md: every "## <field> (max N..." heading is
 # followed by a fenced ``` block whose content is measured (Unicode code points,
 # matching how App Store Connect counts characters).
 #

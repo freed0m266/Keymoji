@@ -14,7 +14,7 @@ The iPhone keyboard for people who live in emoji — personalized emoji one tap 
 
 The 4 remaining tasks are post-beta polish, not blockers: top-row popover clipping ([21](tasks/21-popover-top-row-clipping.md)), Apple-style key preview bubble ([25](tasks/25-key-preview-popup.md)), keyboard-switch height flash ([53](tasks/53-keyboard-switch-height-flash.md)), and auto numberpad for numeric fields ([59](tasks/59-auto-numberpad-for-numeric-fields.md)).
 
-App Store readiness is in place: real app icon ([28](tasks/28-app-icon.md)), and EN+CZ listing copy + submission checklist in [`marketing/app-store/`](marketing/app-store/) ([47](tasks/47-app-store-listing.md)). Screenshots and the App Store Connect upload remain manual.
+App Store readiness is in place: real app icon ([28](tasks/28-app-icon.md)), and English listing copy + submission checklist in [`marketing/app-store/`](marketing/app-store/) ([47](tasks/47-app-store-listing.md)). Screenshots and the App Store Connect upload remain manual.
 
 See [`tasks/README.md`](tasks/README.md) for the full roadmap and [`tasks/dashboard.html`](tasks/dashboard.html) for a live Kanban snapshot (`python3 scripts/generate_dashboard.py`).
 

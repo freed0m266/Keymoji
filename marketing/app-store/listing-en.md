@@ -1,4 +1,4 @@
-# App Store listing — English (primary locale)
+# App Store listing — English
 
 > Source of truth for the English App Store Connect metadata. Copy each field
 > verbatim into ASC. Character limits noted per field; run

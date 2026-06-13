@@ -1,9 +1,8 @@
 # App Store Connect — submission checklist
 
 Manual steps for the first Keymoji submission. The text fields live in
-[`listing-en.md`](listing-en.md) (primary) and [`listing-cs.md`](listing-cs.md)
-(secondary). Run [`check-lengths.sh`](check-lengths.sh) before pasting to confirm
-every field still fits its character limit.
+[`listing-en.md`](listing-en.md). Run [`check-lengths.sh`](check-lengths.sh)
+before pasting to confirm every field still fits its character limit.
 
 ## Before you start
 
@@ -16,12 +15,12 @@ every field still fits its character limit.
 ## App information
 
 - [ ] **Name / Subtitle / Keywords / Promotional text / Description** — paste from the
-      listing files, EN and CZ.
+      listing file.
 - [ ] **Primary category:** Utilities · **Secondary:** Productivity
 - [ ] **Support URL:** `https://github.com/freed0m266/Keymoji`
 - [ ] **Marketing URL** (optional): `https://martinfreedom.com/keymoji`
 - [ ] **Privacy Policy URL:** `https://martinfreedom.com/keymoji/privacy.html`
-- [ ] Localizations: **English (primary)**, **Czech**.
+- [ ] Localizations: **English**.
 
 ## App Privacy ("nutrition label")
 
@@ -32,11 +31,11 @@ Keymoji collects nothing — set every section to **Data Not Collected**.
       If any networked SDK is ever added, this label becomes false and is an App
       Store violation — see the privacy non-goal in `tasks/README.md`.
 
-## Screenshots (per locale, EN + CZ)
+## Screenshots
 
 Required device sizes: **6.9" (iPhone 16 Pro Max)** and **6.5" (iPhone 11 Pro Max
 / XS Max class)**. Capture from the simulator; store source PNGs under
-`marketing/app-store/screenshots/<locale>/`.
+`marketing/app-store/screenshots/`.
 
 1. [ ] Keyboard in action (typing a message) — hero shot, native parity (task 35)
 2. [ ] Emoji mode + favorites / shortcodes (tasks 17, 18, 32)
@@ -60,4 +59,4 @@ Recommended note to pre-empt the custom-keyboard Full Access question:
 - [ ] Privacy label, privacy policy, and listing copy all tell the same Full Access
       story (haptics + key click sounds — **not** data, **not** the shared container,
       which is gated by the App Group entitlement rather than Full Access).
-- [ ] Screenshots uploaded for both sizes and both locales.
+- [ ] Screenshots uploaded for both sizes.
