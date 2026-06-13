@@ -45,6 +45,30 @@ final class OnboardingSnapshots: XCTestCase {
 		assertOnboardingSnapshot(view)
 	}
 
+	func testStep_pickFavorites_dark() {
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(currentStep: .pickFavorites)
+		)
+		assertOnboardingSnapshot(view)
+	}
+
+	func testStep_pickFavorites_someSelected_dark() {
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(
+				currentStep: .pickFavorites,
+				selectedFavorites: ["❤️", "🔥", "🎉"]
+			)
+		)
+		assertOnboardingSnapshot(view)
+	}
+
+	func testStep_pickFavorites_iPhoneSE() {
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(currentStep: .pickFavorites)
+		)
+		assertOnboardingSnapshot(view, size: Self.iPhoneSESize)
+	}
+
 	func testStep4_featureTour_dark() {
 		let view = OnboardingView(
 			viewModel: OnboardingViewModelMock(currentStep: .featureTour)

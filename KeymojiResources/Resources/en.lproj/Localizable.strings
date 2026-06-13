@@ -24,6 +24,12 @@
 "onboarding.step3.done" = "Continue";
 "onboarding.step3.footer" = "You can re-open this guide later from Settings.";
 
+"onboarding.favorites.title" = "Pick your favorite emoji";
+"onboarding.favorites.description" = "Tap the ones you reach for most — they'll sit right above your keyboard, ready to drop in.";
+"onboarding.favorites.cta" = "Continue";
+"onboarding.favorites.skip" = "Skip for now";
+"onboarding.favorites.footer" = "You can change these any time in Settings.";
+
 "onboarding.tour.title" = "What Keymoji can do";
 "onboarding.tour.subtitle" = "A few things stock keyboards don't.";
 "onboarding.tour.cta" = "Start typing";

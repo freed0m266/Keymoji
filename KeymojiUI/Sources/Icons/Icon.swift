@@ -36,6 +36,8 @@ public extension Icon {
 }
 
 public extension Icon {
+	/// checkmark.circle.fill
+	static var checkmarkCircleFill: Icon = "checkmark.circle.fill"
 	/// chevron.right
 	static var chevronRight: Icon = "chevron.right"
 	/// globe

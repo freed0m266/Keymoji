@@ -8,6 +8,7 @@
 
 import SwiftUI
 import KeymojiCore
+import KeyboardCore
 import KeymojiResources
 import KeymojiUI
 
@@ -36,7 +37,10 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 
 				selectKeyboardStep
 					.tag(OnboardingStep.selectKeyboard)
-				
+
+				pickFavoritesStep
+					.tag(OnboardingStep.pickFavorites)
+
 				featureTourStep
 					.tag(OnboardingStep.featureTour)
 			}
@@ -138,7 +142,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 			Spacer()
 
 			PrimaryButton(Texts.Step3.done) {
-				viewModel.currentStep = .featureTour
+				viewModel.currentStep = .pickFavorites
 			}
 			.padding(.horizontal, 32)
 
@@ -150,6 +154,89 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 				.padding(.bottom, 8)
 		}
 		.padding(.top, 64)
+	}
+
+	private var pickFavoritesStep: some View {
+		// Denser than the other steps (grid + two buttons + footer). The Spacer pins the buttons to
+		// the bottom and centres the block on tall screens; `minHeight` + ScrollView let the content
+		// scroll instead of clipping when it can't fit (e.g. iPhone SE), so nothing is ever cut off.
+		GeometryReader { proxy in
+			ScrollView {
+				VStack(spacing: 20) {
+					Text("⭐️")
+						.font(.system(size: 48))
+						.frame(width: 94, height: 94)
+						.glassEffect()
+
+					Text(Texts.Favorites.title)
+						.font(.title2.weight(.bold))
+						.multilineTextAlignment(.center)
+
+					Text(Texts.Favorites.description)
+						.font(.callout)
+						.foregroundStyle(.secondary)
+						.multilineTextAlignment(.center)
+						.padding(.horizontal, 24)
+
+					LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 8) {
+						ForEach(EmojiCatalog.defaultFavorites, id: \.self) { glyph in
+							favoriteCell(glyph, isSelected: viewModel.selectedFavorites.contains(glyph))
+						}
+					}
+					.padding(.horizontal, 24)
+
+					Spacer(minLength: 24)
+
+					VStack(spacing: 12) {
+						PrimaryButton(Texts.Favorites.cta) {
+							viewModel.currentStep = .featureTour
+						}
+
+						SecondaryButton(Texts.Favorites.skip) {
+							viewModel.currentStep = .featureTour
+						}
+
+						Text(Texts.Favorites.footer)
+							.font(.footnote)
+							.foregroundStyle(.tertiary)
+							.multilineTextAlignment(.center)
+					}
+					.padding(.horizontal, 32)
+				}
+				.padding(.top, 56)
+				.padding(.bottom, 16)
+				.frame(minHeight: proxy.size.height, alignment: .top)
+			}
+			.scrollIndicators(.hidden)
+		}
+	}
+
+	private func favoriteCell(_ glyph: String, isSelected: Bool) -> some View {
+		Button {
+			viewModel.toggleFavorite(glyph)
+		} label: {
+			ZStack(alignment: .topTrailing) {
+				Text(glyph)
+					.font(.system(size: 30))
+					.frame(maxWidth: .infinity)
+					.frame(height: 52)
+					.background(
+						RoundedRectangle(cornerRadius: 8)
+							.fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
+					)
+
+				if isSelected {
+					Icon.checkmarkCircleFill
+						.font(.system(size: 14))
+						.foregroundStyle(Color.accentColor, Color(.systemBackground))
+						.padding(2)
+				}
+			}
+			.contentShape(.rect)
+		}
+		.buttonStyle(.plain)
+		.accessibilityLabel(glyph)
+		.accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
 	}
 
 	private var featureTourStep: some View {
@@ -246,7 +333,20 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 	OnboardingView(viewModel: OnboardingViewModelMock(currentStep: .selectKeyboard))
 }
 
-#Preview("Step 4 — Feature tour") {
+#Preview("Step 4 — Pick favorites") {
+	OnboardingView(viewModel: OnboardingViewModelMock(currentStep: .pickFavorites))
+}
+
+#Preview("Step 4 — Pick favorites (some selected)") {
+	OnboardingView(
+		viewModel: OnboardingViewModelMock(
+			currentStep: .pickFavorites,
+			selectedFavorites: ["❤️", "🔥", "🎉"]
+		)
+	)
+}
+
+#Preview("Step 5 — Feature tour") {
 	OnboardingView(viewModel: OnboardingViewModelMock(currentStep: .featureTour))
 }
 #endif
