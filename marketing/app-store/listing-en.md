@@ -93,11 +93,11 @@ https://github.com/freed0m266/Keymoji
 ## Marketing URL (optional)
 
 ```
-https://freedommartin.cz/keymoji
+https://martinfreedom.com/keymoji
 ```
 
 ## Privacy Policy URL
 
 ```
-https://freedommartin.cz/keymoji/privacy.html
+https://martinfreedom.com/keymoji/privacy.html
 ```

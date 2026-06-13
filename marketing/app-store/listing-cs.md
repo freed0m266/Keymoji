@@ -91,11 +91,11 @@ https://github.com/freed0m266/Keymoji
 ## Marketingové URL (volitelné)
 
 ```
-https://freedommartin.cz/keymoji
+https://martinfreedom.com/keymoji
 ```
 
 ## URL zásad ochrany soukromí
 
 ```
-https://freedommartin.cz/keymoji/privacy.html
+https://martinfreedom.com/keymoji/privacy.html
 ```

@@ -8,7 +8,7 @@ every field still fits its character limit.
 ## Before you start
 
 - [ ] Real app icon shipped (task 28) — ASC and screenshots both need it.
-- [ ] Privacy policy live at `https://freedommartin.cz/keymoji/privacy.html` (upload the
+- [ ] Privacy policy live at `https://martinfreedom.com/keymoji/privacy.html` (upload the
       current [`../privacy-policy.html`](../privacy-policy.html) — the in-app
       `KeymojiURLs.privacyPolicy` already points here).
 - [ ] UI is final for screenshots (tasks 35 redesign, 40 suggestions, 18/32 favorites).
@@ -19,8 +19,8 @@ every field still fits its character limit.
       listing files, EN and CZ.
 - [ ] **Primary category:** Utilities · **Secondary:** Productivity
 - [ ] **Support URL:** `https://github.com/freed0m266/Keymoji`
-- [ ] **Marketing URL** (optional): `https://freedommartin.cz/keymoji`
-- [ ] **Privacy Policy URL:** `https://freedommartin.cz/keymoji/privacy.html`
+- [ ] **Marketing URL** (optional): `https://martinfreedom.com/keymoji`
+- [ ] **Privacy Policy URL:** `https://martinfreedom.com/keymoji/privacy.html`
 - [ ] Localizations: **English (primary)**, **Czech**.
 
 ## App Privacy ("nutrition label")
