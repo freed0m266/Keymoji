@@ -2,13 +2,15 @@
 
 **Status:** Done — 2026-06-08
 
-> **Aktualizace 2026-06-13 (task 62 / favorites baseline):** Sekce „Co zůstává beze změny" níže
-> už **neplatí** pro viditelnost baru. `KeyboardView.showsBarContent` je nově **odpojené** od
-> `showsSuggestionBar` (master toggle + eligibilita): protože favorites jsou po onboardingu vždy
-> neprázdné (task 62), top region na letter/symbol stránkách **vždy** ukazuje obsah — buď word/Slack
-> suggestions při psaní, jinak fallback na favorites quick-access. Master toggle a `allowDisplay`
-> teď gateují **jen výpočet word/Slack suggestions**, ne renderování baru (favorites se ukážou i ve
-> secure poli). Viz `KeyboardView.showsBarContent` a `KeyboardViewController.showsSuggestionBar`.
+> **Aktualizace 2026-06-13 (task 62 / favorites baseline + secure-field guard):** Sekce „Co zůstává
+> beze změny" níže platí už jen **zčásti**. Viditelnost baru je nově **odpojená od master toggle**
+> `suggestionsEnabled`: protože favorites jsou po onboardingu vždy neprázdné (task 62, + runtime
+> fallback na `EmojiCatalog.defaultFavorites`), top region na letter/symbol stránkách ukazuje obsah
+> i s vypnutým našeptáváním — buď word/Slack suggestions při psaní, jinak favorites quick-access.
+> **Field eligibilita (`allowDisplay`, tj. secure/password pole) ale bar dál skrývá** — předává se do
+> view jako `fieldAllowsBar`. Takže: master toggle + eligibilita gateují výpočet word/Slack suggestions
+> (`KeyboardViewController.suggestionsActive`), eligibilita navíc renderování baru
+> (`KeyboardView.showsBarContent` / `fieldAllowsBar`). Top region si vždy drží výšku (task 61).
 
 **Priorita:** v1.2 · **Úsilí:** S · **Dopad:** Medium (UX — bar dostupný i na symbol page)
 

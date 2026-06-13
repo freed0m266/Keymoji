@@ -274,8 +274,9 @@ final class KeyboardViewController: UIInputViewController {
 
 	// MARK: - Suggestion eligibility & language
 
-	/// Re-evaluates whether the focused field may show the bar / be learned from. Drives the bar's
-	/// visibility (via `showsSuggestionBar`) and the dispatcher's learning context.
+	/// Re-evaluates whether the focused field may show the bar / be learned from. `allowDisplay` drives the
+	/// bar's visibility (forwarded as `fieldAllowsBar`) and gates suggestion computation (`suggestionsActive`);
+	/// the learning context drives what the dispatcher may learn from.
 	private func refreshEligibility() {
 		let eligibility = SuggestionEligibility.evaluate(
 			isSecureTextEntry: textDocumentProxy.isSecureTextEntry == true,
@@ -449,22 +450,22 @@ final class KeyboardViewController: UIInputViewController {
 	/// always reflects what the proxy sees right now — including transient cases where the
 	/// dispatcher and the proxy disagree by a frame.
 	private func makeRoot() -> KeyboardRoot {
-		let showsBar = showsSuggestionBar
-		let suggestions = showsBar ? currentSuggestions() : []
-		// The favorites bar is on screen whenever word/Slack suggestions aren't occupying the top bar —
-		// i.e. any letter/symbol page with no suggestions — or the emoji panel is open. Freeze their
-		// order while visible so it never reshuffles mid-use. Note this is decoupled from `showsBar`:
-		// with the suggestions toggle off (or a non-eligible field like a password) `suggestions` is
-		// empty but the favorites baseline still shows (see `KeyboardView.showsBarContent`), so it must
-		// still be frozen — otherwise `.frequency` would reshuffle live as usage counts change.
+		let suggestions = suggestionsActive ? currentSuggestions() : []
+		// The favorites bar is on screen whenever the field allows the bar (not a secure field), we're on a
+		// letter/symbol page, and word/Slack suggestions aren't occupying it — or the emoji panel is open.
+		// Freeze the order while visible so it never reshuffles mid-use. This is decoupled from the
+		// suggestions master toggle: with suggestions off, `suggestions` is empty but the favorites baseline
+		// still shows, so it must still be frozen — otherwise `.frequency` would reshuffle live as usage
+		// counts change. (In a secure field the bar is hidden, so favorites aren't visible there.)
 		let onTextPage = state.page != .emojis && !state.page.isEmojiSearch
-		let favoritesVisible = (onTextPage && suggestions.isEmpty) || state.page == .emojis
+		let favoritesVisible = (state.currentEligibility.allowDisplay && onTextPage && suggestions.isEmpty)
+			|| state.page == .emojis
 		refreshFavoritesDisplayOrder(favoritesVisible: favoritesVisible)
 		return KeyboardRoot(
 			state: state,
 			favoriteEmojis: favoritesDisplayOrder,
 			suggestions: suggestions,
-			showsSuggestionBar: showsBar,
+			fieldAllowsBar: state.currentEligibility.allowDisplay,
 			dispatch: { [weak self] key in self?.handle(key) },
 			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
@@ -513,13 +514,14 @@ final class KeyboardViewController: UIInputViewController {
 		)
 	}
 
-	/// Whether word/Slack *suggestions* may occupy the top bar right now: master toggle on, the field
-	/// allows display, and we're not on the emoji panel or an emoji-search page (so it applies on letters
-	/// *and* symbols). This gates only suggestion *computation* — not whether the bar is shown: the bar
-	/// always renders the favorites quick-access baseline on letter/symbol pages regardless (see
-	/// `KeyboardView.showsBarContent`), so when this is false the user still gets their favorites, just no
-	/// word/Slack chips. Content-only (task 61) — never drives height, so it can't cause host/view drift.
-	private var showsSuggestionBar: Bool {
+	/// Whether word/Slack *suggestions* should be computed right now: master toggle on, the field allows
+	/// display, and we're not on the emoji panel or an emoji-search page (so it applies on letters *and*
+	/// symbols). This gates only suggestion *computation*, not whether the bar is shown. On an eligible
+	/// field the bar always renders the favorites quick-access baseline regardless of the master toggle
+	/// (see `KeyboardView.showsBarContent`), so when this is false the user still gets their favorites, just
+	/// no word/Slack chips. (Secure fields hide the bar — but via `allowDisplay` / `fieldAllowsBar`, not
+	/// this.) Content-only (task 61) — never drives height, so no host/view drift.
+	private var suggestionsActive: Bool {
 		guard state.suggestionsEnabled, state.currentEligibility.allowDisplay else { return false }
 		return state.page != .emojis && !state.page.isEmojiSearch
 	}

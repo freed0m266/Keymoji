@@ -17,12 +17,12 @@ public struct KeyboardView: View {
 	public let favoriteEmojis: [String]
 	public let searchQuery: String
 	public let suggestions: [Suggestion]
-	/// Host signal for whether word/Slack *suggestions* are active (master toggle + field eligibility).
-	/// It no longer drives this view's rendering: because the favorites baseline is always available
-	/// (guaranteed non-empty after onboarding — task 62), the top region shows bar content on every
-	/// letter/symbol page regardless of this flag (see `showsBarContent`). Kept on the API for the host's
-	/// bookkeeping and a possible future top-region content type — `KeyboardView` itself ignores it.
-	public let showsSuggestionBar: Bool
+	/// Whether the current field permits the top bar at all. The host passes `currentEligibility.allowDisplay`,
+	/// which is false in secure (password) entry; on those fields the reserved top region stays empty so the
+	/// favorites/suggestions bar is hidden, matching stock keyboards. This is *only* the field gate — it's
+	/// deliberately independent of the suggestions master toggle, since the favorites baseline shows even with
+	/// word/Slack suggestions turned off (see `showsBarContent`). Defaults to `true` (eligible field).
+	public let fieldAllowsBar: Bool
 	public let onKey: (Key) -> Void
 	public let onToggleFavoriteEmoji: (String) -> Void
 	public let onSelectSuggestion: (Suggestion) -> Void
@@ -49,7 +49,7 @@ public struct KeyboardView: View {
 		favoriteEmojis: [String] = [],
 		searchQuery: String = "",
 		suggestions: [Suggestion] = [],
-		showsSuggestionBar: Bool = false,
+		fieldAllowsBar: Bool = true,
 		onKey: @escaping (Key) -> Void,
 		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
 		onSelectSuggestion: @escaping (Suggestion) -> Void = { _ in },
@@ -66,7 +66,7 @@ public struct KeyboardView: View {
 		self.favoriteEmojis = favoriteEmojis
 		self.searchQuery = searchQuery
 		self.suggestions = suggestions
-		self.showsSuggestionBar = showsSuggestionBar
+		self.fieldAllowsBar = fieldAllowsBar
 		self.onKey = onKey
 		self.onToggleFavoriteEmoji = onToggleFavoriteEmoji
 		self.onSelectSuggestion = onSelectSuggestion
@@ -88,16 +88,26 @@ public struct KeyboardView: View {
 		layout.page.isEmojiSearch
 	}
 
-	/// Whether the `topRegion` renders bar content. True on every letter/symbol page; false only on the
-	/// emoji panel / emoji-search pages (which have no `topRegion`). Deliberately decoupled from
-	/// `showsSuggestionBar`: the bar's baseline is the user's favorites — guaranteed non-empty after
-	/// onboarding (task 62) — so the top region always shows *something* (emoji quick-access), and word/
-	/// Slack suggestions only take it over transiently while typing. The suggestions master toggle and
-	/// field eligibility therefore no longer make the bar disappear; they only gate whether word/Slack
-	/// suggestions are computed (controller-side). Content-only (task 61): drives content, never height —
-	/// the region is reserved regardless, so this can't cause host/view height drift.
+	/// Whether the `topRegion` renders bar content. True on letter/symbol pages of an eligible field; false
+	/// on the emoji panel / emoji-search pages (which have no `topRegion`) and in secure fields
+	/// (`fieldAllowsBar`). Decoupled from the suggestions master toggle: the bar's baseline is the user's
+	/// favorites — guaranteed non-empty after onboarding (task 62) — so on an eligible field the top region
+	/// always shows *something* (emoji quick-access), and word/Slack suggestions only take it over
+	/// transiently while typing. The master toggle therefore doesn't make the bar disappear; it only gates
+	/// whether suggestions are computed (controller-side). Content-only (task 61): drives content, never
+	/// height — the region is reserved regardless, so this can't cause host/view height drift.
 	private var showsBarContent: Bool {
-		!isEmojiKeyboard && !isEmojiSearchKeyboard
+		fieldAllowsBar && !isEmojiKeyboard && !isEmojiSearchKeyboard
+	}
+
+	/// Favorites shown *in the bar*. Falls back to the curated starter set (`EmojiCatalog.defaultFavorites`)
+	/// when the user has none, so the always-on emoji quick-access is never empty — the same "never empty"
+	/// guarantee onboarding makes for the stored set (task 62), held here as a runtime safety net for the
+	/// edge case where the user clears every favorite. Scoped to the bar only: the emoji panel's favorites
+	/// category still reflects the real stored list (and stays hidden when it's empty), so the panel's
+	/// star-toggle curation isn't polluted with defaults the user never picked.
+	private var barFavorites: [String] {
+		favoriteEmojis.isEmpty ? EmojiCatalog.defaultFavorites : favoriteEmojis
 	}
 
 	public var body: some View {
@@ -127,18 +137,17 @@ public struct KeyboardView: View {
 
 	/// The reserved region above the keys on letter/symbol pages (task 61). Fixed at
 	/// `KeyboardMetrics.topRegionHeight` whether or not it has content, so the keyboard's height is
-	/// identical whatever the bar shows — switching pages or toggling suggestions off never makes it jump.
-	/// On these pages it always renders the `SuggestionBarView` (`showsBarContent` is true here, so the
-	/// inner guard is effectively unconditional): the bar shows word/Slack suggestions while typing and
-	/// otherwise falls back to the favorites quick-access row. A future top-region content type would slot
-	/// into the same fixed-height container. The bar only draws nothing in the rare case of no suggestions
-	/// *and* no favorites (visually silent, still holding its space).
+	/// identical whatever the bar shows — switching pages, toggling suggestions off, or entering a secure
+	/// field never makes it jump. On an eligible field it renders the `SuggestionBarView` (`showsBarContent`):
+	/// word/Slack suggestions while typing, otherwise the favorites quick-access row. In a secure field
+	/// (`!fieldAllowsBar`) it stays empty — height held, bar hidden, like stock keyboards. A future
+	/// top-region content type would slot into the same fixed-height container.
 	private var topRegion: some View {
 		VStack(spacing: 0) {
 			if showsBarContent {
 				SuggestionBarView(
 					suggestions: suggestions,
-					favoriteEmojis: favoriteEmojis,
+					favoriteEmojis: barFavorites,
 					totalWidth: max(0, width - horizontalPadding * 2),
 					onSelect: onSelectSuggestion,
 					onSelectEmoji: { emoji in insertEmojiKey(emoji) },

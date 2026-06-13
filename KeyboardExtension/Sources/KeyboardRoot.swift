@@ -11,7 +11,8 @@ struct KeyboardRoot: View {
 	/// under the user's finger.
 	let favoriteEmojis: [String]
 	let suggestions: [Suggestion]
-	let showsSuggestionBar: Bool
+	/// Whether the current field permits the top bar (false in secure entry). Forwarded to `KeyboardView`.
+	let fieldAllowsBar: Bool
 	let dispatch: (Key) -> Void
 	let toggleFavoriteEmoji: (String) -> Void
 	let selectSuggestion: (Suggestion) -> Void
@@ -37,7 +38,7 @@ struct KeyboardRoot: View {
 			favoriteEmojis: favoriteEmojis,
 			searchQuery: state.searchQuery,
 			suggestions: suggestions,
-			showsSuggestionBar: showsSuggestionBar,
+			fieldAllowsBar: fieldAllowsBar,
 			onKey: dispatch,
 			onToggleFavoriteEmoji: toggleFavoriteEmoji,
 			onSelectSuggestion: selectSuggestion,

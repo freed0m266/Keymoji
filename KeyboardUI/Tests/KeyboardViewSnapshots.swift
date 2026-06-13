@@ -100,7 +100,6 @@ final class KeyboardViewSnapshots: XCTestCase {
 			width: Self.iPhoneWidth,
 			favoriteEmojis: ["❤️", "🚀", "🍕", "🐶"],
 			suggestions: [],
-			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
 		let size = keyboardSize(for: layout)
@@ -195,7 +194,6 @@ final class KeyboardViewSnapshots: XCTestCase {
 			layout: layout,
 			width: Self.iPhoneWidth,
 			suggestions: suggestions,
-			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
 		let size = keyboardSize(for: layout)
@@ -216,20 +214,38 @@ final class KeyboardViewSnapshots: XCTestCase {
 			layout: layout,
 			width: Self.iPhoneWidth,
 			suggestions: suggestions,
-			showsSuggestionBar: true,
 			onKey: { _ in }
 		)
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
 
-	func testSuggestionBar_alwaysShownWhenEmpty_withNumberRow() {
-		// C1: the bar holds its slot even with no chips (visually silent), so height stays stable.
+	func testSuggestionBar_emptyFavorites_showsDefaultStarterSet() {
+		// With no suggestions *and* no user favorites, the bar falls back to `EmojiCatalog.defaultFavorites`
+		// (D — bar is never empty; mirrors onboarding's "never empty" guarantee, task 62). The truly-silent
+		// no-suggestions-no-favorites branch is covered at the component level by
+		// `SuggestionBarViewSnapshots.testEmptyBar_alwaysShown`.
 		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
 		let view = KeyboardView(
 			layout: layout,
 			width: Self.iPhoneWidth,
+			favoriteEmojis: [],
 			suggestions: [],
-			showsSuggestionBar: true,
+			onKey: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+	}
+
+	func testSecureField_topRegionReservedButEmpty() {
+		// Secure (password) fields pass `fieldAllowsBar: false`, so the bar — favorites and suggestions
+		// alike — is hidden, but the top region keeps its reserved height (task 61) so the keyboard doesn't
+		// jump when focus moves between secure and normal fields.
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
+		let view = KeyboardView(
+			layout: layout,
+			width: Self.iPhoneWidth,
+			favoriteEmojis: ["❤️", "🚀", "🍕", "🐶"],
+			suggestions: [],
+			fieldAllowsBar: false,
 			onKey: { _ in }
 		)
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
