@@ -57,6 +57,13 @@ public struct EmojiCatalogPickerView: View {
 			}
 			.padding(.vertical, 8)
 		}
+		// Clip overflow at the top (content bleeding under the nav bar) without
+		// cropping the bottom — the mask hugs the top edge but extends past the
+		// bottom safe area so content keeps flowing under the home indicator.
+		.mask {
+			Rectangle()
+				.ignoresSafeArea(edges: .bottom)
+		}
 		.navigationTitle(Texts.title)
 		.navigationBarTitleDisplayMode(.inline)
 		.toolbar {
