@@ -89,6 +89,7 @@
 "settings.keyboard.spaceDoubleTapFooter" = "Choose what happens when you tap the space bar twice in quick succession.";
 "settings.favorites.row" = "Favorite emojis";
 "settings.favorites.footer" = "Pinned to the front of the emoji panel for quick access.";
+"settings.favorites.header" = "Emojis";
 "settings.favorites.title" = "Favorite emojis";
 "settings.favorites.add" = "Add";
 "settings.favorites.emptyTitle" = "No favorites yet";
@@ -101,7 +102,7 @@
 "settings.favorites.sort.frequency" = "Most used";
 "settings.favorites.frequencyFooter" = "Favorites are ordered by how often you use them.";
 "settings.emojiCodes.row" = "Emoji codes reference";
-"settings.emojiCodes.footer" = "Browse all Slack-style shortcodes the keyboard recognises.";
+"settings.emojiCodes.footer" = "Browse all shortcodes the keyboard recognises.";
 
 "settings.suggestions.sectionHeader" = "Suggestions";
 "settings.suggestions.toggleTitle" = "Word suggestions";

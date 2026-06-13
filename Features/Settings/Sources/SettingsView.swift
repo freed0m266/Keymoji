@@ -30,10 +30,10 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	public var body: some View {
 		NavigationStack {
 			Form {
-				keyboardSection
-				suggestionsSection
 				favoritesSection
 				emojiCodesSection
+				keyboardSection
+				suggestionsSection
 				supportSection
 				aboutSection
 			}
@@ -49,6 +49,32 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				}
 				.preferredColorScheme(.dark)
 			}
+		}
+	}
+
+	private var favoritesSection: some View {
+		Section {
+			NavigationLink {
+				FavoriteEmojisEditorView(viewModel: favoriteEmojisEditorVM())
+			} label: {
+				Text("⭐️ \(Texts.Favorites.row)")
+			}
+		} header: {
+			Text(Texts.Favorites.header)
+		} footer: {
+			Text(Texts.Favorites.footer)
+		}
+	}
+
+	private var emojiCodesSection: some View {
+		Section {
+			NavigationLink {
+				EmojiCodesView(viewModel: emojiCodesVM())
+			} label: {
+				Text("📖 \(Texts.EmojiCodes.row)")
+			}
+		} footer: {
+			Text(Texts.EmojiCodes.footer)
 		}
 	}
 
@@ -169,30 +195,6 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		case .french:  return "Français"
 		case .spanish: return "Español"
 		case .all:     return Texts.Keyboard.LetterAlternateSet.all
-		}
-	}
-
-	private var favoritesSection: some View {
-		Section {
-			NavigationLink {
-				FavoriteEmojisEditorView(viewModel: favoriteEmojisEditorVM())
-			} label: {
-				Text("⭐️ \(Texts.Favorites.row)")
-			}
-		} footer: {
-			Text(Texts.Favorites.footer)
-		}
-	}
-
-	private var emojiCodesSection: some View {
-		Section {
-			NavigationLink {
-				EmojiCodesView(viewModel: emojiCodesVM())
-			} label: {
-				Text("📖 \(Texts.EmojiCodes.row)")
-			}
-		} footer: {
-			Text(Texts.EmojiCodes.footer)
 		}
 	}
 
