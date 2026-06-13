@@ -90,6 +90,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 
 28. [28 — Real app icon](28-app-icon.md)
 47. [47 — App Store listing & ASO](47-app-store-listing.md)
+63. [63 — About: sekce „Follow along" se socials (Instagram + Threads) + přerámování supportu](63-about-socials-section.md)
 
 ## Tech debt / Refactoring
 
