@@ -86,6 +86,10 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 
 58. [58 — Jazykové sady letterAlternates + popup vždy se základním písmenem](58-letter-alternates-language-sets.md)
 
+## Monetizace
+
+63. [63 — Keymoji Plus (freemium + jednorázový unlock $3.99)](63-monetization-keymoji-plus.md) — zavést **před** prvním veřejným releasem.
+
 ## Pre-App-Store
 
 28. [28 — Real app icon](28-app-icon.md)
