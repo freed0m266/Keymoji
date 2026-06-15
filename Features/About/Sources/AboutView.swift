@@ -82,7 +82,6 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 		}
 	}
 
-	@ViewBuilder
 	private func chevronRow(title: String, action: @escaping () -> Void) -> some View {
 		Button(action: action) {
 			HStack {

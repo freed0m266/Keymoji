@@ -113,7 +113,6 @@ public struct EmojiSearchView: View {
 		.frame(height: Self.cellHeight)
 	}
 
-	@ViewBuilder
 	private var emptyResultsPlaceholder: some View {
 		let label: String = {
 			if query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -121,7 +120,7 @@ public struct EmojiSearchView: View {
 			}
 			return "No results"
 		}()
-		Text(label)
+		return Text(label)
 			.font(.footnote)
 			.foregroundStyle(.secondary)
 			.padding(.horizontal, 14)
