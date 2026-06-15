@@ -89,6 +89,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## Monetizace
 
 63. [63 — Keymoji Plus (freemium + jednorázový unlock $3.99)](63-monetization-keymoji-plus.md) — zavést **před** prvním veřejným releasem.
+64. [64 — „HESOYAM" promo cheat → 30denní Plus trial](64-hesoyam-promo-trial.md) — viralní easter egg + loss-aversion konverze (závisí na 63).
 
 ## Pre-App-Store
 
