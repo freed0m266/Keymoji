@@ -84,7 +84,7 @@ No silent autocorrect. Keymoji suggests — it never swaps your words behind you
 
 PRIVATE BECAUSE IT'S SIMPLE
 
-Keymoji makes no network requests at all — there is literally no networking code in the app — so what you type never leaves your iPhone. No analytics, no tracking, no accounts, no third-party SDKs. The words it learns to speed you up stay in a private container only Keymoji can read, never uploaded, not even to Apple. Don't take our word for it: the source code is public on GitHub.
+The only network activity in Keymoji is Apple's own purchase check when you buy or restore Keymoji Plus — and even then, nothing you type is ever involved. No analytics, no tracking, no accounts, no third-party SDKs. What you type never leaves your iPhone. The words it learns to speed you up stay in a private container only Keymoji can read, never uploaded, not even to Apple. Don't take our word for it: the source code is public on GitHub.
 
 ABOUT "ALLOW FULL ACCESS"
 
@@ -93,7 +93,7 @@ iOS makes every custom keyboard request "Allow Full Access" before it can play h
 • Haptic feedback (vibration) when you type
 • Key click sounds
 
-Nothing else — no networking, no contacts, no location (there's no networking code to do any of it with). Prefer it off? Leave it off, and every typing feature still works — just silent.
+Nothing else — no contacts, no location, and nothing you type ever leaves your iPhone. The one exception to "offline" is Apple's standard purchase check when you buy or restore Keymoji Plus, which never involves what you type. Prefer Full Access off? Leave it off, and every typing feature still works — just silent.
 
 Built by one developer who wanted a fast, private keyboard with emoji done right — and uses it every day.
 

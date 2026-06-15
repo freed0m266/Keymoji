@@ -1,6 +1,6 @@
 # 63 — Monetizace: Keymoji Plus (freemium + jednorázový unlock)
 
-**Status:** TODO
+**Status:** Done — 2026-06-15
 
 **Priorita:** v1.x (před prvním veřejným releasem) · **Úsilí:** L · **Dopad:** High
 

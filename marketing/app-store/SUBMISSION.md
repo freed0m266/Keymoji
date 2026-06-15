@@ -22,14 +22,41 @@ before pasting to confirm every field still fits its character limit.
 - [ ] **Privacy Policy URL:** `https://martinfreedom.com/keymoji/privacy.html`
 - [ ] Localizations: **English**.
 
+## In-App Purchase — Keymoji Plus (task 63)
+
+One non-consumable unlock. **Must be created in ASC before the build can be reviewed.**
+
+- [ ] Create In-App Purchase **`com.freedommartin.keymoji.plus`**
+      - Type: **Non-Consumable**
+      - Reference name: **Keymoji Plus**
+      - Price: **$3.99 (Tier 4)** / 99 Kč
+      - Localized **Display Name**: "Keymoji Plus"
+      - Localized **Description**: "Unlock unlimited favorite emoji, multiple favorite
+        pages, and auto-sort by most-used. One-time purchase, no subscription."
+        (ASC rejects emoji in IAP metadata — keep it text-only, like the app Description.)
+- [ ] Attach the IAP to the version and submit it **with** the build (first review of a
+      new IAP must accompany an app submission).
+- [ ] Local simulator testing uses `Keymoji/Resources/Keymoji.storekit` (wired into the
+      Keymoji run scheme) — ASC product not required for that.
+- [ ] Sandbox-test buy + **Restore** on device before submitting (Restore is mandatory
+      for non-consumables; the paywall already exposes it).
+
 ## App Privacy ("nutrition label")
 
 Keymoji collects nothing — set every section to **Data Not Collected**.
 
 - [ ] "Data Collection" → **No, we do not collect data from this app.**
-- [ ] This must match [`../privacy-policy.html`](../privacy-policy.html) **exactly**.
-      If any networked SDK is ever added, this label becomes false and is an App
-      Store violation — see the privacy non-goal in `tasks/README.md`.
+- [ ] **StoreKit / IAP does not change this.** The purchase/restore network call is Apple's,
+      not ours — we run no server and receive no data. Purchases are not linked to the user by
+      us and are not used for tracking. Keep **Data Not Collected**; only declare a "Purchases"
+      data type if ASC's questionnaire forces it (then: not linked, not used for tracking).
+- [ ] This must match [`../privacy-policy.html`](../privacy-policy.html) **exactly**. The
+      absolute "no network requests at all" wording was softened (task 63) to disclose Apple's
+      purchase check — re-upload the current `privacy-policy.html` to
+      `https://martinfreedom.com/keymoji/privacy.html` so the hosted page matches.
+- [ ] **Listing copy follow-up:** the IAP-reconciled Description in [`listing-en.md`](listing-en.md)
+      must be re-mirrored into `fastlane/metadata/en-GB/`, then run [`check-lengths.sh`](check-lengths.sh)
+      and `fastlane ios upload_metadata`. Promo text ("zero tracking") is unchanged — still true.
 
 ## Screenshots
 
