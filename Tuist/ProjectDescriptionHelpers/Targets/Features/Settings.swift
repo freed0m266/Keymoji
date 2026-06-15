@@ -8,6 +8,7 @@ public let settings = Feature(
 		.target(name: resources.name),
 		.target(keyboardCore),
 		.target(onboarding),
+		.target(paywall),
 		.target(about),
 		.target(emojiCodes),
 		.target(favoriteEmojisEditor),

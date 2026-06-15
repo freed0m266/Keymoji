@@ -181,6 +181,11 @@ final class KeyboardViewController: UIInputViewController {
 			settingsNotifier.addObserver(for: .favoritesSortMode) { [weak self] in
 				self?.refreshFromStore()
 			},
+			// After a purchase/restore in the host app, the running keyboard unlocks live (unlimited
+			// favorites + the chosen sort mode) without a restart.
+			settingsNotifier.addObserver(for: .isPlus) { [weak self] in
+				self?.refreshFromStore()
+			},
 			settingsNotifier.addObserver(for: .appearance) { [weak self] in
 				self?.refreshAppearance()
 			},
@@ -233,6 +238,11 @@ final class KeyboardViewController: UIInputViewController {
 		let storedUsageCounts = store.emojiUsageCounts
 		if state.emojiUsageCounts != storedUsageCounts {
 			state.emojiUsageCounts = storedUsageCounts
+			changed = true
+		}
+		let plus = store.isPlus
+		if state.isPlus != plus {
+			state.isPlus = plus
 			changed = true
 		}
 		let suggestionsOn = store.suggestionsEnabled
@@ -491,26 +501,36 @@ final class KeyboardViewController: UIInputViewController {
 	///   that were just un-favorited and append newly-favorited ones at the end (a long-press toggle
 	///   must still take effect, but existing items stay put).
 	private func refreshFavoritesDisplayOrder(favoritesVisible: Bool) {
+		// Reconcile against the entitlement-clamped list (`orderedFavorites()`), never the raw stored
+		// favorites — otherwise the frozen-while-visible path could show more than the free limit: a
+		// mid-session favorite toggle, or an entitlement downgrade that arrives while the bar/panel is
+		// on screen, would otherwise append past the cap until the favorites were hidden and reseeded.
+		let entitled = orderedFavorites()
 		guard favoritesVisible, !favoritesDisplayOrder.isEmpty else {
-			favoritesDisplayOrder = orderedFavorites()
+			favoritesDisplayOrder = entitled
 			return
 		}
-		let favorites = Set(state.favoriteEmojis)
-		var reconciled = favoritesDisplayOrder.filter { favorites.contains($0) }
+		let allowed = Set(entitled)
+		var reconciled = favoritesDisplayOrder.filter { allowed.contains($0) }
 		let present = Set(reconciled)
-		for emoji in state.favoriteEmojis where !present.contains(emoji) {
+		for emoji in entitled where !present.contains(emoji) {
 			reconciled.append(emoji)
 		}
 		favoritesDisplayOrder = reconciled
 	}
 
-	/// The favorites ordered per the current sort mode and usage counts. `.manual` returns the
-	/// hand-curated order unchanged; `.frequency` sorts by count descending (stable on ties).
+	/// The favorites the bar should show, in display order, clamped to the user's entitlement. Free
+	/// users see at most `FavoritesEntitlement.freeFavoritesLimit` favorites in `.manual` order (which
+	/// also keeps the bar to a single page — frequency auto-sort and paging are Plus-only); Plus users
+	/// get the full set in their chosen sort mode. The stored `favoriteEmojis` is never mutated here, so
+	/// a Plus → free transition (e.g. entitlement still loading after reinstall) hides extras without
+	/// losing them — they reappear once `isPlus` refreshes.
 	private func orderedFavorites() -> [String] {
-		FavoritesOrdering.ordered(
+		FavoritesEntitlement.visibleFavorites(
 			state.favoriteEmojis,
 			counts: state.emojiUsageCounts,
-			mode: state.favoritesSortMode
+			mode: state.favoritesSortMode,
+			isPlus: state.isPlus
 		)
 	}
 
@@ -668,6 +688,12 @@ final class KeyboardViewController: UIInputViewController {
 		if let index = updated.firstIndex(of: emoji) {
 			updated.remove(at: index)
 		} else {
+			// Respect the free favorites cap here too: the keyboard can't present a paywall (no StoreKit
+			// in the extension), so a free user at the limit simply can't add more from the emoji panel —
+			// the host app's editor is where the upgrade is offered. Removing is always allowed.
+			guard FavoritesEntitlement.canAddFavorite(currentCount: updated.count, isPlus: state.isPlus) else {
+				return
+			}
 			updated.append(emoji)
 		}
 		state.favoriteEmojis = updated

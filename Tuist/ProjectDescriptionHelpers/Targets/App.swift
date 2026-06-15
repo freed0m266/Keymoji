@@ -37,6 +37,7 @@ public let app: Target = .target(
 		.target(favoriteEmojisEditor),
 		.target(learnedWordsEditor),
 		.target(onboarding),
+		.target(paywall),
 		.target(about),
 		.target(settings),
 		.target(resources),

@@ -7,6 +7,7 @@ public let favoriteEmojisEditor = Feature(
 		.target(name: design.name),
 		.target(name: resources.name),
 		.target(name: keyboardCore.name),
-		.target(emojiCatalogPicker)
+		.target(emojiCatalogPicker),
+		.target(paywall)
 	]
 )

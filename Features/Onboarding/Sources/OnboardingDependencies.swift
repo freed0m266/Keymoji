@@ -12,9 +12,12 @@ public protocol OnboardingPreferencesProviding: Sendable {
 	var isOnboardingComplete: Bool { get }
 	/// Currently stored favorites — read once at view-model init to pre-fill the picker on re-run.
 	var currentFavorites: [String] { get }
+	/// Whether the user owns Keymoji Plus — caps the onboarding favorites selection for free users so
+	/// they can't save more than the keyboard would show (which would look like a silent loss).
+	var isPlus: Bool { get }
 	func markOnboardingComplete()
 	/// Final, single write of the onboarding favorites selection (already resolved against the
-	/// non-empty fallback by the view model). Also notifies a possibly-active keyboard to refresh.
+	/// non-empty fallback and the free cap by the view model). Also notifies a possibly-active keyboard.
 	func persistOnboardingFavorites(_ favorites: [String])
 }
 
@@ -33,6 +36,10 @@ public struct OnboardingPreferences: OnboardingPreferencesProviding {
 
 	public var currentFavorites: [String] {
 		store.favoriteEmojis
+	}
+
+	public var isPlus: Bool {
+		store.isPlus
 	}
 
 	public func markOnboardingComplete() {

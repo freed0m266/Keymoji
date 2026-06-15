@@ -9,6 +9,7 @@
 import Foundation
 import KeymojiCore
 import KeyboardCore
+import Paywall
 
 @MainActor
 public protocol SettingsViewModeling: Observable, AnyObject {
@@ -21,6 +22,8 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var letterAlternateSet: LetterAlternateSet { get set }
 	var suggestionsEnabled: Bool { get set }
 	var learnedWordCount: Int { get }
+	/// Whether the user owns Keymoji Plus — drives the Plus row (unlock vs. unlocked).
+	var isPlus: Bool { get }
 
 	/// Recompute `learnedWordCount` from the store (the keyboard mutates it out-of-process, and the
 	/// Learned words editor can delete entries). Refresh on view appear.
@@ -29,7 +32,7 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 
 @MainActor
 public func settingsVM() -> some SettingsViewModeling {
-	SettingsViewModel()
+	SettingsViewModel(purchaseService: PurchaseService.shared)
 }
 
 @Observable
@@ -93,18 +96,23 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 
 	private(set) var learnedWordCount: Int = 0
 
+	var isPlus: Bool { purchaseService.isPlus }
+
 	private let store: AppGroupStore
 	private let notifier: SettingsChangeNotifier
 	private let recentsStore: PersonalRecentsStore
+	private let purchaseService: any PurchaseServicing
 
 	// MARK: - Init
 
 	init(
 		store: AppGroupStore = .shared,
-		notifier: SettingsChangeNotifier = .shared
+		notifier: SettingsChangeNotifier = .shared,
+		purchaseService: any PurchaseServicing
 	) {
 		self.store = store
 		self.notifier = notifier
+		self.purchaseService = purchaseService
 		self.recentsStore = PersonalRecentsStore(store: store)
 		self.showNumberRow = store.showNumberRow
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
@@ -118,7 +126,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.learnedWordCount = recentsStore.count
 	}
 
-	// MARK: - Learned words
+	// MARK: - Public API
 
 	func refreshLearnedWordCount() {
 		learnedWordCount = recentsStore.count

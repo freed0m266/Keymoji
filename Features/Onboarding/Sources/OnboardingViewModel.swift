@@ -17,10 +17,14 @@ public protocol OnboardingViewModeling: Observable, AnyObject {
 	var isKeyboardActivated: Bool { get }
 	/// Favorites the user has tapped in the picker step, in tap order (= manual bar order).
 	var selectedFavorites: [String] { get }
+	/// Whether the user may select another favorite. False once a free user hits the free cap, so the
+	/// picker can dim the remaining cells instead of silently swallowing taps (no mid-onboarding upsell).
+	var canSelectMoreFavorites: Bool { get }
 
 	func didConfirmKeyboardAdded()
 	func didConfirmFullAccess()
 	/// Toggles `glyph` in `selectedFavorites`: appends if absent (keeping tap order), removes otherwise.
+	/// A free user who has hit the cap can still deselect, but adding past it is ignored.
 	func toggleFavorite(_ glyph: String)
 	func didFinishOnboarding()
 	func openSettings()
@@ -42,7 +46,14 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	private let dependencies: OnboardingDependencies
 	/// The step the flow started on — used to tell whether the picker was actually part of this run.
 	private let initialStep: OnboardingStep
+	/// Cap on the favorites a free user may pick — the keyboard would clamp anything beyond it, so we
+	/// never let onboarding save more (which would read as a silent loss). Unbounded for Plus.
+	private let favoritesLimit: Int
 	private var pollTask: Task<Void, Never>?
+
+	var canSelectMoreFavorites: Bool {
+		selectedFavorites.count < favoritesLimit
+	}
 
 	// MARK: - Init
 
@@ -50,6 +61,7 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		self.dependencies = dependencies
 		self.initialStep = initialStep
 		self.currentStep = initialStep
+		self.favoritesLimit = dependencies.preferences.isPlus ? .max : FavoritesEntitlement.freeFavoritesLimit
 		// Empty for a fresh install; pre-filled with the stored set on a re-run from Settings.
 		self.selectedFavorites = dependencies.preferences.currentFavorites
 		super.init()
@@ -69,9 +81,10 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	func toggleFavorite(_ glyph: String) {
 		if let index = selectedFavorites.firstIndex(of: glyph) {
 			selectedFavorites.remove(at: index)
-		} else {
+		} else if canSelectMoreFavorites {
 			selectedFavorites.append(glyph)
 		}
+		// Adding past the free cap is a no-op — the picker dims further cells, no upsell mid-flow.
 	}
 
 	func didFinishOnboarding() {
@@ -89,7 +102,9 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	private func persistFavoritesIfPickerWasShown() {
 		guard initialStep.rawValue <= OnboardingStep.pickFavorites.rawValue else { return }
 		let resolved = selectedFavorites.isEmpty ? EmojiCatalog.defaultFavorites : selectedFavorites
-		dependencies.preferences.persistOnboardingFavorites(resolved)
+		// Cap the write to the free limit: the curated fallback has 12, but a free user can only keep
+		// `freeFavoritesLimit`, so save the first N rather than let the keyboard clamp it inconsistently.
+		dependencies.preferences.persistOnboardingFavorites(Array(resolved.prefix(favoritesLimit)))
 	}
 
 	func openSettings() {

@@ -96,6 +96,14 @@ public extension AppGroupStore {
 		set { setBool(newValue, forKey: .onboardingComplete) }
 	}
 
+	/// Keymoji Plus entitlement. Source of truth for the freemium gate, shared host app ↔ extension.
+	/// Defaults to `false` (free). Written only by the host app's `PurchaseService`; the keyboard
+	/// extension reads it to clamp favorites and never mutates it (no StoreKit in the extension).
+	var isPlus: Bool {
+		get { bool(forKey: .isPlus, default: false) }
+		set { setBool(newValue, forKey: .isPlus) }
+	}
+
 	var appearance: AppearancePreference {
 		get {
 			guard let raw = string(forKey: .appearance) else { return .system }

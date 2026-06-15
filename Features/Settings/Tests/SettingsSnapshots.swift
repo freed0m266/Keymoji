@@ -53,6 +53,10 @@ final class SettingsSnapshots: XCTestCase {
 		assertSnapshot(view)
 	}
 
+	// Note: the Keymoji Plus section sits below the fold in this fixed-height capture (the keyboard
+	// section's many pickers push it off-screen), so it isn't snapshot-verified here. Its two states
+	// are covered by the SettingsViewModel `isPlus` wiring and the Paywall snapshots instead.
+
 	private func assertSnapshot<V: View>(
 		_ view: V,
 		record: Bool = false,

@@ -72,6 +72,12 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `.frequency` favorites ordering.
 	public var emojiUsageCounts: [String: Int]
 
+	/// Keymoji Plus entitlement. Runtime mirror of `AppGroupStore.isPlus`, refreshed on
+	/// `viewWillAppear` and the `.isPlus` Darwin notification (live unlock after a purchase). Free
+	/// (`false`) clamps the favorites bar to `FavoritesEntitlement.freeFavoritesLimit` and forces
+	/// `.manual` order; the extension never runs StoreKit — it only reads this mirror.
+	public var isPlus: Bool
+
 	/// Maximum number of emojis tracked in `recentEmojis`. Keeps the recents tab to two short
 	/// rows on iPhone portrait — long enough to be useful, short enough that it never scrolls.
 	public static let recentEmojisCapacity = 30
@@ -110,6 +116,7 @@ public struct KeyboardState: Sendable, Equatable {
 		favoriteEmojis: [String] = [],
 		favoritesSortMode: FavoritesSortMode = .manual,
 		emojiUsageCounts: [String: Int] = [:],
+		isPlus: Bool = false,
 		searchQuery: String = "",
 		suggestionsEnabled: Bool = true,
 		currentEligibility: SuggestionEligibility = .denied,
@@ -131,6 +138,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.favoriteEmojis = favoriteEmojis
 		self.favoritesSortMode = favoritesSortMode
 		self.emojiUsageCounts = emojiUsageCounts
+		self.isPlus = isPlus
 		self.searchQuery = searchQuery
 		self.suggestionsEnabled = suggestionsEnabled
 		self.currentEligibility = currentEligibility

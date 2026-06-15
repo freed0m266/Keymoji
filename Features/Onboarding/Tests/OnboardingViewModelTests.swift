@@ -8,6 +8,7 @@
 
 import XCTest
 import KeyboardCore
+import KeymojiCore
 @testable import Onboarding
 
 @MainActor
@@ -15,14 +16,52 @@ final class OnboardingViewModelTests: XCTestCase {
 
 	// MARK: - Finish: selection vs. fallback
 
-	func testFinish_emptySelection_persistsDefaultFavorites() {
-		let spy = FavoritesPreferencesSpy(currentFavorites: [])
+	func testFinish_emptySelection_freeUser_persistsCappedDefaultFavorites() {
+		let spy = FavoritesPreferencesSpy(currentFavorites: [])   // free by default
 		let viewModel = makeViewModel(spy)
 
 		viewModel.didFinishOnboarding()
 
-		// Skip / Continue without picking → the curated 12, in order. Never empty, never random.
+		// Skip / Continue without picking → the curated fallback, capped to the free limit (never the
+		// full 12, which the keyboard would clamp), in order. Never empty, never random.
+		XCTAssertEqual(
+			spy.persistedFavorites,
+			Array(EmojiCatalog.defaultFavorites.prefix(FavoritesEntitlement.freeFavoritesLimit))
+		)
+	}
+
+	func testFinish_emptySelection_plusUser_persistsAllDefaultFavorites() {
+		let spy = FavoritesPreferencesSpy(currentFavorites: [], isPlus: true)
+		let viewModel = makeViewModel(spy)
+
+		viewModel.didFinishOnboarding()
+
 		XCTAssertEqual(spy.persistedFavorites, EmojiCatalog.defaultFavorites)
+	}
+
+	// MARK: - Free favorites cap
+
+	func testToggleFavorite_freeUser_stopsAtLimit() {
+		let spy = FavoritesPreferencesSpy(currentFavorites: [])
+		let viewModel = makeViewModel(spy)
+
+		let glyphs = ["❤️", "😂", "👍", "🙏", "😍", "🔥", "🎉", "🥰"]
+		glyphs.forEach { viewModel.toggleFavorite($0) }
+
+		XCTAssertEqual(viewModel.selectedFavorites.count, FavoritesEntitlement.freeFavoritesLimit)
+		XCTAssertFalse(viewModel.canSelectMoreFavorites)
+		XCTAssertEqual(viewModel.selectedFavorites, Array(glyphs.prefix(FavoritesEntitlement.freeFavoritesLimit)))
+	}
+
+	func testToggleFavorite_plusUser_hasNoCap() {
+		let spy = FavoritesPreferencesSpy(currentFavorites: [], isPlus: true)
+		let viewModel = makeViewModel(spy)
+
+		let glyphs = ["❤️", "😂", "👍", "🙏", "😍", "🔥", "🎉", "🥰"]
+		glyphs.forEach { viewModel.toggleFavorite($0) }
+
+		XCTAssertEqual(viewModel.selectedFavorites, glyphs)
+		XCTAssertTrue(viewModel.canSelectMoreFavorites)
 	}
 
 	func testFinish_nonEmptySelection_persistsSelectedInTapOrder() {
@@ -106,13 +145,15 @@ final class OnboardingViewModelTests: XCTestCase {
 private final class FavoritesPreferencesSpy: OnboardingPreferencesProviding, @unchecked Sendable {
 	let isOnboardingComplete = false
 	let currentFavorites: [String]
+	let isPlus: Bool
 
 	private let lock = NSLock()
 	private var _persistedFavorites: [String]?
 	private var _markCompleteCount = 0
 
-	init(currentFavorites: [String]) {
+	init(currentFavorites: [String], isPlus: Bool = false) {
 		self.currentFavorites = currentFavorites
+		self.isPlus = isPlus
 	}
 
 	var persistedFavorites: [String]? { lock.withLock { _persistedFavorites } }

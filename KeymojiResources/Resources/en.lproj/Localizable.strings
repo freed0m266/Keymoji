@@ -101,6 +101,9 @@
 "settings.favorites.sort.manual" = "Manual";
 "settings.favorites.sort.frequency" = "Most used";
 "settings.favorites.frequencyFooter" = "Favorites are ordered by how often you use them.";
+"settings.favorites.frequencyLockedFooter" = "Auto-sort by most-used is a Keymoji Plus feature. Unlock it to order favorites by how often you use them.";
+"settings.favorites.limitTitle" = "Unlock unlimited favorites";
+"settings.favorites.limitCaption" = "%1$d of %2$d free favorites used";
 "settings.emojiCodes.row" = "Emoji codes reference";
 "settings.emojiCodes.footer" = "Browse all shortcodes the keyboard recognises.";
 
@@ -108,6 +111,31 @@
 "settings.suggestions.toggleTitle" = "Word suggestions";
 "settings.suggestions.toggleFooter" = "Suggests words as you type. Keymoji learns from your typing to improve suggestions — all learning stays on this iPhone.";
 "settings.suggestions.learnedWordsLabel" = "Learned words";
+
+"settings.plus.header" = "Keymoji Plus";
+"settings.plus.unlock" = "Unlock Keymoji Plus";
+"settings.plus.unlocked" = "Keymoji Plus — Unlocked";
+"settings.plus.footer" = "A one-time unlock for unlimited favorite emoji, multiple favorite pages, and auto-sort by most-used. The keyboard itself is always free.";
+
+"paywall.headlineLimit" = "You've filled your %d free favorites.";
+"paywall.headlineFrequency" = "Auto-sort is a Keymoji Plus feature.";
+"paywall.headlineSettings" = "Keymoji Plus";
+"paywall.subtitle" = "More of the emoji you already love — unlocked once, yours forever.";
+"paywall.benefitUnlimited" = "Unlimited favorite emoji";
+"paywall.benefitPages" = "Multiple favorite pages";
+"paywall.benefitAutoSort" = "Auto-sort by most-used";
+"paywall.cta" = "Unlock for %@";
+"paywall.restore" = "Restore purchase";
+"paywall.retry" = "Try again";
+"paywall.productsUnavailable" = "Couldn't reach the App Store. Check your connection and try again.";
+"paywall.privacyPolicy" = "Privacy Policy";
+"paywall.noSubscription" = "No subscription. No tracking. Pay once, yours forever.";
+"paywall.indie" = "Built by one developer. Your purchase keeps Keymoji independent, ad-free, and private.";
+"paywall.successTitle" = "You're Plus!";
+"paywall.successBody" = "Unlimited favorites unlocked. Add as many as you like and sort them your way.";
+"paywall.successCta" = "Done";
+"paywall.errorPurchase" = "That didn't go through. No charge was made — please try again.";
+"paywall.errorNothingToRestore" = "No previous purchase was found on this Apple Account.";
 
 "settings.learnedWords.title" = "Learned words";
 "settings.learnedWords.sort.mostUsed" = "Most used";

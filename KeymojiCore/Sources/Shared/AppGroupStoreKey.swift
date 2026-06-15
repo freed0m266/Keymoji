@@ -24,4 +24,8 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case wordCompletionRecents
 	/// JSON `{ "word": unixTimestamp }` mirroring `wordCompletionRecents`, used for LRU eviction.
 	case wordCompletionRecentsLastUsed
+	/// Keymoji Plus entitlement mirror (`Bool`). Written by the host app's `PurchaseService` after a
+	/// purchase/restore/entitlement refresh; read (never written) by the keyboard extension, which has
+	/// no StoreKit code. Its dedicated Darwin channel live-unlocks a running keyboard right after a buy.
+	case isPlus
 }

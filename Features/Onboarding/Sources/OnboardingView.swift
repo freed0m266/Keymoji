@@ -51,7 +51,6 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 		.onForeground {
 			viewModel.refreshKeyboardStatus()
 		}
-		.preferredColorScheme(.dark)
 	}
 
 	private var addKeyboardStep: some View {
@@ -209,7 +208,10 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 	}
 
 	private func favoriteCell(_ glyph: String, isSelected: Bool) -> some View {
-		Button {
+		// Free users cap out at the free favorites limit — dim the remaining cells (no mid-onboarding
+		// upsell) so a tap that wouldn't register reads as "full", not broken.
+		let isDimmed = !isSelected && !viewModel.canSelectMoreFavorites
+		return Button {
 			viewModel.toggleFavorite(glyph)
 		} label: {
 			ZStack(alignment: .topTrailing) {
@@ -230,8 +232,10 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 				}
 			}
 			.contentShape(.rect)
+			.opacity(isDimmed ? 0.35 : 1)
 		}
 		.buttonStyle(.plain)
+		.disabled(isDimmed)
 		.accessibilityLabel(glyph)
 		.accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
 	}

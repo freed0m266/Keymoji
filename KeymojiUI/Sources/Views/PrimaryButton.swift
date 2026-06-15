@@ -9,9 +9,10 @@
 import SwiftUI
 
 public struct PrimaryButton: View {
+	@Environment(\.isEnabled) private var isEnabled
+
 	let title: String
 	let isLoading: Bool
-	let isDisabled: Bool
 	let action: () -> Void
 
 	public init(
@@ -22,7 +23,6 @@ public struct PrimaryButton: View {
 	) {
 		self.title = title
 		self.isLoading = isLoading
-		self.isDisabled = isDisabled
 		self.action = action
 	}
 
@@ -41,7 +41,7 @@ public struct PrimaryButton: View {
 		}
 		.buttonStyle(.glassProminent)
 		.tint(.accentColor)
-		.disabled(isDisabled || isLoading)
+		.disabled(!isEnabled || isLoading)
 	}
 }
 

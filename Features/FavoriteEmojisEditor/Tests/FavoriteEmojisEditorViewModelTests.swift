@@ -8,6 +8,7 @@
 
 import XCTest
 import KeymojiCore
+import Paywall
 @testable import FavoriteEmojisEditor
 
 @MainActor
@@ -17,34 +18,53 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 		AppGroupStore(suiteName: "keymoji.tests.favoriteEmojisEditor.\(UUID().uuidString)")
 	}
 
+	private func makeVM(
+		store: AppGroupStore,
+		notifier: SettingsChangeNotifier = .shared,
+		isPlus: Bool = true
+	) -> FavoriteEmojisEditorViewModel {
+		FavoriteEmojisEditorViewModel(
+			store: store,
+			notifier: notifier,
+			purchaseService: PurchaseServiceMock(isPlus: isPlus)
+		)
+	}
+
 	// MARK: - Defaults
 
 	func testSortMode_defaultsToManual() {
-		let vm = FavoriteEmojisEditorViewModel(store: makeStore())
+		let vm = makeVM(store: makeStore())
 		XCTAssertEqual(vm.sortMode, .manual)
 	}
 
-	func testInit_readsSortModeFromStore() {
+	func testInit_readsSortModeFromStore_whenPlus() {
 		let store = makeStore()
 		store.favoritesSortMode = .frequency
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store, isPlus: true)
 		XCTAssertEqual(vm.sortMode, .frequency)
 	}
 
-	// MARK: - Sort mode persistence + notification
+	func testInit_freeUser_fallsBackToManual_evenIfStoredFrequency() {
+		let store = makeStore()
+		store.favoritesSortMode = .frequency
+		let vm = makeVM(store: store, isPlus: false)
+		// A stale Plus-era `.frequency` must not survive a downgrade.
+		XCTAssertEqual(vm.sortMode, .manual)
+	}
 
-	// Darwin notifications round-trip within a single process, so post → observe proves the
-	// live-propagation wiring (same approach as SettingsChangeNotifierTests).
-	func testSettingSortMode_persistsAndPostsNotification() async {
+	// MARK: - Sort mode persistence + notification (Plus)
+
+	func testSettingSortMode_plus_persistsAndPostsNotification() async {
 		let store = makeStore()
 		let notifier = SettingsChangeNotifier()
-		let vm = FavoriteEmojisEditorViewModel(store: store, notifier: notifier)
+		let vm = makeVM(store: store, notifier: notifier, isPlus: true)
 		let fired = expectation(description: "favoritesSortMode notification fires")
 		let token = notifier.addObserver(for: .favoritesSortMode) { fired.fulfill() }
 
-		vm.sortMode = .frequency
+		vm.setSortMode(.frequency)
 
 		await fulfillment(of: [fired], timeout: 2.0)
+		XCTAssertEqual(vm.sortMode, .frequency)
 		XCTAssertEqual(store.favoritesSortMode, .frequency)
 		_ = token
 	}
@@ -52,15 +72,70 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 	func testSettingSortMode_toSameValue_doesNotPost() async {
 		let store = makeStore()
 		let notifier = SettingsChangeNotifier()
-		let vm = FavoriteEmojisEditorViewModel(store: store, notifier: notifier)
+		let vm = makeVM(store: store, notifier: notifier, isPlus: true)
 		let unwanted = expectation(description: "no notification on no-op set")
 		unwanted.isInverted = true
 		let token = notifier.addObserver(for: .favoritesSortMode) { unwanted.fulfill() }
 
-		vm.sortMode = .manual   // already manual
+		vm.setSortMode(.manual)   // already manual
 
 		await fulfillment(of: [unwanted], timeout: 0.5)
 		_ = token
+	}
+
+	// MARK: - Frequency sort gate (Plus-only)
+
+	func testSettingFrequency_freeUser_isRejectedAndOpensPaywall() {
+		let store = makeStore()
+		let vm = makeVM(store: store, isPlus: false)
+		vm.setSortMode(.frequency)
+		XCTAssertEqual(vm.sortMode, .manual)               // gate held
+		XCTAssertEqual(vm.paywallContext, .frequencySort)  // invited to Plus
+		XCTAssertEqual(store.favoritesSortMode, .manual)   // nothing persisted
+	}
+
+	// MARK: - Favorites limit gate
+
+	func testAddFavorite_freeUserAtLimit_isBlockedAndOpensPaywall() {
+		let store = makeStore()
+		store.favoriteEmojis = ["❤️", "😂", "👍", "🙏", "😍", "🔥"]   // 6 = the free cap
+		let vm = makeVM(store: store, isPlus: false)
+		XCTAssertFalse(vm.canAddMoreFavorites)
+
+		vm.toggle("🎉")   // 7th
+
+		XCTAssertEqual(vm.favorites.count, FavoritesEntitlement.freeFavoritesLimit)
+		XCTAssertFalse(vm.favorites.contains("🎉"))
+		XCTAssertEqual(vm.paywallContext, .favoritesLimit)
+		XCTAssertEqual(store.favoriteEmojis.count, FavoritesEntitlement.freeFavoritesLimit)
+	}
+
+	func testAddFavorite_freeUserBelowLimit_succeeds() {
+		let store = makeStore()
+		store.favoriteEmojis = ["❤️", "😂", "👍"]
+		let vm = makeVM(store: store, isPlus: false)
+		vm.toggle("🎉")
+		XCTAssertEqual(vm.favorites, ["❤️", "😂", "👍", "🎉"])
+		XCTAssertNil(vm.paywallContext)
+	}
+
+	func testRemoveFavorite_freeUserAtLimit_isAlwaysAllowed() {
+		let store = makeStore()
+		store.favoriteEmojis = ["❤️", "😂", "👍", "🙏", "😍", "🔥"]
+		let vm = makeVM(store: store, isPlus: false)
+		vm.toggle("🔥")   // remove existing — must not be gated
+		XCTAssertFalse(vm.favorites.contains("🔥"))
+		XCTAssertNil(vm.paywallContext)
+	}
+
+	func testAddFavorite_plusUser_canExceedLimit() {
+		let store = makeStore()
+		store.favoriteEmojis = ["❤️", "😂", "👍", "🙏", "😍", "🔥"]
+		let vm = makeVM(store: store, isPlus: true)
+		XCTAssertTrue(vm.canAddMoreFavorites)
+		vm.toggle("🎉")
+		XCTAssertEqual(vm.favorites.count, 7)
+		XCTAssertNil(vm.paywallContext)
 	}
 
 	// MARK: - Displayed favorites
@@ -69,7 +144,7 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 		let store = makeStore()
 		store.favoriteEmojis = ["❤️", "😀", "🚀"]
 		store.emojiUsageCounts = ["🚀": 10]
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store)
 		XCTAssertEqual(vm.displayedFavorites, ["❤️", "😀", "🚀"])
 	}
 
@@ -78,7 +153,7 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 		store.favoriteEmojis = ["❤️", "😀", "🚀"]
 		store.emojiUsageCounts = ["🚀": 10, "❤️": 2, "😀": 5]
 		store.favoritesSortMode = .frequency
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store, isPlus: true)
 		XCTAssertEqual(vm.displayedFavorites, ["🚀", "😀", "❤️"])
 	}
 
@@ -89,7 +164,7 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 		store.favoriteEmojis = ["❤️", "😀", "🚀"]   // stored (manual) order
 		store.emojiUsageCounts = ["🚀": 10, "❤️": 2, "😀": 5]
 		store.favoritesSortMode = .frequency
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store, isPlus: true)
 		// Displayed: [🚀, 😀, ❤️]. Delete index 0 → must remove 🚀, not stored[0] (❤️).
 		vm.remove(at: IndexSet(integer: 0))
 		XCTAssertEqual(vm.favorites, ["❤️", "😀"])
@@ -99,7 +174,7 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 	func testRemove_inManual_deletesByOffset() {
 		let store = makeStore()
 		store.favoriteEmojis = ["❤️", "😀", "🚀"]
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store)
 		vm.remove(at: IndexSet(integer: 1))   // 😀
 		XCTAssertEqual(vm.favorites, ["❤️", "🚀"])
 	}
@@ -110,7 +185,7 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 		let store = makeStore()
 		store.favoriteEmojis = ["❤️", "😀", "🚀"]
 		store.favoritesSortMode = .frequency
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store, isPlus: true)
 		vm.move(fromOffsets: IndexSet(integer: 0), toOffset: 3)
 		XCTAssertEqual(vm.favorites, ["❤️", "😀", "🚀"])
 	}
@@ -118,7 +193,7 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 	func testMove_inManual_reorders() {
 		let store = makeStore()
 		store.favoriteEmojis = ["❤️", "😀", "🚀"]
-		let vm = FavoriteEmojisEditorViewModel(store: store)
+		let vm = makeVM(store: store)
 		vm.move(fromOffsets: IndexSet(integer: 0), toOffset: 3)
 		XCTAssertEqual(vm.favorites, ["😀", "🚀", "❤️"])
 	}

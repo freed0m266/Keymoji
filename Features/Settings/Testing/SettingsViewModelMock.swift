@@ -22,6 +22,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 	var letterAlternateSet: LetterAlternateSet
 	var suggestionsEnabled: Bool
 	private(set) var learnedWordCount: Int
+	var isPlus: Bool
 
 	init(
 		showNumberRow: Bool = true,
@@ -33,6 +34,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		letterAlternateSet: LetterAlternateSet = .czech,
 		suggestionsEnabled: Bool = true,
 		learnedWordCount: Int = 128,
+		isPlus: Bool = false,
 	) {
 		self.showNumberRow = showNumberRow
 		self.hapticFeedbackEnabled = hapticFeedbackEnabled
@@ -43,6 +45,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		self.letterAlternateSet = letterAlternateSet
 		self.suggestionsEnabled = suggestionsEnabled
 		self.learnedWordCount = learnedWordCount
+		self.isPlus = isPlus
 	}
 
 	func refreshLearnedWordCount() {}

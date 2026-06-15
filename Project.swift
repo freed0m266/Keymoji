@@ -7,6 +7,7 @@ let features: [Feature] = [
 	favoriteEmojisEditor,
 	learnedWordsEditor,
 	onboarding,
+	paywall,
 	about,
 	emojiCodes,
 	settings
@@ -55,7 +56,10 @@ let project = Project(
 				targets: ["Keymoji", "KeyboardExtension"]
 			),
 			runAction: .runAction(
-				executable: .executable("Keymoji")
+				executable: .executable("Keymoji"),
+				options: .options(
+					storeKitConfigurationPath: .relativeToRoot("Keymoji/Resources/Keymoji.storekit")
+				)
 			),
 			archiveAction: .archiveAction(
 				configuration: "Release"

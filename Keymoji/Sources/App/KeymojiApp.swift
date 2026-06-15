@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftyBeaver
 import KeymojiCore
 import Onboarding
+import Paywall
 import Settings
 
 @main
@@ -33,7 +34,19 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 	) -> Bool {
 		setupLogger()
+		startPurchases()
 		return true
+	}
+
+	/// Bring up the StoreKit gateway once at launch: start the `Transaction.updates` listener (catches
+	/// Ask-to-Buy approvals and cross-device purchases) and pre-load the product so the price is ready
+	/// before the user ever reaches the paywall. The keyboard extension never touches StoreKit; it reads
+	/// the `AppGroupStore.isPlus` mirror this keeps current.
+	@MainActor
+	private func startPurchases() {
+		let service = PurchaseService.shared
+		service.start()
+		Task { await service.loadProducts() }
 	}
 }
 

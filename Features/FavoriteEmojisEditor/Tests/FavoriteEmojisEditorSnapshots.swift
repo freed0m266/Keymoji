@@ -50,6 +50,20 @@ final class FavoriteEmojisEditorSnapshots: XCTestCase {
 		assertSnapshot(view)
 	}
 
+	func testFavoriteEmojisEditor_freeAtLimit_dark() {
+		// Free user with the 6-favorite cap filled: locked "Most used" segment + the "6 of 6" upsell row.
+		let view = NavigationStack {
+			FavoriteEmojisEditorView(
+				viewModel: FavoriteEmojisEditorViewModelMock(
+					favorites: ["❤️", "😂", "👍", "🙏", "😍", "🔥"],
+					isPlus: false
+				)
+			)
+		}
+		.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
 	private func assertSnapshot<V: View>(
 		_ view: V,
 		record: Bool = false,

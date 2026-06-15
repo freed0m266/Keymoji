@@ -46,6 +46,14 @@ public extension Icon {
 	static var keyboardBadgeEye: Icon = "keyboard.badge.eye"
 	/// lock.shield
 	static var lockShield: Icon = "lock.shield"
+	/// star.fill
+	static var starFill: Icon = "star.fill"
+	/// star.circle.fill
+	static var starCircleFill: Icon = "star.circle.fill"
+	/// square.stack.3d.up.fill
+	static var squareStack: Icon = "square.stack.3d.up.fill"
+	/// chart.bar.fill
+	static var chartBarFill: Icon = "chart.bar.fill"
 }
 
 #Preview {

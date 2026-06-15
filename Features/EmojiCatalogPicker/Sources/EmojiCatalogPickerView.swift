@@ -46,7 +46,7 @@ public struct EmojiCatalogPickerView: View {
 					Section {
 						LazyVGrid(columns: columns, spacing: Self.gridSpacing) {
 							ForEach(EmojiCatalog.emojis(for: category)) { emoji in
-								cell(for: emoji.glyph)
+								cell(for: emoji.glyph, isSelected: selectedEmojis.contains(emoji.glyph))
 							}
 						}
 						.padding(.horizontal, 16)
@@ -87,9 +87,8 @@ public struct EmojiCatalogPickerView: View {
 		.background(Color(.systemBackground))
 	}
 
-	private func cell(for emoji: String) -> some View {
-		let isSelected = selectedEmojis.contains(emoji)
-		return Button {
+	private func cell(for emoji: String, isSelected: Bool) -> some View {
+		Button {
 			onToggle(emoji)
 		} label: {
 			ZStack(alignment: .topTrailing) {

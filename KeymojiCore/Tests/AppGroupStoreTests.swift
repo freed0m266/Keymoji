@@ -33,6 +33,10 @@ final class AppGroupStoreTests: XCTestCase {
 		XCTAssertFalse(store.onboardingComplete)
 	}
 
+	func testIsPlus_defaultsToFalse() {
+		XCTAssertFalse(store.isPlus)
+	}
+
 	// MARK: - Set / get
 
 	func testShowNumberRow_canBeDisabled() {
@@ -48,6 +52,13 @@ final class AppGroupStoreTests: XCTestCase {
 	func testOnboardingComplete_canBeMarked() {
 		store.onboardingComplete = true
 		XCTAssertTrue(store.onboardingComplete)
+	}
+
+	func testIsPlus_roundTrips() {
+		store.isPlus = true
+		XCTAssertTrue(store.isPlus)
+		store.isPlus = false
+		XCTAssertFalse(store.isPlus)
 	}
 
 	// MARK: - Default fallback distinguishes unset from `false`

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import BaseKitX
 import KeymojiCore
 import KeymojiResources
 import KeymojiUI
@@ -16,10 +17,12 @@ import EmojiCodes
 import FavoriteEmojisEditor
 import LearnedWordsEditor
 import Onboarding
+import Paywall
 
 public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	@Bindable private var viewModel: ViewModel
 	@State private var sheet: SheetKind?
+	@State private var paywallContext: PaywallContext?
 
 	typealias Texts = L10n.Settings
 
@@ -34,6 +37,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				emojiCodesSection
 				keyboardSection
 				suggestionsSection
+				plusSection
 				supportSection
 				aboutSection
 			}
@@ -47,8 +51,41 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 						onFinish: { sheet = nil }
 					)
 				}
-				.preferredColorScheme(.dark)
 			}
+			.sheet(item: $paywallContext) { context in
+				PaywallView(
+					viewModel: paywallVM(context: context),
+					onFinish: { paywallContext = nil }
+				)
+			}
+		}
+	}
+
+	private var plusSection: some View {
+		Section {
+			if viewModel.isPlus {
+				Label(Texts.Plus.unlocked, systemImage: "checkmark.seal.fill")
+					.foregroundStyle(.primary)
+			} else {
+				Button {
+					paywallContext = .settings
+				} label: {
+					HStack {
+						Text("✨ \(Texts.Plus.unlock)")
+							.foregroundStyle(.primary)
+							.maxWidthLeading()
+
+						Icon.chevronRight
+							.font(.footnote.weight(.bold))
+							.foregroundStyle(.tertiary)
+					}
+				}
+				.buttonStyle(.plain)
+			}
+		} header: {
+			Text(Texts.Plus.header)
+		} footer: {
+			Text(Texts.Plus.footer)
 		}
 	}
 
@@ -135,7 +172,6 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 	}
 
-	@ViewBuilder
 	private var suggestionsSection: some View {
 		Section {
 			Toggle(Texts.Suggestions.toggleTitle, isOn: $viewModel.suggestionsEnabled)
