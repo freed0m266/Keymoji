@@ -6,6 +6,51 @@
 
 **Závisí na:** [63 — Keymoji Plus](63-monetization-keymoji-plus.md) (entitlement infra, paywall, downgrade fallback, free favorites limit). Bez 63 nedává smysl.
 
+## ⚠️ Log z 1. pokusu — NEDOKONČENO, vráceno (2026-06-15)
+
+Zkusili jsme celý task naimplementovat (detekce, Keychain perzistence, `effectiveIsPlus`
+plumbing, ConfettiSwiftUI efekt, loss-aversion banner, countdown v Settings, paywall
+headline, lokalizace, testy). **Všechno se zbuildilo a všechny unit testy prošly, ALE na
+zařízení to nefungovalo** — napsání „hesoyam" neudělalo vůbec nic. Změny jsme vrátili
+(`git reset --hard`, větev smazána). Zjištění, ať jsme příště rychlejší:
+
+1. **Root cause: `textDidChange` v extension neslučuje 1:1 se znaky.** Při psaní (a hlavně
+   při vkládání přes návrhy) buffer skočí v jednom callbacku třeba z „heso" rovnou na
+   „hesoyam h" — klávesnice tedy skoro nikdy nevidí buffer končící **přesně** na „hesoyam".
+   Detekce přes `hasSuffix("hesoyam")` proto reálné aktivace míjela. (Ověřeno on-device:
+   po ~18 napsaných znacích jen ~4 volání detekce; kontext byl „hesoyam h", `match=false`.)
+   → Detekovat přes **okno na konci bufferu** (`contains` v posledních ~17 znacích, snese
+   pár trailing znaků), ne striktní suffix. **Scope 4 „context KONČÍ na HESOYAM" je tím
+   pádem v praxi špatně — přepsat zadání.**
+
+2. **`documentContextBeforeInput` funguje** — v debug proužku jsme „hesoyam" reálně viděli.
+   Dostupnost kontextu NENÍ problém (obava v Rizicích je lichá).
+
+3. **Efekt (ConfettiSwiftUI overlay + banner) jsme NIKDY neviděli** — protože detekce
+   nefírovala, overlay se nespustil. Jestli konfety/banner reálně fungují, je **pořád
+   neznámé**. Příště ověřit efekt samostatně a brzy (ne ho stavět naslepo).
+
+4. **Jak debugovat extension:** Xcode konzole NEukazuje logy z extension, když pustíš
+   host-app scheme (debugger visí na appce, ne na extension). Co fungovalo a použít hned
+   příště: **vykreslit debug stav přímo na klávesnici** (dočasný proužek se živým
+   `documentContextBeforeInput` + match stavem). Tahle technika dovedla k root cause.
+
+5. **Meta-lekce (nejdůležitější):** zelené unit testy ≠ funguje na zařízení, u klávesnice
+   obzvlášť. Stavět **inkrementálně a ověřovat běh na telefonu po každém kroku**. Nejdřív
+   rozchodit jádro (detekce → efekt) na zařízení, teprve pak Keychain / paywall / zbytek.
+   Tady se postavila celá featura proti zeleným testům a ověřovalo se až nakonec = chyba.
+
+6. **Co bylo OK k převzetí:** `effectiveIsPlus` (paid OR aktivní promo) protažený přes
+   editor/settings/onboarding/keyboard clamp; Keychain shared-access-group + ConfettiSwiftUI
+   (ověřeno extension-safe: žádné `UIApplication`/`UIScreen`) + KeychainAccess wiring se
+   zbuildilo. Persistence přes reinstal neověřena.
+
+7. **Drobnosti:** chime byl jen tipnutý placeholder (system sound `1025`), nikdy neslyšený ·
+   build pouštět přes `xcodebuild -workspace`, NE `-project` (Tuist dává externí SPM do
+   workspace, jinak „Unable to find module dependency") · simulátory tu jsou iPhone 17 /
+   iOS 26.2 · `Paywall_Tests/testPaywall_loadingPrice_dark` padá i na čistém `main`
+   (animovaný spinner snapshot, env-citlivý — nesouvisí s tímhle taskem).
+
 ## Cíl
 
 Skrytý promo „cheat": uživatel napíše na klávesnici **`HESOYAM`** (pocta GTA: San
