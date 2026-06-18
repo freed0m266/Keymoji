@@ -1,6 +1,6 @@
 # 64 — „HESOYAM" promo cheat → 30denní Plus trial
 
-**Status:** TODO
+**Status:** Todo
 
 **Priorita:** v1.x (po/se [taskem 63](63-monetization-keymoji-plus.md)) · **Úsilí:** M–L · **Dopad:** Medium (akvizice + konverze)
 
