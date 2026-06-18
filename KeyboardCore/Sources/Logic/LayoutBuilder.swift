@@ -35,7 +35,7 @@ public enum LayoutBuilder {
 		case .letters(let shift):
 			rows.append(contentsOf: makeLetterRows(shift: shift, letterLayout: letterLayout, alternateSet: alternateSet))
 		case .symbols(let symbolPage):
-			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: false))
+			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: false, includeDigits: !includeNumberRow))
 		case .emojis:
 			// Emoji page renders an `EmojiPanelView` in place of the letter/symbol rows.
 			// No row keys here — only the page-specific bottom row appears below.
@@ -48,8 +48,10 @@ public enum LayoutBuilder {
 		case .emojiSearchSymbols(let symbolPage):
 			// Symbols variant of search mode — same row content as the regular `.symbols`
 			// layout, but the in-row `#+=` / `123` toggle keeps the user in the search-mode
-			// symbol pages instead of escaping back to plain symbols.
-			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: true))
+			// symbol pages instead of escaping back to plain symbols. The number row is always
+			// dropped here (`includeNumberRow` is false on every search page), so `includeDigits`
+			// is always true → digits ride the primary symbol page, the only place to reach them.
+			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: true, includeDigits: !includeNumberRow))
 		case .numeric(let kind):
 			// The numpad builds all four of its own rows (digits + a custom bottom row with the
 			// separator/delete), so it skips both the number row above and `makeBottomRow` below.
@@ -76,8 +78,18 @@ public enum LayoutBuilder {
 		("6", "^"), ("7", "&"), ("8", "*"), ("9", "("), ("0", ")")
 	]
 
-	private static func makeNumberRow() -> KeyboardRow {
-		let keys = numberRowMapping.map { entry in
+	/// The ten digit keys, shared between the number row (letters page) and the primary symbol page
+	/// in native config. Each carries its `numberRowMapping` alternate (`1→!` … `0→)`) and uses the
+	/// `.standard` visual weight (10 keys = full row width, no `referenceWeight`).
+	///
+	/// The key IDs (`number.1` … `number.0`) are shared too — that's safe because the number row and
+	/// the symbol page are mutually exclusive on screen (the symbol page only carries digits when the
+	/// number row is absent), so there's never a duplicate-ID collision in a single layout. What must
+	/// NOT be shared is the *row* ID: `makeNumberRow` wraps these in `"numberRow"` (height 36 via
+	/// `KeyboardRow.isNumberRow`), while the symbol page wraps them in a standard `symbols.*.rowA` ID
+	/// (height 42) so the digits line up with the symbol row beneath them.
+	private static func makeDigitKeys() -> [Key] {
+		numberRowMapping.map { entry in
 			Key(
 				id: "number.\(entry.digit)",
 				primary: .text(entry.digit),
@@ -87,7 +99,10 @@ public enum LayoutBuilder {
 				role: .character
 			)
 		}
-		return KeyboardRow(id: "numberRow", keys: keys)
+	}
+
+	private static func makeNumberRow() -> KeyboardRow {
+		KeyboardRow(id: "numberRow", keys: makeDigitKeys())
 	}
 
 	// MARK: - Numeric (numpad)
@@ -282,18 +297,24 @@ public enum LayoutBuilder {
 
 	// MARK: - Symbols
 
-	/// Symbols page primary content (matches SwiftKey/Apple parity):
-	///   Row A: bracket / math operator row — `[ ] { } # % ^ * + =`
-	///   Row B: punctuation / common symbols — `- / : ; ( ) $ & @ "`
-	///   Row C: `[#+=]` toggle + .,?!' + delete (8 visual slots, weight-balanced to 10)
+	/// The four symbol content rows, shared between the two configs (see `makeSymbolRows`). Which two
+	/// land on which page depends on whether digits need a home:
+	///
+	/// - **Rich config** (number row present → digits live up top): primary = brackets + punctuation;
+	///   alternate = underscores/currency + legal/typography. Today's stock layout, matching Apple.
+	/// - **Native config** (no number row → digits have nowhere else): primary = digits + punctuation;
+	///   alternate = brackets + underscores/currency. Mirrors the native iOS `123` / `#+=` pages; the
+	///   orphaned legal/typography row (`° § ¶ …`) has no slot here, exactly like native iOS.
+	///
+	///   Row A (rich primary): bracket / math operator row — `[ ] { } # % ^ * + =`
 	private static let symbolsPrimaryRowA: [String] = ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="]
+	///   Row B (both primaries): punctuation / common symbols — `- / : ; ( ) $ & @ "`
 	private static let symbolsPrimaryRowB: [String] = ["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]
 
-	/// Symbols page alternate (`#+=`) content:
-	///   Row A: underscore / pipes / comparisons / currency — `_ \ | ~ < > € £ ¥ ·`
-	///   Row B: legal & typographic punctuation — `° § ¶ © ® ™ – — • …`
-	///   Row C: `[123]` toggle + .,?!' + delete
+	///   Row A (rich alternate): underscore / pipes / comparisons / currency — `_ \ | ~ < > € £ ¥ ·`
 	private static let symbolsAlternateRowA: [String] = ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "·"]
+	///   Row B (rich alternate only): legal & typographic punctuation — `° § ¶ © ® ™ – — • …`.
+	///   Dropped in native config (no third symbol page to host it — accepted; see task 66 ADR).
 	private static let symbolsAlternateRowB: [String] = ["°", "§", "¶", "©", "®", "™", "–", "—", "•", "…"]
 
 	/// Punctuation row C (shared between primary and alternate).
@@ -309,18 +330,24 @@ public enum LayoutBuilder {
 	/// width. See `makeSymbolRows` for the full budget.
 	private static let symbolRowCPunctuationWeight = KeyWeight(1.4)
 
-	private static func makeSymbolRows(_ page: SymbolPage, inEmojiSearch: Bool) -> [KeyboardRow] {
-		let (rowAContent, rowBContent, rowCToggle) = symbolPageContent(page, inEmojiSearch: inEmojiSearch)
+	/// Builds the three symbol body rows for one sub-page. `includeDigits` selects the config:
+	/// when `true` (no number row in this layout → the bug case) the primary page leads with the
+	/// digit row so `1…0` stay reachable; when `false` (number row carries the digits) the page
+	/// keeps today's bracket-first layout. See `symbolPageContent` for the per-config row content.
+	private static func makeSymbolRows(_ page: SymbolPage, inEmojiSearch: Bool, includeDigits: Bool) -> [KeyboardRow] {
+		let content = symbolPageContent(page, inEmojiSearch: inEmojiSearch, includeDigits: includeDigits)
 		let idPrefix = inEmojiSearch ? "emojiSearchSymbols" : "symbols"
 
-		let rowA = KeyboardRow(
-			id: "\(idPrefix).\(page.id).rowA",
-			keys: rowAContent.map(makeSymbolKey)
-		)
+		// Native config primary: row A is the shared digit row. It keeps a *standard* row ID (not
+		// `"numberRow"`), so `KeyboardRow.isNumberRow` is false and the digits render at the full 42pt
+		// cap height, aligned with the symbol row beneath — not the number row's shorter 36pt cap.
+		let rowAKeys = content.rowAIsDigits ? makeDigitKeys() : content.rowA.map(makeSymbolKey)
+		let rowA = KeyboardRow(id: "\(idPrefix).\(page.id).rowA", keys: rowAKeys)
 		let rowB = KeyboardRow(
 			id: "\(idPrefix).\(page.id).rowB",
-			keys: rowBContent.map(makeSymbolKey)
+			keys: content.rowB.map(makeSymbolKey)
 		)
+		let rowCToggle = content.rowCToggle
 		let rowCPunctuation = symbolsRowCPunctuation.map(makeSymbolPunctuationKey)
 		// Native parity: the toggle hugs the left edge and delete the right edge, each separated from
 		// the punctuation cluster by a sliver of breathing room. No `referenceWeight` — the row fills
@@ -337,13 +364,26 @@ public enum LayoutBuilder {
 		return [rowA, rowB, rowC]
 	}
 
-	/// In-row `#+=` / `123` toggle. When `inEmojiSearch` is true, the toggle hops between the
-	/// `.emojiSearchSymbols` sub-pages so the user stays in the search context; otherwise it
-	/// flips between the regular `.symbols` sub-pages.
+	/// Resolved content for one symbol sub-page. `rowAIsDigits` flags the native-config primary page,
+	/// whose row A is the shared digit row rather than a list of symbol glyphs (so `rowA` is unused —
+	/// `makeSymbolRows` builds the digit keys directly). `rowCToggle` is the in-row `#+=` / `123`
+	/// switcher.
+	private struct SymbolPageContent {
+		let rowA: [String]
+		let rowB: [String]
+		let rowCToggle: Key
+		let rowAIsDigits: Bool
+	}
+
+	/// Per-config content for a symbol sub-page. The in-row `#+=` / `123` toggle hops between the
+	/// `.emojiSearchSymbols` sub-pages when `inEmojiSearch`, or the regular `.symbols` sub-pages
+	/// otherwise. `includeDigits` switches between the two layouts described on `symbolsPrimaryRowA`:
+	/// native config (digits up front on the primary page) vs. rich config (today's brackets-first).
 	private static func symbolPageContent(
 		_ page: SymbolPage,
-		inEmojiSearch: Bool
-	) -> (rowA: [String], rowB: [String], rowCToggle: Key) {
+		inEmojiSearch: Bool,
+		includeDigits: Bool
+	) -> SymbolPageContent {
 		switch page {
 		case .primary:
 			let target: KeyboardPage = inEmojiSearch ? .emojiSearchSymbols(.alternate) : .symbols(.alternate)
@@ -355,7 +395,13 @@ public enum LayoutBuilder {
 				visualWeight: rowEdgeKeyWeight,
 				role: .system
 			)
-			return (symbolsPrimaryRowA, symbolsPrimaryRowB, toggle)
+			// Native: digits + punctuation. Rich: brackets + punctuation (today).
+			return SymbolPageContent(
+				rowA: includeDigits ? [] : symbolsPrimaryRowA,
+				rowB: symbolsPrimaryRowB,
+				rowCToggle: toggle,
+				rowAIsDigits: includeDigits
+			)
 
 		case .alternate:
 			let target: KeyboardPage = inEmojiSearch ? .emojiSearchSymbols(.primary) : .symbols(.primary)
@@ -367,7 +413,14 @@ public enum LayoutBuilder {
 				visualWeight: rowEdgeKeyWeight,
 				role: .system
 			)
-			return (symbolsAlternateRowA, symbolsAlternateRowB, toggle)
+			// Native: brackets + underscores/currency (legal/typography row dropped — no slot for it).
+			// Rich: underscores/currency + legal/typography (today).
+			return SymbolPageContent(
+				rowA: includeDigits ? symbolsPrimaryRowA : symbolsAlternateRowA,
+				rowB: includeDigits ? symbolsAlternateRowA : symbolsAlternateRowB,
+				rowCToggle: toggle,
+				rowAIsDigits: false
+			)
 		}
 	}
 

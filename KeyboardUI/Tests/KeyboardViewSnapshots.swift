@@ -83,7 +83,18 @@ final class KeyboardViewSnapshots: XCTestCase {
 	}
 
 	func testSymbolsPrimary_withoutNumberRow() {
+		// Native config: with the number row off, the primary `123` page now leads with the digit row
+		// (task 66) so digits stay typeable. Re-recorded from the old brackets-first reference.
 		let layout = KeyboardCore.makeLayout(page: .symbols(.primary), showNumberRow: false, returnKeyType: .default)
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
+
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+	}
+
+	func testSymbolsAlternate_withoutNumberRow() {
+		// Native config alternate (`#+=`) page: brackets (displaced off the primary page by the digits)
+		// on row A, underscores/pipes/currency on row B. The legal/typography glyph row has no slot here.
+		let layout = KeyboardCore.makeLayout(page: .symbols(.alternate), showNumberRow: false, returnKeyType: .default)
 		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, onKey: { _ in })
 
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
