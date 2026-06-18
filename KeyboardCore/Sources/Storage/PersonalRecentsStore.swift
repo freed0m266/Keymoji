@@ -40,7 +40,7 @@ public struct LearnedWord: Sendable, Equatable {
 public struct PersonalRecentsStore: PersonalRecentsReading {
 
 	/// Max distinct words retained. Beyond this, LRU eviction by `(count, lastUsed)` kicks in.
-	public static let capacity = 500
+	public static let capacity = 1000
 	/// Shortest word learned from prose (LEN3). Below this, completion saves nothing meaningful.
 	public static let minLength = 3
 	/// Longest word learned from prose. Guards against pasted blobs polluting the pool.
