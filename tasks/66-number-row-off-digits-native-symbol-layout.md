@@ -1,6 +1,6 @@
 # 66 — Číslice nejdou napsat při vypnutém number row → nativní rozložení symbolů
 
-**Status:** Todo
+**Status:** Done — 2026-06-18
 
 **Priorita:** v1.x · **Úsilí:** M · **Dopad:** High (bug — uživatel nemůže psát číslice)
 
