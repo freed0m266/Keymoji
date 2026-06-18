@@ -31,9 +31,12 @@ public enum ShiftStateMachine {
 		switch event {
 		case .shiftTapped(let now):
 			next.page = nextPageAfterShiftTap(state.page, lastTapAt: state.lastShiftTapAt, now: now)
-			// Only update timestamp if we acted on the tap (i.e., we were on letters).
+			// Only update the double-tap clock if we acted on the tap (i.e., we were on letters).
 			if case .letters = state.page {
-				next.lastShiftTapAt = now
+				// Leaving caps lock resets the clock: now that `.lower` is double-tap-sensitive, a
+				// quick follow-up tap must be a one-shot upper, not snap straight back into caps lock.
+				let leftCapsLock = state.page == .letters(.capsLock) && next.page == .letters(.lower)
+				next.lastShiftTapAt = leftCapsLock ? nil : now
 			}
 
 		case .characterInserted:
@@ -41,6 +44,10 @@ public enum ShiftStateMachine {
 				next.page = .letters(.lower)
 			}
 			// capsLock stays sticky; lower stays lower; symbols unaffected.
+			// A typed character ends any shift-tap streak, so the next quick shift tap is a fresh
+			// one-shot upper, not the second half of a double-tap — which would otherwise caps-lock
+			// now that the `.lower` branch honors the double-tap window.
+			next.lastShiftTapAt = nil
 
 		case .pageSwitched(let target):
 			next.page = target
@@ -69,11 +76,14 @@ public enum ShiftStateMachine {
 			return page
 		}
 
+		let isDoubleTap = lastTapAt.map { now.timeIntervalSince($0) < doubleTapWindow } ?? false
 		switch shift {
 		case .lower:
-			return .letters(.upper)
+			// Empty auto-capitalized fields start on `.upper`, so a double-tap there bounces
+			// `.upper` → `.lower` → here; honor the second tap as caps lock too (task 65). In a
+			// non-empty field `.lower` has no recent tap, so a single tap is still one-shot upper.
+			return isDoubleTap ? .letters(.capsLock) : .letters(.upper)
 		case .upper:
-			let isDoubleTap = lastTapAt.map { now.timeIntervalSince($0) < doubleTapWindow } ?? false
 			return isDoubleTap ? .letters(.capsLock) : .letters(.lower)
 		case .capsLock:
 			return .letters(.lower)

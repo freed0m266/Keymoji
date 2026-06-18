@@ -124,4 +124,55 @@ final class ShiftStateMachineTests: XCTestCase {
 		ShiftStateMachine.apply(.shiftTapped(at: baseDate), to: &state)
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
+
+	// MARK: - Empty-field caps lock (auto-cap upper → lower → caps lock, task 65)
+
+	func testEmptyField_doubleTapFromAutoCapUpper_reachesCapsLock() {
+		// An empty auto-capitalized field starts on `.upper` with no shift history (auto-cap doesn't
+		// record a tap). Two quick taps must still latch caps lock: tap1 bounces to `.lower` seeding
+		// the clock, tap2 within the window collapses to caps lock.
+		var state = KeyboardState(page: .letters(.upper), lastShiftTapAt: nil)
+		let t0 = baseDate
+		let t1 = baseDate.addingTimeInterval(0.2)
+
+		ShiftStateMachine.apply(.shiftTapped(at: t0), to: &state)
+		XCTAssertEqual(state.page, .letters(.lower))
+		XCTAssertEqual(state.lastShiftTapAt, t0, "the first tap seeds the double-tap clock")
+
+		ShiftStateMachine.apply(.shiftTapped(at: t1), to: &state)
+		XCTAssertEqual(state.page, .letters(.capsLock))
+	}
+
+	// MARK: - capsLock → lower clears the double-tap clock
+
+	func testCapsLockToLower_clearsClock_nextQuickTapIsUpperNotCapsLock() {
+		var state = KeyboardState(page: .letters(.capsLock), lastShiftTapAt: baseDate)
+		let exitTap = baseDate.addingTimeInterval(1)       // leaves caps lock
+		let quickTap = exitTap.addingTimeInterval(0.1)     // well inside the window
+
+		ShiftStateMachine.apply(.shiftTapped(at: exitTap), to: &state)
+		XCTAssertEqual(state.page, .letters(.lower))
+		XCTAssertNil(state.lastShiftTapAt, "exiting caps lock resets the clock")
+
+		ShiftStateMachine.apply(.shiftTapped(at: quickTap), to: &state)
+		XCTAssertEqual(state.page, .letters(.upper), "a quick re-tap is one-shot upper, not caps lock")
+	}
+
+	// MARK: - Character insertion clears the double-tap clock
+
+	func testCharacterInserted_clearsClock_preventsAccidentalCapsLock() {
+		// shift → type a letter → quick shift again must be one-shot upper, not caps lock: the two
+		// shift taps aren't consecutive (a character intervened), so they aren't a double-tap.
+		var state = KeyboardState(page: .letters(.lower))
+		let t0 = baseDate
+		ShiftStateMachine.apply(.shiftTapped(at: t0), to: &state)
+		XCTAssertEqual(state.page, .letters(.upper))
+
+		ShiftStateMachine.apply(.characterInserted, to: &state)
+		XCTAssertEqual(state.page, .letters(.lower))
+		XCTAssertNil(state.lastShiftTapAt, "an inserted character clears the double-tap clock")
+
+		ShiftStateMachine.apply(.shiftTapped(at: t0.addingTimeInterval(0.2)), to: &state)
+		XCTAssertEqual(state.page, .letters(.upper), "not caps lock — the taps weren't consecutive")
+	}
 }
