@@ -50,8 +50,8 @@ struct KeyView: View {
 	/// of horizontal motion past this anchor emits a one-character offset and advances the anchor.
 	@State private var trackpadAnchorX: CGFloat = 0
 
-	/// 450ms — slightly more generous than Apple's ~350ms, kinder to slow thumbs.
-	private static let longPressDelay: Duration = .milliseconds(450)
+	/// 350ms — parity with Apple's long-press delay, so alternates pop as fast as the stock keyboard.
+	private static let longPressDelay: Duration = .milliseconds(350)
 	/// Initial delay before delete-on-hold starts firing.
 	private static let backspaceInitialDelay: Duration = .milliseconds(400)
 	/// Repeat interval once delete-on-hold is firing.
