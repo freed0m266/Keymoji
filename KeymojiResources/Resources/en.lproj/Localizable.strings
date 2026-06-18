@@ -67,6 +67,7 @@
 "settings.aboutHeader" = "App";
 "settings.keyboard.header" = "Keyboard";
 "settings.keyboard.showNumberRow" = "Always show number row";
+"settings.keyboard.showNumberRowHint" = "When off, digits move to the 123 page.";
 "settings.keyboard.hapticFeedback" = "Haptic feedback";
 "settings.keyboard.keyClickSound" = "Key click sound";
 "settings.keyboard.hapticFooter" = "Haptic feedback and key clicks both require Allow Full Access in Settings → General → Keyboard → Keymoji. Key clicks additionally require Keyboard Clicks enabled in Settings → Sounds & Haptics.";
