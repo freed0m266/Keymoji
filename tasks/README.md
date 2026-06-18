@@ -85,6 +85,8 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## v1.x — Typing & diakritika
 
 58. [58 — Jazykové sady letterAlternates + popup vždy se základním písmenem](58-letter-alternates-language-sets.md)
+65. [65 — Accent-aware doplňování, caps lock z prázdného pole & limity](65-accent-aware-completions-capslock-limits.md)
+66. [66 — Číslice nejdou napsat při vypnutém number row → nativní rozložení symbolů](66-number-row-off-digits-native-symbol-layout.md)
 
 ## Monetizace
 
