@@ -1,6 +1,6 @@
 # 65 — Accent-aware doplňování, caps lock z prázdného pole & limity
 
-**Status:** Todo
+**Status:** Done — 2026-06-18
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** Medium (kvalita psaní pro bilingvní uživatele + dvě UX vady)
 
