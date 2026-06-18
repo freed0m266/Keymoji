@@ -3,13 +3,17 @@ import Foundation
 
 // MARK: - Provider mocks
 
-/// Returns a fixed completion list, optionally keyed by the queried partial word.
+/// Returns a fixed completion list, optionally keyed by the queried partial word or by language.
 struct MockTextChecker: TextChecking {
 	var byPrefix: [String: [String]] = [:]
 	var fallback: [String] = []
+	/// When a language has an entry here it wins, letting a test model distinct per-language
+	/// dictionaries (EN vs CS) for the additive multi-language completion merge.
+	var byLanguage: [String: [String]] = [:]
 
 	func completions(forPartialWord partialWord: String, language: String) -> [String] {
-		byPrefix[partialWord] ?? fallback
+		if let hits = byLanguage[language] { return hits }
+		return byPrefix[partialWord] ?? fallback
 	}
 }
 
@@ -51,13 +55,13 @@ extension SuggestionContext {
 		before: String?,
 		after: String? = nil,
 		page: KeyboardPage = .letters(.lower),
-		language: String? = "en"
+		languages: [String] = ["en"]
 	) -> SuggestionContext {
 		SuggestionContext(
 			documentContextBeforeInput: before,
 			documentContextAfterInput: after,
 			page: page,
-			primaryLanguage: language,
+			completionLanguages: languages,
 			eligibility: SuggestionEligibility(allowDisplay: true, learningContext: .prose)
 		)
 	}

@@ -585,11 +585,19 @@ final class KeyboardViewController: UIInputViewController {
 	/// present (pill chips); otherwise word completions are merged from recents + `UITextChecker` +
 	/// `UILexicon`. Providers are cheap value types, rebuilt per call so they always see fresh state.
 	private func currentSuggestions() -> [Suggestion] {
+		// Additive completion languages: the field/PrimaryLanguage base (kept as the future-proof
+		// signal, even though it's "mul" today → English via the adapter) plus the chosen accent
+		// set's language, deduped so a shared dictionary isn't queried twice. `.all` contributes
+		// nothing (`accentLanguageCode == nil`), leaving just the base.
+		var completionLanguages = [state.currentLanguage ?? "en"]
+		if let accent = state.letterAlternateSet.accentLanguageCode, !completionLanguages.contains(accent) {
+			completionLanguages.append(accent)
+		}
 		let context = SuggestionContext(
 			documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
 			documentContextAfterInput: textDocumentProxy.documentContextAfterInput,
 			page: state.page,
-			primaryLanguage: state.currentLanguage,
+			completionLanguages: completionLanguages,
 			eligibility: state.currentEligibility
 		)
 		let coordinator = SuggestionCoordinator(providers: [

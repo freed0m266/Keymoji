@@ -55,8 +55,6 @@ public struct WordCompletionProvider: SuggestionProviding {
 			return []
 		}
 
-		let language = context.primaryLanguage ?? "en"
-
 		// Case-insensitive merge keyed on the lowercased word. The first writer's casing becomes
 		// the base (recents run first), but recents are now stored lowercase, so the base is
 		// effectively lowercase for learned words; later sources only raise the score. Display
@@ -78,11 +76,16 @@ public struct WordCompletionProvider: SuggestionProviding {
 			consider(match.word, score: score)
 		}
 
-		// (b) UITextChecker completions: linear 0.9 (best) → 0.4 (worst) by ordinal position.
-		let checkerHits = textChecker.completions(forPartialWord: prefix, language: language)
-		for (index, word) in checkerHits.enumerated() {
-			let score = 0.9 - 0.5 * Double(index) / Double(max(checkerHits.count - 1, 1))
-			consider(word, score: score)
+		// (b) UITextChecker completions — queried once per language (field/PrimaryLanguage base +
+		// accent set) and merged. Linear 0.9 (best) → 0.4 (worst) by ordinal position, scored within
+		// each language; the case-insensitive dedupe in `consider` keeps the max when a word surfaces
+		// in more than one dictionary, so neither language is privileged.
+		for language in context.completionLanguages {
+			let checkerHits = textChecker.completions(forPartialWord: prefix, language: language)
+			for (index, word) in checkerHits.enumerated() {
+				let score = 0.9 - 0.5 * Double(index) / Double(max(checkerHits.count - 1, 1))
+				consider(word, score: score)
+			}
 		}
 
 		// (c) UILexicon supplementary entries: flat 0.3.

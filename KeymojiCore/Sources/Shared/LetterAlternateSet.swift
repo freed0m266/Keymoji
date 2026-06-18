@@ -38,6 +38,14 @@ public enum LetterAlternateSet: String, Sendable, CaseIterable {
 		return .all
 	}
 
+	/// Language whose dictionary this accent set contributes to word completion, or `nil` when the
+	/// set isn't a single concrete language (`.all`). The field/PrimaryLanguage base is added
+	/// separately by the controller; on-device availability is handled downstream by
+	/// `UITextCheckerAdapter.resolveLanguage` (a missing dictionary falls back to English).
+	public var accentLanguageCode: String? {
+		Self.byLanguage.first(where: { $0.value == self })?.key
+	}
+
 	private static let byLanguage: [String: LetterAlternateSet] = [
 		"cs": .czech, "sk": .slovak, "de": .german,
 		"pl": .polish, "fr": .french, "es": .spanish

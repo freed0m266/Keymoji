@@ -8,6 +8,7 @@
 
 import SwiftUI
 import BaseKitX
+import KeyboardCore
 import KeymojiCore
 import KeymojiResources
 import KeymojiUI
@@ -220,18 +221,15 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 	}
 
-	/// Language names are endonyms (not localized — a Czech speaker browsing a German UI still
-	/// recognizes "Čeština"); only the catch-all "All" set goes through L10n.
+	/// Accent-set name in the app's UI language (today English → "Czech", "Slovak", …). Deliberately
+	/// *not* `Locale.current.localizedString`, which on a Czech device would hand back the endonym
+	/// "čeština"; the UI app is English-only, so we resolve against `preferredLocalizations`. Only the
+	/// catch-all "All" set is a Keymoji concept rather than a language, so it stays on L10n.
 	private func label(for set: LetterAlternateSet) -> String {
-		switch set {
-		case .czech:   return "Čeština"
-		case .slovak:  return "Slovenčina"
-		case .german:  return "Deutsch"
-		case .polish:  return "Polski"
-		case .french:  return "Français"
-		case .spanish: return "Español"
-		case .all:     return Texts.Keyboard.LetterAlternateSet.all
-		}
+		if set == .all { return Texts.Keyboard.LetterAlternateSet.all }
+		let uiLocale = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+		let code = set.accentLanguageCode ?? "en"   // concrete language; `.all` handled above
+		return uiLocale.localizedString(forLanguageCode: code)?.capitalizedFirstLetter() ?? code
 	}
 
 	private var supportSection: some View {

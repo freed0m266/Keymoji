@@ -141,14 +141,44 @@ final class WordCompletionProviderTests: XCTestCase {
 		XCTAssertEqual(Set(result.map(\.displayText)), ["Rada", "Ráda"], "leading capital by sentence position")
 	}
 
-	// MARK: - Language fallback
+	// MARK: - Additive multi-language completion (accent adds a language, task 65)
 
-	func testLanguageFallback_usesEnWhenNil() {
-		// The mock ignores language, but exercise the nil path to confirm it doesn't crash/skip.
-		let provider = makeProvider(checker: ["help"])
-		XCTAssertEqual(
-			provider.suggestions(for: .test(before: "he", language: nil)).first?.displayText,
-			"help"
+	private func multiLanguageProvider(_ byLanguage: [String: [String]]) -> WordCompletionProvider {
+		WordCompletionProvider(
+			textChecker: MockTextChecker(byLanguage: byLanguage),
+			systemLexicon: MockSystemLexicon(),
+			recents: MockRecents()
 		)
+	}
+
+	func testMultiLanguage_mergesBothDictionaries() {
+		// EN + CS are each queried once and the hits are merged into one ranked list.
+		let provider = multiLanguageProvider(["en": ["help"], "cs": ["hejno", "helma"]])
+		let result = provider.suggestions(for: .test(before: "he", languages: ["en", "cs"]))
+		XCTAssertEqual(Set(result.map(\.displayText)), ["help", "hejno", "helma"])
+	}
+
+	func testMultiLanguage_dedupeKeepsMaxScoreAcrossLanguages() {
+		// "slovo" is the best hit (idx0 → 0.9) in cs but the worst (idx1 → 0.4) in en; it collapses
+		// to a single chip carrying the higher score, so neither language is privileged.
+		let provider = multiLanguageProvider(["en": ["svet", "slovo"], "cs": ["slovo", "syn"]])
+		let result = provider.suggestions(for: .test(before: "s", languages: ["en", "cs"]))
+		XCTAssertEqual(result.filter { $0.displayText == "slovo" }.count, 1, "deduped to one chip")
+		XCTAssertEqual(result.first { $0.displayText == "slovo" }?.score, 0.9, "the higher score wins")
+	}
+
+	func testSingleLanguage_onlyQueriesThatDictionary() {
+		// Accent `.all` resolves to just `["en"]` — the cs dictionary is never consulted.
+		let provider = multiLanguageProvider(["en": ["help"], "cs": ["hejno"]])
+		let result = provider.suggestions(for: .test(before: "he", languages: ["en"]))
+		XCTAssertEqual(result.map(\.displayText), ["help"])
+	}
+
+	func testEmptyLanguages_skipsCheckerButKeepsOtherSources() {
+		// Defensive: the controller always supplies at least one language, but an empty list must
+		// simply yield no checker hits while recents/lexicon still flow.
+		let provider = makeProvider(recents: [("hello", 3)], checker: ["help"])
+		let result = provider.suggestions(for: .test(before: "he", languages: []))
+		XCTAssertEqual(result.map(\.displayText), ["hello"], "no checker hits; recents survive")
 	}
 }

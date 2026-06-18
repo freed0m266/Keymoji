@@ -60,22 +60,25 @@ public struct SuggestionContext: Sendable, Equatable {
 	/// collapses when the caret sits inside a word). Nil/empty when the host hides it.
 	public let documentContextAfterInput: String?
 	public let page: KeyboardPage
-	/// BCP-47-ish language tag from `UITextInputMode.primaryLanguage` (e.g. "en-US"), or nil when
-	/// unavailable; providers fall back to `"en"`.
-	public let primaryLanguage: String?
+	/// Languages to query for word completions, base-first: the focused field's language
+	/// (`currentLanguage` / `PrimaryLanguage`) plus the chosen accent set's language, deduped by the
+	/// controller. Each is queried independently and the hits are merged. The controller always
+	/// supplies at least one; an empty list simply yields no `UITextChecker` hits (recents and
+	/// lexicon still apply).
+	public let completionLanguages: [String]
 	public let eligibility: SuggestionEligibility
 
 	public init(
 		documentContextBeforeInput: String?,
 		documentContextAfterInput: String?,
 		page: KeyboardPage,
-		primaryLanguage: String?,
+		completionLanguages: [String],
 		eligibility: SuggestionEligibility
 	) {
 		self.documentContextBeforeInput = documentContextBeforeInput
 		self.documentContextAfterInput = documentContextAfterInput
 		self.page = page
-		self.primaryLanguage = primaryLanguage
+		self.completionLanguages = completionLanguages
 		self.eligibility = eligibility
 	}
 }

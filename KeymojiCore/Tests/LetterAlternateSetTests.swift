@@ -59,6 +59,29 @@ final class LetterAlternateSetTests: XCTestCase {
 		)
 	}
 
+	// MARK: - accentLanguageCode (task 65)
+
+	func testAccentLanguageCode_concreteLanguages() {
+		XCTAssertEqual(LetterAlternateSet.czech.accentLanguageCode, "cs")
+		XCTAssertEqual(LetterAlternateSet.slovak.accentLanguageCode, "sk")
+		XCTAssertEqual(LetterAlternateSet.german.accentLanguageCode, "de")
+		XCTAssertEqual(LetterAlternateSet.polish.accentLanguageCode, "pl")
+		XCTAssertEqual(LetterAlternateSet.french.accentLanguageCode, "fr")
+		XCTAssertEqual(LetterAlternateSet.spanish.accentLanguageCode, "es")
+	}
+
+	func testAccentLanguageCode_allIsNil() {
+		// `.all` isn't a single language — it contributes no completion dictionary.
+		XCTAssertNil(LetterAlternateSet.all.accentLanguageCode)
+	}
+
+	func testAccentLanguageCode_definedForEveryConcreteSet() {
+		// Guards against a new set being added without a `byLanguage` entry.
+		for set in LetterAlternateSet.allCases where set != .all {
+			XCTAssertNotNil(set.accentLanguageCode, "\(set) must map to a language code")
+		}
+	}
+
 	// MARK: - Round-trip / coverage
 
 	func testRawValueRoundTrip() {
