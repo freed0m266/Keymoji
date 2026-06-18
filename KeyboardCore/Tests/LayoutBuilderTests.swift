@@ -176,13 +176,45 @@ final class LayoutBuilderTests: XCTestCase {
 
 	// MARK: - Symbols page primary
 
-	func testSymbolsPrimary_rowA_hasBracketsAndMath() {
-		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary))
+	func testSymbolsPrimary_withNumberRow_rowA_hasBracketsAndMath() {
+		// Rich config (number row carries the digits): the primary page leads with brackets, as today.
+		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary), showNumberRow: true)
 		let chars = row.keys.compactMap { key -> String? in
 			if case .text(let t) = key.primary { return t }
 			return nil
 		}
 		XCTAssertEqual(chars, ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="])
+	}
+
+	func testSymbolsPrimary_withoutNumberRow_rowA_hasDigits() {
+		// Native config (no number row): digits move to the primary symbol page so they stay typeable —
+		// the core bug fix. (`symbolRow` defaults to `showNumberRow: false`.)
+		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary))
+		let chars = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
+	}
+
+	func testSymbolsPrimary_digitsCarryNumberRowAlternates() {
+		// The digit row on the symbol page shares `numberRowMapping`, so each digit keeps its
+		// long-press alternate (`1→!` … `0→)`), exactly like the number row.
+		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary))
+		let alternates = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.alternates.first ?? .text("") { return t }
+			return nil
+		}
+		XCTAssertEqual(alternates, ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"])
+	}
+
+	func testSymbolsPrimary_digitRow_usesStandardKeyHeight() {
+		// The digit row must NOT carry the `"numberRow"` ID — that ID is what drives the shorter
+		// number-row cap height (`KeyboardRow.isNumberRow`). A standard `symbols.primary.rowA` ID keeps
+		// the digits at the full key height, aligned with the symbol row beneath them.
+		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary))
+		XCTAssertEqual(row.id, "symbols.primary.rowA")
+		XCTAssertFalse(row.isNumberRow)
 	}
 
 	func testSymbolsPrimary_rowB_hasPunctuation() {
@@ -208,8 +240,9 @@ final class LayoutBuilderTests: XCTestCase {
 
 	// MARK: - Symbols page alternate
 
-	func testSymbolsAlternate_rowA_hasUnderscoresPipesAndCurrency() {
-		let row = symbolRow(at: "symbols.alternate.rowA", page: .symbols(.alternate))
+	func testSymbolsAlternate_withNumberRow_rowA_hasUnderscoresPipesAndCurrency() {
+		// Rich config: the alternate (`#+=`) page leads with underscores/pipes/currency, as today.
+		let row = symbolRow(at: "symbols.alternate.rowA", page: .symbols(.alternate), showNumberRow: true)
 		let chars = row.keys.compactMap { key -> String? in
 			if case .text(let t) = key.primary { return t }
 			return nil
@@ -217,13 +250,34 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(chars, ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "·"])
 	}
 
-	func testSymbolsAlternate_rowB_hasLegalAndTypography() {
-		let row = symbolRow(at: "symbols.alternate.rowB", page: .symbols(.alternate))
+	func testSymbolsAlternate_withNumberRow_rowB_hasLegalAndTypography() {
+		// Rich config: the legal & typographic glyph row lives on the alternate page row B, as today.
+		// (In native config there's no slot for it — covered by the absence in the test below.)
+		let row = symbolRow(at: "symbols.alternate.rowB", page: .symbols(.alternate), showNumberRow: true)
 		let chars = row.keys.compactMap { key -> String? in
 			if case .text(let t) = key.primary { return t }
 			return nil
 		}
 		XCTAssertEqual(chars, ["°", "§", "¶", "©", "®", "™", "–", "—", "•", "…"])
+	}
+
+	func testSymbolsAlternate_withoutNumberRow_hasBracketsThenUnderscores() {
+		// Native config: brackets get displaced off the primary page (digits took it), landing on the
+		// alternate page row A; row B carries underscores/pipes/currency. The legal/typography glyphs
+		// (`° § ¶ …`) have no slot in native config — accepted (task 66 ADR: native iOS drops them too).
+		let rowA = symbolRow(at: "symbols.alternate.rowA", page: .symbols(.alternate))
+		let rowAChars = rowA.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(rowAChars, ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="])
+
+		let rowB = symbolRow(at: "symbols.alternate.rowB", page: .symbols(.alternate))
+		let rowBChars = rowB.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(rowBChars, ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "·"])
 	}
 
 	func testSymbolsAlternate_rowC_hasPrimaryToggleAndDelete() {
@@ -347,6 +401,20 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertNotNil(rowC, "primary rowC missing")
 		// In-row toggle hops between the search-mode symbol sub-pages, NOT to plain `.symbols`.
 		XCTAssertEqual(rowC?.keys.first?.action, .switchPage(.emojiSearchSymbols(.alternate)))
+	}
+
+	func testEmojiSearchSymbolsPrimary_rowA_hasDigits() {
+		// Emoji search always drops the number row, so its primary symbol page is always native config:
+		// digits on row A. Regression for the "can't type digits while searching emoji" bug. Passing
+		// `showNumberRow: true` proves the preference is irrelevant here — search never shows it anyway.
+		let row = symbolRow(at: "emojiSearchSymbols.primary.rowA", page: .emojiSearchSymbols(.primary), showNumberRow: true)
+		let chars = row.keys.compactMap { key -> String? in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+		XCTAssertEqual(chars, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
+		// And the row must keep its standard ID (not `"numberRow"`) so it renders at full key height.
+		XCTAssertFalse(row.isNumberRow)
 	}
 
 	func testEmojiSearchSymbolsAlternate_rowCToggle_pointsBackToPrimary() {
@@ -775,8 +843,12 @@ final class LayoutBuilderTests: XCTestCase {
 		return []
 	}
 
-	private func symbolRow(at id: String, page: KeyboardPage) -> KeyboardRow {
-		let layout = LayoutBuilder.layout(page: page, showNumberRow: false, returnKeyType: .default)
+	/// `showNumberRow` defaults to `false` (native config — digits on the primary symbol page). Pass
+	/// `true` to exercise the rich config (number row present → brackets-first primary page). Task 66
+	/// made the symbol-page content depend on this flag, so symbol tests must opt into the config they
+	/// mean instead of assuming today's brackets-first layout.
+	private func symbolRow(at id: String, page: KeyboardPage, showNumberRow: Bool = false) -> KeyboardRow {
+		let layout = LayoutBuilder.layout(page: page, showNumberRow: showNumberRow, returnKeyType: .default)
 		return layout.rows.first { $0.id == id }!
 	}
 
