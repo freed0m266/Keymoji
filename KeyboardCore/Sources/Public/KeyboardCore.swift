@@ -13,14 +13,16 @@ public enum KeyboardCore {
 		showNumberRow: Bool,
 		returnKeyType: ReturnKeyType,
 		letterLayout: LetterLayout = .qwerty,
-		alternateSet: LetterAlternateSet = .all
+		alternateSet: LetterAlternateSet = .all,
+		decimalSeparator: String = "."
 	) -> KeyboardLayout {
 		LayoutBuilder.layout(
 			page: page,
 			showNumberRow: showNumberRow,
 			returnKeyType: returnKeyType,
 			letterLayout: letterLayout,
-			alternateSet: alternateSet
+			alternateSet: alternateSet,
+			decimalSeparator: decimalSeparator
 		)
 	}
 }

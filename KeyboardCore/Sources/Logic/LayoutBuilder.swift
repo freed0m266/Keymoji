@@ -10,7 +10,8 @@ public enum LayoutBuilder {
 		showNumberRow: Bool,
 		returnKeyType: ReturnKeyType,
 		letterLayout: LetterLayout = .qwerty,
-		alternateSet: LetterAlternateSet = .all
+		alternateSet: LetterAlternateSet = .all,
+		decimalSeparator: String = "."
 	) -> KeyboardLayout {
 		var rows: [KeyboardRow] = []
 
@@ -22,7 +23,10 @@ public enum LayoutBuilder {
 		// builder is pure and orientation-unaware: callers pass the *effective* value
 		// (`KeyboardState.effectiveShowsNumberRow`, already false in landscape), not the raw
 		// user preference — so landscape gets the shorter, number-row-less layout for free.
-		let includeNumberRow = showNumberRow && page != .emojis && !page.isEmojiSearch
+		// Numeric pages drop the number row too: the numpad already *is* digits, and its host height
+		// is derived from the four real rows below — adding a number row on top would desync the host
+		// constraint from the visible content (the classic drift bug). See `KeyboardMetrics`.
+		let includeNumberRow = showNumberRow && page != .emojis && !page.isEmojiSearch && !page.isNumeric
 		if includeNumberRow {
 			rows.append(makeNumberRow())
 		}
@@ -46,9 +50,16 @@ public enum LayoutBuilder {
 			// layout, but the in-row `#+=` / `123` toggle keeps the user in the search-mode
 			// symbol pages instead of escaping back to plain symbols.
 			rows.append(contentsOf: makeSymbolRows(symbolPage, inEmojiSearch: true))
+		case .numeric(let kind):
+			// The numpad builds all four of its own rows (digits + a custom bottom row with the
+			// separator/delete), so it skips both the number row above and `makeBottomRow` below.
+			rows.append(contentsOf: makeNumericRows(kind: kind, decimalSeparator: decimalSeparator))
 		}
 
-		rows.append(makeBottomRow(page: page))
+		// The numpad owns its bottom row (`makeNumericRows`); every other page gets the shared one.
+		if !page.isNumeric {
+			rows.append(makeBottomRow(page: page))
+		}
 
 		return KeyboardLayout(
 			page: page,
@@ -77,6 +88,55 @@ public enum LayoutBuilder {
 			)
 		}
 		return KeyboardRow(id: "numberRow", keys: keys)
+	}
+
+	// MARK: - Numeric (numpad)
+
+	/// Builds the four-row Apple-style numpad (task 59). Rows 1–3 are the `1-2-3 / 4-5-6 / 7-8-9`
+	/// grid; row 4 carries `0` plus delete, with the bottom-left slot either empty (`.integer`) or
+	/// the locale decimal separator (`.decimal`).
+	///
+	/// Digits are plain `.text` keys with `role: .character`, so they inherit tap dispatch
+	/// (`.insertText`), haptics, click sound, and key-preview from `KeyView` for free, and render
+	/// with the flat (non-letter) baseline `KeyView` already applies to non-lowercase glyphs. No
+	/// alternates → no long-press popup, matching the locked native numberPad.
+	private static func makeNumericRows(kind: NumericKind, decimalSeparator: String) -> [KeyboardRow] {
+		func digit(_ d: String) -> Key {
+			Key(
+				id: "numeric.\(d)",
+				primary: .text(d),
+				alternates: [],
+				action: .insertText(d),
+				visualWeight: .standard,
+				role: .character
+			)
+		}
+		let row1 = KeyboardRow(id: "numeric.row1", keys: ["1", "2", "3"].map(digit))
+		let row2 = KeyboardRow(id: "numeric.row2", keys: ["4", "5", "6"].map(digit))
+		let row3 = KeyboardRow(id: "numeric.row3", keys: ["7", "8", "9"].map(digit))
+
+		let zero = digit("0")
+		let delete = makeDeleteKey(weight: .standard)
+		let bottomKeys: [Key]
+		switch kind {
+		case .integer:
+			// Empty left third (a leading gap on `0`, reusing the existing gap mechanic — no inert
+			// key, no new action) keeps `0` optically centered in the middle column, like Apple's
+			// numberPad. The gap area stays part of `0`'s tap target, which only enlarges it.
+			bottomKeys = [zero.addingGaps(leading: 1.0), delete]
+		case .decimal:
+			let separator = Key(
+				id: "numeric.separator",
+				primary: .text(decimalSeparator),
+				alternates: [],
+				action: .insertText(decimalSeparator),
+				visualWeight: .standard,
+				role: .character
+			)
+			bottomKeys = [separator, zero, delete]
+		}
+		let row4 = KeyboardRow(id: "numeric.row4", keys: bottomKeys)
+		return [row1, row2, row3, row4]
 	}
 
 	// MARK: - Letters
@@ -379,6 +439,10 @@ public enum LayoutBuilder {
 			return makeEmojiBottomRow()
 		case .emojiSearch, .emojiSearchSymbols:
 			return makeEmojiSearchBottomRow(page: page)
+		case .numeric:
+			// Unreachable — the numpad builds its own four rows in `makeNumericRows` and `layout`
+			// skips this call for numeric pages. Present only to keep the switch exhaustive.
+			fatalError("numeric page builds its own rows in makeNumericRows")
 		}
 	}
 
@@ -405,9 +469,10 @@ public enum LayoutBuilder {
 				visualWeight: .small,
 				role: .system
 			)
-		case .emojis, .emojiSearch, .emojiSearchSymbols:
-			// Unreachable — emoji pages are handled by their own bottom-row builders.
-			fatalError("emoji page should not reach makeStandardBottomRow")
+		case .emojis, .emojiSearch, .emojiSearchSymbols, .numeric:
+			// Unreachable — emoji pages have their own bottom-row builders and numeric pages build
+			// their own rows. Present only to keep the switch exhaustive.
+			fatalError("emoji/numeric page should not reach makeStandardBottomRow")
 		}
 
 		// Slot for jumping to the emoji panel — tapping it pushes the page state to `.emojis`.
@@ -504,7 +569,7 @@ public enum LayoutBuilder {
 				visualWeight: .small,
 				role: .system
 			)
-		case .letters, .symbols, .emojis:
+		case .letters, .symbols, .emojis, .numeric:
 			// Unreachable — `makeBottomRow` only routes the two emoji-search variants here.
 			fatalError("non-search page should not reach makeEmojiSearchBottomRow")
 		}

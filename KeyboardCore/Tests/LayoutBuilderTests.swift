@@ -649,7 +649,104 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertNotEqual(czech, all)
 	}
 
+	// MARK: - Numeric (numpad, task 59)
+
+	func testNumericInteger_hasFourRows_noNumberRow() {
+		let layout = LayoutBuilder.layout(page: .numeric(.integer), showNumberRow: true, returnKeyType: .default)
+		XCTAssertEqual(layout.rows.count, 4)
+		XCTAssertNil(layout.rows.first { $0.id == "numberRow" }, "numeric page must never include the number row")
+		XCTAssertNil(layout.rows.first { $0.id == "bottomRow" }, "numeric page builds its own bottom row, not the shared one")
+	}
+
+	func testNumericInteger_gridRowsAreOneTwoThree() {
+		let layout = LayoutBuilder.layout(page: .numeric(.integer), showNumberRow: false, returnKeyType: .default)
+		XCTAssertEqual(digits(in: layout, rowID: "numeric.row1"), ["1", "2", "3"])
+		XCTAssertEqual(digits(in: layout, rowID: "numeric.row2"), ["4", "5", "6"])
+		XCTAssertEqual(digits(in: layout, rowID: "numeric.row3"), ["7", "8", "9"])
+	}
+
+	func testNumericInteger_digitsAreTextCharacterKeysWithInsertAction() {
+		let layout = LayoutBuilder.layout(page: .numeric(.integer), showNumberRow: false, returnKeyType: .default)
+		let one = numericRow(in: layout, id: "numeric.row1").keys[0]
+		XCTAssertEqual(one.primary, .text("1"))
+		XCTAssertEqual(one.action, .insertText("1"))
+		XCTAssertEqual(one.role, .character)
+	}
+
+	func testNumericInteger_bottomRow_isZeroWithLeadingGapThenDelete() {
+		let layout = LayoutBuilder.layout(page: .numeric(.integer), showNumberRow: false, returnKeyType: .default)
+		let row4 = numericRow(in: layout, id: "numeric.row4")
+		XCTAssertEqual(row4.keys.count, 2)
+
+		let zero = row4.keys[0]
+		XCTAssertEqual(zero.primary, .text("0"))
+		XCTAssertEqual(zero.action, .insertText("0"))
+		// Empty left third keeps `0` centered in the middle column (no separator on the integer pad).
+		XCTAssertEqual(zero.leadingGapWeight, 1.0, accuracy: 0.0001)
+
+		let delete = row4.keys[1]
+		XCTAssertEqual(delete.action, .backspace)
+		XCTAssertEqual(delete.leadingGapWeight, 0.0, accuracy: 0.0001)
+	}
+
+	func testNumericDecimal_bottomRow_isSeparatorZeroDelete() {
+		let layout = LayoutBuilder.layout(page: .numeric(.decimal), showNumberRow: false, returnKeyType: .default, decimalSeparator: ",")
+		let row4 = numericRow(in: layout, id: "numeric.row4")
+		XCTAssertEqual(row4.keys.count, 3)
+
+		let separator = row4.keys[0]
+		XCTAssertEqual(separator.id, "numeric.separator")
+		XCTAssertEqual(separator.primary, .text(","))
+		XCTAssertEqual(separator.action, .insertText(","))
+		XCTAssertEqual(separator.role, .character)
+		// No leading gap on the decimal pad — the separator fills the left column.
+		XCTAssertEqual(separator.leadingGapWeight, 0.0, accuracy: 0.0001)
+
+		XCTAssertEqual(row4.keys[1].primary, .text("0"))
+		XCTAssertEqual(row4.keys[1].leadingGapWeight, 0.0, accuracy: 0.0001)
+		XCTAssertEqual(row4.keys[2].action, .backspace)
+	}
+
+	func testNumericDecimal_defaultSeparatorIsDot() {
+		let layout = LayoutBuilder.layout(page: .numeric(.decimal), showNumberRow: false, returnKeyType: .default)
+		let separator = numericRow(in: layout, id: "numeric.row4").keys[0]
+		XCTAssertEqual(separator.primary, .text("."))
+		XCTAssertEqual(separator.action, .insertText("."))
+	}
+
+	func testNumeric_noKeyHasAlternates() {
+		for kind in [NumericKind.integer, .decimal] {
+			let layout = LayoutBuilder.layout(page: .numeric(kind), showNumberRow: true, returnKeyType: .default, decimalSeparator: ",")
+			for row in layout.rows {
+				for key in row.keys {
+					XCTAssertTrue(key.alternates.isEmpty, "numeric key \(key.id) must have no long-press alternates")
+				}
+			}
+		}
+	}
+
+	func testNumeric_isEquatableForIdenticalInputs_andDiffersByKind() {
+		let intA = LayoutBuilder.layout(page: .numeric(.integer), showNumberRow: false, returnKeyType: .default)
+		let intB = LayoutBuilder.layout(page: .numeric(.integer), showNumberRow: false, returnKeyType: .default)
+		XCTAssertEqual(intA, intB)
+
+		let decimal = LayoutBuilder.layout(page: .numeric(.decimal), showNumberRow: false, returnKeyType: .default)
+		XCTAssertNotEqual(intA, decimal)
+	}
+
 	// MARK: - Helpers
+
+	private func numericRow(in layout: KeyboardLayout, id: String) -> KeyboardRow {
+		layout.rows.first { $0.id == id }!
+	}
+
+	/// Digit primaries (as text) for a numpad grid row.
+	private func digits(in layout: KeyboardLayout, rowID: String) -> [String] {
+		numericRow(in: layout, id: rowID).keys.compactMap { key in
+			if case .text(let t) = key.primary { return t }
+			return nil
+		}
+	}
 
 	private func letterRow(
 		at id: String,

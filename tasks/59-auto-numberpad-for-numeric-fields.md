@@ -1,6 +1,6 @@
 # 59 — Auto numberpad pro číselná pole
 
-**Status:** Todo
+**Status:** Done — 2026-06-18
 
 **Priorita:** v1.2 · **Úsilí:** M · **Dopad:** Medium (číselný vstup — částky v bankovnictví, kódy, množství)
 

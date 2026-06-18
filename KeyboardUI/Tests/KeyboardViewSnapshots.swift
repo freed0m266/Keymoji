@@ -332,4 +332,27 @@ final class KeyboardViewSnapshots: XCTestCase {
 		)
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 	}
+
+	// MARK: - Numeric numpad (task 59)
+
+	func testNumericInteger_numpad() {
+		// Forced numpad for a `.numberPad` field. No number row and no suggestion bar — numeric fields
+		// are `.denied`, so `fieldAllowsBar` is false and the reserved top region stays empty. `0` sits
+		// centered in the middle column with an empty bottom-left third; delete hugs the right.
+		let layout = KeyboardCore.makeLayout(page: .numeric(.integer), showNumberRow: false, returnKeyType: .default)
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, fieldAllowsBar: false, onKey: { _ in })
+
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
+	}
+
+	func testNumericDecimal_numpad() {
+		// Forced numpad for a `.decimalPad` field. Same grid as the integer pad, but the bottom-left slot
+		// holds the locale decimal separator (here the `.` default).
+		let layout = KeyboardCore.makeLayout(page: .numeric(.decimal), showNumberRow: false, returnKeyType: .default, decimalSeparator: ".")
+		let view = KeyboardView(layout: layout, width: Self.iPhoneWidth, fieldAllowsBar: false, onKey: { _ in })
+
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
+	}
 }

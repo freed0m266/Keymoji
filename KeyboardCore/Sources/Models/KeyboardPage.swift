@@ -13,6 +13,19 @@ public enum KeyboardPage: Sendable, Equatable {
 	case emojis
 	case emojiSearch
 	case emojiSearchSymbols(SymbolPage)
+	/// Locked Apple-style numeric grid, force-shown while a `.numberPad` / `.decimalPad` field is
+	/// focused (task 59). `NumericKind` selects integer vs. decimal; the concrete decimal-separator
+	/// glyph is locale-aware and flows into `LayoutBuilder` separately (like `returnKeyType`), so
+	/// this case stays locale-agnostic and cleanly `Equatable`.
+	case numeric(NumericKind)
+}
+
+/// Which numeric variant the numpad renders. `.integer` mirrors `numberPad` (no separator — the
+/// bottom-left slot stays empty so `0` reads centered); `.decimal` mirrors `decimalPad` (the
+/// bottom-left slot holds the locale decimal separator).
+public enum NumericKind: Sendable, Equatable {
+	case integer
+	case decimal
 }
 
 /// Convenience predicate: any of the search-mode pages. Used by `InputDispatcher` to route
@@ -22,9 +35,17 @@ public enum KeyboardPage: Sendable, Equatable {
 public extension KeyboardPage {
 	var isEmojiSearch: Bool {
 		switch self {
-		case .emojiSearch, .emojiSearchSymbols: return true
-		case .letters, .symbols, .emojis:       return false
+		case .emojiSearch, .emojiSearchSymbols:   return true
+		case .letters, .symbols, .emojis, .numeric: return false
 		}
+	}
+
+	/// True for the force-shown numeric pages (task 59). Guards the number-row inclusion and the
+	/// bottom-row append in `LayoutBuilder` (the numpad builds its own four rows) and the
+	/// "leaving a numeric field" branch in `KeyboardViewController`.
+	var isNumeric: Bool {
+		if case .numeric = self { return true }
+		return false
 	}
 }
 

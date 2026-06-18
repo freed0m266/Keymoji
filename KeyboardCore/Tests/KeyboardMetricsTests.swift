@@ -15,7 +15,8 @@ final class KeyboardMetricsTests: XCTestCase {
 		.letters(.lower), .letters(.upper), .letters(.capsLock),
 		.symbols(.primary), .symbols(.alternate),
 		.emojis,
-		.emojiSearch, .emojiSearchSymbols(.primary)
+		.emojiSearch, .emojiSearchSymbols(.primary),
+		.numeric(.integer), .numeric(.decimal)
 	]
 
 	private func layout(_ page: KeyboardPage, showNumberRow: Bool) -> KeyboardLayout {
@@ -134,6 +135,21 @@ final class KeyboardMetricsTests: XCTestCase {
 			let search = KeyboardMetrics.keyboardHeight(for: layout(.emojiSearch, showNumberRow: showNumber))
 			let chrome = search - KeyboardMetrics.qwertyRowsHeight
 			XCTAssertGreaterThanOrEqual(chrome, KeyboardMetrics.emojiSearchMinChrome)
+		}
+	}
+
+	// MARK: - Numeric numpad (task 59)
+
+	func testKeyboardHeight_numericPad_matchesNumberRowlessLetters_regardlessOfPreference() {
+		// The numpad always drops the number row (it *is* digits), so its four real rows + the reserved
+		// top region equal a number-row-less letters page — whatever `showNumberRow` the caller passes.
+		// This is why the host height "resolves itself" with no special-casing in `KeyboardMetrics`.
+		let expected = KeyboardMetrics.canonicalHeight(showsNumberRow: false)
+		for kind in [NumericKind.integer, .decimal] {
+			for showNumber in [true, false] {
+				let pad = KeyboardMetrics.keyboardHeight(for: layout(.numeric(kind), showNumberRow: showNumber))
+				XCTAssertEqual(pad, expected, "numeric(\(kind)) must match number-row-less letters (showNumberRow=\(showNumber))")
+			}
 		}
 	}
 

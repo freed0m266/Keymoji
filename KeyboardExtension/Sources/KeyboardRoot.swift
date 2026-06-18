@@ -13,6 +13,9 @@ struct KeyboardRoot: View {
 	let suggestions: [Suggestion]
 	/// Whether the current field permits the top bar (false in secure entry). Forwarded to `KeyboardView`.
 	let fieldAllowsBar: Bool
+	/// Locale decimal separator for the `.numeric(.decimal)` numpad (task 59). Threaded in from the
+	/// controller (which reads `Locale.current`) so `KeyboardCore` stays pure.
+	let decimalSeparator: String
 	let dispatch: (Key) -> Void
 	let toggleFavoriteEmoji: (String) -> Void
 	let selectSuggestion: (Suggestion) -> Void
@@ -29,7 +32,8 @@ struct KeyboardRoot: View {
 			showNumberRow: state.effectiveShowsNumberRow,
 			returnKeyType: state.returnKeyType,
 			letterLayout: state.letterLayout,
-			alternateSet: state.letterAlternateSet
+			alternateSet: state.letterAlternateSet,
+			decimalSeparator: decimalSeparator
 		)
 		KeyboardView(
 			layout: layout,

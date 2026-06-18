@@ -118,6 +118,8 @@ final class KeyboardViewController: UIInputViewController {
 		haptics.prepareForInput()
 		refreshFromStore()
 		refreshAppearance()
+		// Seed the page for the first appearance into a field (numpad vs. text) before any keystroke.
+		refreshKeyboardPageForInputType()
 		refreshReturnKeyType()
 		refreshEligibility()
 		refreshLanguage()
@@ -275,6 +277,9 @@ final class KeyboardViewController: UIInputViewController {
 	override func textWillChange(_ textInput: UITextInput?) {}
 
 	override func textDidChange(_ textInput: UITextInput?) {
+		// First, so a numeric field forces the numpad before `refreshAutoCapitalization` runs —
+		// it must never see a numeric page it could try to promote to `letters(.upper)`.
+		refreshKeyboardPageForInputType()
 		refreshReturnKeyType()
 		refreshAutoCapitalization()
 		refreshEligibility()
@@ -300,6 +305,26 @@ final class KeyboardViewController: UIInputViewController {
 			state.currentEligibility = eligibility
 			rebuild()
 		}
+	}
+
+	/// Forces the numpad when the focused field requests a numeric keyboard, and snaps back to
+	/// letters when leaving one (task 59). Deliberately *non-sticky* and self-contained: it only
+	/// ever moves the page between "numpad" and "not numpad", so regular `letters`/`symbols`/`emoji`
+	/// navigation (driven by `switchPage` in the dispatcher) is never disturbed — the numpad just
+	/// slides in over a numeric field and slides back out to `letters(.lower)` on exit.
+	private func refreshKeyboardPageForInputType() {
+		let kind = SuggestionFieldTraitsMapping.keyboardKind(textDocumentProxy.keyboardType ?? .default)
+		let desired: KeyboardPage
+		if let numeric = NumericPageResolver.numericPage(for: kind) {
+			desired = numeric                  // numeric field → always the numpad
+		} else if state.page.isNumeric {
+			desired = .letters(.lower)         // left a numeric field → back to letters (non-sticky)
+		} else {
+			return                             // non-numeric field, not on the numpad → leave typing page alone
+		}
+		guard state.page != desired else { return }
+		state.page = desired
+		rebuild()
 	}
 
 	/// Tracks the focused field's primary language so `UITextChecker` queries the right dictionary.
@@ -438,6 +463,14 @@ final class KeyboardViewController: UIInputViewController {
 		}
 	}
 
+	/// Device decimal separator used by the `.numeric(.decimal)` numpad (task 59). Read from
+	/// `Locale.current` at the UIKit boundary so `KeyboardCore`/`LayoutBuilder` stay pure and the
+	/// page enum stays locale-agnostic. Re-read per access so a region change is picked up on the
+	/// next rebuild. Falls back to `.` for the rare locale with no decimal separator.
+	private static var currentDecimalSeparator: String {
+		Locale.current.decimalSeparator ?? "."
+	}
+
 	private func desiredKeyboardHeight() -> CGFloat {
 		// Build the same layout `makeRoot` renders, then ask `KeyboardMetrics` for its height. The host
 		// UIInputView constraint and the SwiftUI frame therefore come from one formula and can't drift —
@@ -450,7 +483,8 @@ final class KeyboardViewController: UIInputViewController {
 			showNumberRow: state.effectiveShowsNumberRow,
 			returnKeyType: state.returnKeyType,
 			letterLayout: state.letterLayout,
-			alternateSet: state.letterAlternateSet
+			alternateSet: state.letterAlternateSet,
+			decimalSeparator: Self.currentDecimalSeparator
 		)
 		return KeyboardMetrics.keyboardHeight(for: layout)
 	}
@@ -476,6 +510,7 @@ final class KeyboardViewController: UIInputViewController {
 			favoriteEmojis: favoritesDisplayOrder,
 			suggestions: suggestions,
 			fieldAllowsBar: state.currentEligibility.allowDisplay,
+			decimalSeparator: Self.currentDecimalSeparator,
 			dispatch: { [weak self] key in self?.handle(key) },
 			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
@@ -734,6 +769,11 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func refreshAutoCapitalization() {
+		// Auto-cap only ever flips between `letters(.lower)` and `letters(.upper)`; it must never
+		// touch a numeric page (task 59). It can't today — numeric fields report `.none` autocap and
+		// the branches below only match `.letters` — but this makes the invariant explicit and
+		// independent of the `textDidChange` call ordering.
+		guard !state.page.isNumeric else { return }
 		let rawType = textDocumentProxy.autocapitalizationType ?? .sentences
 		let autoCapType = AutocapitalizationTypeMapping.map(rawType)
 		let shouldCap = AutoCapitalizer.shouldCapitalize(
