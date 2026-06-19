@@ -24,8 +24,12 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	@Bindable private var viewModel: ViewModel
 	@State private var sheet: SheetKind?
 	@State private var paywallContext: PaywallContext?
+	/// Welcome-trial confirm alert (S2 tap) and the short post-activation toast.
+	@State private var showWelcomeConfirm = false
+	@State private var welcomeToast: String?
 
 	typealias Texts = L10n.Settings
+	typealias WelcomeTexts = L10n.Welcome.Settings
 
 	public init(viewModel: ViewModel) {
 		_viewModel = Bindable(wrappedValue: viewModel)
@@ -43,6 +47,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				aboutSection
 			}
 			.mainBackground()
+			.overlay(alignment: .bottom) { welcomeToastView }
 			.onAppear { viewModel.refreshLearnedWordCount() }
 			.navigationTitle(Texts.title)
 			.sheet(item: $sheet) { kind in
@@ -62,24 +67,30 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 	}
 
+	@ViewBuilder
 	private var plusSection: some View {
 		Section {
-			if viewModel.isPlus {
+			switch viewModel.plusRowState {
+			case .paid:
 				Label(Texts.Plus.unlocked, systemImage: "checkmark.seal.fill")
 					.foregroundStyle(.primary)
-			} else {
-				Button {
-					paywallContext = .settings
-				} label: {
-					HStack {
-						Text("✨ \(Texts.Plus.unlock)")
-							.foregroundStyle(.primary)
-							.maxWidthLeading()
 
-						Icon.chevronRight
-							.font(.footnote.weight(.bold))
-							.foregroundStyle(.tertiary)
-					}
+			case .welcomeAvailable:
+				// The opt-in gift — explicit consent via a confirm alert (one-shot, so we ask first).
+				Button { showWelcomeConfirm = true } label: {
+					plusRowChevronLabel(WelcomeTexts.cta)
+				}
+				.buttonStyle(.plain)
+
+			case .trialActive(let daysLeft):
+				// Info only — no upsell while a trial is running (holds task 63 "don't nag").
+				Label(Texts.Plus.trialDaysLeft(daysLeft), systemImage: "gift.fill")
+					.foregroundStyle(.primary)
+
+			case .afterTrial:
+				// Trial lapsed → loss-aversion paywall ("You loved Plus. Get it back.").
+				Button { paywallContext = .afterTrial } label: {
+					plusRowChevronLabel("✨ \(Texts.Plus.unlock)")
 				}
 				.buttonStyle(.plain)
 			}
@@ -87,6 +98,51 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			Text(Texts.Plus.header)
 		} footer: {
 			Text(Texts.Plus.footer)
+		}
+		.alert(WelcomeTexts.Confirm.title, isPresented: $showWelcomeConfirm) {
+			Button(WelcomeTexts.Confirm.activate) { confirmWelcomeActivation() }
+			Button(WelcomeTexts.Confirm.cancel, role: .cancel) {}
+		} message: {
+			Text(WelcomeTexts.Confirm.message)
+		}
+	}
+
+	private func plusRowChevronLabel(_ text: String) -> some View {
+		HStack {
+			Text(text)
+				.foregroundStyle(.primary)
+				.maxWidthLeading()
+
+			Icon.chevronRight
+				.font(.footnote.weight(.bold))
+				.foregroundStyle(.tertiary)
+		}
+	}
+
+	/// Consume the gift, then surface a short toast confirming the new expiry. The row itself flips to
+	/// the trial-countdown state reactively (the VM updates its observable promo mirrors).
+	private func confirmWelcomeActivation() {
+		viewModel.activateWelcomeTrial()
+		guard let until = viewModel.trialActiveUntil else { return }
+		welcomeToast = WelcomeTexts.toast(until.formatted(date: .abbreviated, time: .omitted))
+		Task {
+			try? await Task.sleep(for: .seconds(3))
+			withAnimation { welcomeToast = nil }
+		}
+	}
+
+	@ViewBuilder
+	private var welcomeToastView: some View {
+		if let welcomeToast {
+			Text(welcomeToast)
+				.font(.subheadline.weight(.medium))
+				.foregroundStyle(.primary)
+				.padding(.horizontal, 16)
+				.padding(.vertical, 10)
+				.background(.regularMaterial, in: Capsule())
+				.padding(.bottom, 24)
+				.shadow(radius: 8, y: 2)
+				.transition(.move(edge: .bottom).combined(with: .opacity))
 		}
 	}
 

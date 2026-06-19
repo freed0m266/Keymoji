@@ -104,6 +104,23 @@ public extension AppGroupStore {
 		set { setBool(newValue, forKey: .isPlus) }
 	}
 
+	/// Cheap hot-path mirror of the Keychain-owned *Plus trial expiry* (Welcome trial + cheat code promo,
+	/// stacked into one `Date`). Serialized as a string so it survives without a custom `Date` codec and
+	/// reads identically host app ↔ extension. `nil` means "no promo grant active" (key absent or
+	/// cleared). The keyboard reads this — never the Keychain — on the gating hot path; the host app
+	/// reconciles it from Keychain at launch (see `PromoTrialStoring`).
+	///
+	/// Uses `timeIntervalSinceReferenceDate` (not `…Since1970`) so the round-trip is **bit-exact**: a
+	/// `Date` stores its interval-since-reference internally, so write→read reproduces the same value
+	/// with no large-constant arithmetic that would drop low bits (which broke `Date` equality).
+	var promoPlusExpiresAt: Date? {
+		get {
+			guard let raw = string(forKey: .promoPlusExpiresAt), let interval = TimeInterval(raw) else { return nil }
+			return Date(timeIntervalSinceReferenceDate: interval)
+		}
+		set { setString(newValue.map { String($0.timeIntervalSinceReferenceDate) }, forKey: .promoPlusExpiresAt) }
+	}
+
 	var appearance: AppearancePreference {
 		get {
 			guard let raw = string(forKey: .appearance) else { return .system }

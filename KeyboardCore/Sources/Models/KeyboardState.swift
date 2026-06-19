@@ -72,11 +72,22 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `.frequency` favorites ordering.
 	public var emojiUsageCounts: [String: Int]
 
-	/// Keymoji Plus entitlement. Runtime mirror of `AppGroupStore.isPlus`, refreshed on
-	/// `viewWillAppear` and the `.isPlus` Darwin notification (live unlock after a purchase). Free
-	/// (`false`) clamps the favorites bar to `FavoritesEntitlement.freeFavoritesLimit` and forces
-	/// `.manual` order; the extension never runs StoreKit — it only reads this mirror.
+	/// Keymoji Plus **paid** entitlement. Runtime mirror of `AppGroupStore.isPlus`, refreshed on
+	/// `viewWillAppear` and the `.isPlus` Darwin notification (live unlock after a purchase). Stays
+	/// paid-only — never overwritten by promo. Gating reads `effectiveIsPlus`, not this.
 	public var isPlus: Bool
+
+	/// *Plus trial expiry* runtime mirror of `AppGroupStore.promoPlusExpiresAt`, refreshed on
+	/// `viewWillAppear` and the `.promoPlusExpiresAt` Darwin notification (live unlock the instant a
+	/// Welcome/cheat code grant lands). `nil` when no promo grant is active.
+	public var promoPlusExpiresAt: Date?
+
+	/// *Effective* Plus — the single gating call for the keyboard: paid (`isPlus`) **or** an active
+	/// promo trial (`promoPlusExpiresAt` in the future). Drives the favorites clamp and the long-press
+	/// favorite-add gate so a promo unlocks the bar exactly like a paid purchase.
+	public var effectiveIsPlus: Bool {
+		KeymojiCore.effectiveIsPlus(paid: isPlus, promoExpiresAt: promoPlusExpiresAt, now: Date())
+	}
 
 	/// Maximum number of emojis tracked in `recentEmojis`. Keeps the recents tab to two short
 	/// rows on iPhone portrait — long enough to be useful, short enough that it never scrolls.
@@ -117,6 +128,7 @@ public struct KeyboardState: Sendable, Equatable {
 		favoritesSortMode: FavoritesSortMode = .manual,
 		emojiUsageCounts: [String: Int] = [:],
 		isPlus: Bool = false,
+		promoPlusExpiresAt: Date? = nil,
 		searchQuery: String = "",
 		suggestionsEnabled: Bool = true,
 		currentEligibility: SuggestionEligibility = .denied,
@@ -139,6 +151,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.favoritesSortMode = favoritesSortMode
 		self.emojiUsageCounts = emojiUsageCounts
 		self.isPlus = isPlus
+		self.promoPlusExpiresAt = promoPlusExpiresAt
 		self.searchQuery = searchQuery
 		self.suggestionsEnabled = suggestionsEnabled
 		self.currentEligibility = currentEligibility

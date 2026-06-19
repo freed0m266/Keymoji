@@ -56,16 +56,22 @@ final class PaywallViewModel: BaseViewModel, PaywallViewModeling {
 	private(set) var purchaseError: String?
 
 	private let service: any PurchaseServicing
+	private let store: AppGroupStore
 
 	typealias Texts = L10n.Paywall
 
-	var isPlus: Bool { service.isPlus }
+	/// *Effective* Plus — paid or an active promo trial. Drives the already-unlocked layout and the
+	/// auto-dismiss `onChange` in `PaywallView`: a user who is mid-trial shouldn't be shown the offer.
+	var isPlus: Bool {
+		effectiveIsPlus(paid: service.isPlus, promoExpiresAt: store.promoPlusExpiresAt, now: Date())
+	}
 	var displayPrice: String? { service.displayPrice }
 	var isProductLoaded: Bool { service.isProductLoaded }
 
-	init(context: PaywallContext, service: any PurchaseServicing) {
+	init(context: PaywallContext, service: any PurchaseServicing, store: AppGroupStore = .shared) {
 		self.context = context
 		self.service = service
+		self.store = store
 		super.init()
 	}
 

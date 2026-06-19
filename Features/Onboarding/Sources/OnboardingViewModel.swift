@@ -20,6 +20,13 @@ public protocol OnboardingViewModeling: Observable, AnyObject {
 	/// Whether the user may select another favorite. False once a free user hits the free cap, so the
 	/// picker can dim the remaining cells instead of silently swallowing taps (no mid-onboarding upsell).
 	var canSelectMoreFavorites: Bool { get }
+	/// The favorites selection cap — `freeFavoritesLimit` for free users, `.max` after Welcome/paid.
+	/// Surfaced so the "Browse all" picker sheet can apply the same cap.
+	var favoritesLimit: Int { get }
+	/// Whether to show the opt-in Welcome gift button above the grid (see `OnboardingPreferencesProviding`).
+	var canShowWelcomeOffer: Bool { get }
+	/// The active *Plus trial expiry*, or `nil` — drives the read-only "Plus active until {date}" banner.
+	var welcomeTrialActiveUntil: Date? { get }
 
 	func didConfirmKeyboardAdded()
 	func didConfirmFullAccess()
@@ -29,6 +36,8 @@ public protocol OnboardingViewModeling: Observable, AnyObject {
 	func didFinishOnboarding()
 	func openSettings()
 	func refreshKeyboardStatus()
+	/// Activate the opt-in Welcome trial from the banner — unlocks the grid (cap → `.max`) in place.
+	func activateWelcomeTrial()
 }
 
 @MainActor
@@ -47,8 +56,11 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	/// The step the flow started on — used to tell whether the picker was actually part of this run.
 	private let initialStep: OnboardingStep
 	/// Cap on the favorites a free user may pick — the keyboard would clamp anything beyond it, so we
-	/// never let onboarding save more (which would read as a silent loss). Unbounded for Plus.
-	private let favoritesLimit: Int
+	/// never let onboarding save more (which would read as a silent loss). Unbounded for Plus/Welcome.
+	/// Observable so activating the Welcome gift relaxes the cap (6 → `.max`) and the grid un-dims live.
+	private(set) var favoritesLimit: Int
+	private(set) var canShowWelcomeOffer: Bool
+	private(set) var welcomeTrialActiveUntil: Date?
 	private var pollTask: Task<Void, Never>?
 
 	var canSelectMoreFavorites: Bool {
@@ -61,9 +73,13 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		self.dependencies = dependencies
 		self.initialStep = initialStep
 		self.currentStep = initialStep
-		self.favoritesLimit = dependencies.preferences.isPlus ? .max : FavoritesEntitlement.freeFavoritesLimit
+		// Provisional entitlement values; `refreshEntitlement()` recomputes them after `super.init`.
+		let prefs = dependencies.preferences
+		self.favoritesLimit = prefs.isPlus ? .max : FavoritesEntitlement.freeFavoritesLimit
+		self.canShowWelcomeOffer = prefs.canShowWelcomeOffer
+		self.welcomeTrialActiveUntil = prefs.welcomeTrialActiveUntil
 		// Empty for a fresh install; pre-filled with the stored set on a re-run from Settings.
-		self.selectedFavorites = dependencies.preferences.currentFavorites
+		self.selectedFavorites = prefs.currentFavorites
 		super.init()
 		refreshKeyboardStatus()
 	}
@@ -76,6 +92,13 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 
 	func didConfirmFullAccess() {
 		currentStep = .selectKeyboard
+	}
+
+	func activateWelcomeTrial() {
+		dependencies.preferences.activateWelcomeTrial()
+		// Re-read entitlement so the banner flips to its success state and the grid cap relaxes (6 → .max)
+		// in place — both `favoritesLimit` and `welcomeTrialActiveUntil` are observable.
+		refreshEntitlement()
 	}
 
 	func toggleFavorite(_ glyph: String) {
@@ -99,6 +122,15 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 	/// shortcut re-enters the tour directly at `.featureTour`, skipping the picker; closing it must
 	/// not silently overwrite favorites the user may have intentionally cleared. First-run and the
 	/// full "Setup instructions" re-run both start at/before the picker, so the invariant still holds.
+	/// Pull entitlement-derived state from the preferences provider into observable VM state. Called at
+	/// init and after a Welcome activation so the banner + grid cap update in place.
+	private func refreshEntitlement() {
+		let prefs = dependencies.preferences
+		favoritesLimit = prefs.isPlus ? .max : FavoritesEntitlement.freeFavoritesLimit
+		canShowWelcomeOffer = prefs.canShowWelcomeOffer
+		welcomeTrialActiveUntil = prefs.welcomeTrialActiveUntil
+	}
+
 	private func persistFavoritesIfPickerWasShown() {
 		guard initialStep.rawValue <= OnboardingStep.pickFavorites.rawValue else { return }
 		let resolved = selectedFavorites.isEmpty ? EmojiCatalog.defaultFavorites : selectedFavorites

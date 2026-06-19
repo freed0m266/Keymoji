@@ -23,6 +23,8 @@ final class SettingsViewModelMock: SettingsViewModeling {
 	var suggestionsEnabled: Bool
 	private(set) var learnedWordCount: Int
 	var isPlus: Bool
+	var plusRowState: PlusRowState
+	var trialActiveUntil: Date?
 
 	init(
 		showNumberRow: Bool = true,
@@ -35,6 +37,8 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		suggestionsEnabled: Bool = true,
 		learnedWordCount: Int = 128,
 		isPlus: Bool = false,
+		plusRowState: PlusRowState = .welcomeAvailable,
+		trialActiveUntil: Date? = nil,
 	) {
 		self.showNumberRow = showNumberRow
 		self.hapticFeedbackEnabled = hapticFeedbackEnabled
@@ -46,8 +50,15 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		self.suggestionsEnabled = suggestionsEnabled
 		self.learnedWordCount = learnedWordCount
 		self.isPlus = isPlus
+		self.plusRowState = plusRowState
+		self.trialActiveUntil = trialActiveUntil
 	}
 
 	func refreshLearnedWordCount() {}
+
+	func activateWelcomeTrial() {
+		plusRowState = .trialActive(daysLeft: 30)
+		trialActiveUntil = Date().addingTimeInterval(30 * 24 * 60 * 60)
+	}
 }
 #endif

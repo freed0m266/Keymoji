@@ -29,6 +29,8 @@ public struct PaywallView<ViewModel: PaywallViewModeling>: View {
 			Texts.headlineFrequency
 		case .settings:
 			Texts.headlineSettings
+		case .afterTrial:
+			Texts.headlineAfterTrial
 		}
 	}
 

@@ -27,7 +27,8 @@ public let keyboardExtension: Target = .target(
 	]),
 	sources: "\(targetName)/Sources/**",
 	entitlements: .dictionary([
-		"com.apple.security.application-groups": .array([.string(appGroupIdentifier)])
+		"com.apple.security.application-groups": .array([.string(appGroupIdentifier)]),
+		"keychain-access-groups": .array([.string(keychainSharedAccessGroup)])
 	]),
 	scripts: [
 		.setVersions

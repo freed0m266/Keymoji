@@ -15,6 +15,14 @@ let package = Package(
 		.package(
 			url: "https://github.com/pointfreeco/swift-snapshot-testing",
 			from: "1.18.4"
+		),
+		.package(
+			url: "https://github.com/kishikawakatsumi/KeychainAccess",
+			from: "4.2.2"
+		),
+		.package(
+			url: "https://github.com/simibac/ConfettiSwiftUI",
+			from: "2.0.0"
 		)
 	]
 )

@@ -11,12 +11,15 @@ import KeymojiCore
 import KeyboardCore
 import KeymojiResources
 import KeymojiUI
+import EmojiCatalogPicker
 
 public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 	@State private var viewModel: ViewModel
+	@State private var showBrowseAll = false
 	private let onFinish: () -> Void
 
 	typealias Texts = L10n.Onboarding
+	typealias WelcomeTexts = L10n.Welcome.Onboarding
 
 	public init(viewModel: ViewModel, onFinish: @escaping () -> Void = {}) {
 		_viewModel = State(wrappedValue: viewModel)
@@ -174,12 +177,18 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 						.multilineTextAlignment(.center)
 						.padding(.horizontal, 24)
 
+					welcomeBanner
+
 					LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 8) {
 						ForEach(EmojiCatalog.defaultFavorites, id: \.self) { glyph in
 							favoriteCell(glyph, isSelected: viewModel.selectedFavorites.contains(glyph))
 						}
 					}
 					.padding(.horizontal, 24)
+
+					Button(Texts.Favorites.browseAll) { showBrowseAll = true }
+						.font(.subheadline.weight(.medium))
+						.tint(.accentColor)
 
 					Spacer(minLength: 24)
 
@@ -205,6 +214,63 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 			}
 			.scrollIndicators(.hidden)
 		}
+		.sheet(isPresented: $showBrowseAll) {
+			NavigationStack {
+				EmojiCatalogPickerView(
+					selectedEmojis: Set(viewModel.selectedFavorites),
+					onToggle: { viewModel.toggleFavorite($0) },
+					onDone: { showBrowseAll = false },
+					// Same cap as the inline grid — dims past the limit (6 free, ∞ after Welcome/paid).
+					selectionLimit: viewModel.favoritesLimit
+				)
+				.mainBackground()
+			}
+		}
+	}
+
+	/// The opt-in Welcome gift, shown above the grid in the pick-favorites step (task 64 Scope 5).
+	/// Hidden for paid users and once a consumed trial has lapsed; a button while available, then a
+	/// read-only success card while a trial (Welcome or cheat code) is running.
+	@ViewBuilder
+	private var welcomeBanner: some View {
+		if let until = viewModel.welcomeTrialActiveUntil {
+			bannerCard(filled: true) {
+				Text(WelcomeTexts.activeUntil(until.formatted(date: .abbreviated, time: .omitted)))
+					.font(.subheadline.weight(.semibold))
+					.foregroundStyle(.primary)
+			}
+			.padding(.horizontal, 24)
+		} else if viewModel.canShowWelcomeOffer {
+			Button {
+				// Animate so the grid un-dims and the banner morphs to its success state in place.
+				withAnimation { viewModel.activateWelcomeTrial() }
+			} label: {
+				bannerCard(filled: false) {
+					Text(WelcomeTexts.cta)
+						.font(.subheadline.weight(.semibold))
+						.foregroundStyle(.primary)
+						.multilineTextAlignment(.leading)
+				}
+			}
+			.buttonStyle(.plain)
+			.padding(.horizontal, 24)
+		}
+	}
+
+	private func bannerCard<Content: View>(filled: Bool, @ViewBuilder content: () -> Content) -> some View {
+		HStack(spacing: 10) {
+			Text("🎁").font(.title3)
+			content()
+			Spacer(minLength: 0)
+		}
+		.padding(14)
+		.frame(maxWidth: .infinity)
+		.background(RoundedRectangle(cornerRadius: 14).fill(Color.accentColor.opacity(filled ? 0.15 : 0.18)))
+		.overlay(
+			RoundedRectangle(cornerRadius: 14)
+				.strokeBorder(Color.accentColor.opacity(filled ? 0 : 0.5), lineWidth: 1)
+		)
+		.contentShape(.rect)
 	}
 
 	private func favoriteCell(_ glyph: String, isSelected: Bool) -> some View {

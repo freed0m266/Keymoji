@@ -17,6 +17,10 @@ public struct EmojiCatalogPickerView: View {
 	public let selectedEmojis: Set<String>
 	public let onToggle: (String) -> Void
 	public let onDone: () -> Void
+	/// Optional cap. When set, once `selectedEmojis.count` reaches it, unselected cells dim + disable
+	/// (matching the onboarding grid) so a free user can't pick past what the keyboard would keep.
+	/// `nil` (default) = no cap — the Favorites editor relies on its `onToggle` paywall instead.
+	public let selectionLimit: Int?
 
 	typealias Texts = L10n.Settings.Favorites.Picker
 
@@ -32,11 +36,13 @@ public struct EmojiCatalogPickerView: View {
 	public init(
 		selectedEmojis: Set<String>,
 		onToggle: @escaping (String) -> Void,
-		onDone: @escaping () -> Void
+		onDone: @escaping () -> Void,
+		selectionLimit: Int? = nil
 	) {
 		self.selectedEmojis = selectedEmojis
 		self.onToggle = onToggle
 		self.onDone = onDone
+		self.selectionLimit = selectionLimit
 	}
 
 	public var body: some View {
@@ -87,8 +93,15 @@ public struct EmojiCatalogPickerView: View {
 		.background(Color(.systemBackground))
 	}
 
+	/// Whether an unselected cell should be dimmed/disabled because the selection cap is reached.
+	private func isBeyondLimit(isSelected: Bool) -> Bool {
+		guard let limit = selectionLimit, !isSelected else { return false }
+		return selectedEmojis.count >= limit
+	}
+
 	private func cell(for emoji: String, isSelected: Bool) -> some View {
-		Button {
+		let dimmed = isBeyondLimit(isSelected: isSelected)
+		return Button {
 			onToggle(emoji)
 		} label: {
 			ZStack(alignment: .topTrailing) {
@@ -108,8 +121,10 @@ public struct EmojiCatalogPickerView: View {
 				}
 			}
 			.contentShape(Rectangle())
+			.opacity(dimmed ? 0.35 : 1)
 		}
 		.buttonStyle(.plain)
+		.disabled(dimmed)
 		.accessibilityLabel(emoji)
 		.accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
 	}

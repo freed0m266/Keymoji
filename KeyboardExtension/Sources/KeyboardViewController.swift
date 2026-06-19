@@ -1,9 +1,11 @@
+import AudioToolbox
 import AVFoundation
 import UIKit
 import SwiftUI
 import KeymojiCore
 import KeyboardCore
 import KeyboardUI
+import KeymojiResources
 
 /// Principal class for the Keymoji custom keyboard extension.
 /// `@objc(KeyboardViewController)` exposes an unmangled Obj-C name so the system
@@ -52,6 +54,16 @@ final class KeyboardViewController: UIInputViewController {
 	private lazy var clickSound: any KeyClickSounding = UIKitClickSound(isEnabled: { [weak self] in
 		self?.store.keyClickSoundEnabled ?? false
 	})
+
+	/// cheat code celebration overlay state (task 64 Scope 9/11). Reference type so its confetti trigger +
+	/// banner survive the frequent root rebuilds.
+	private let cheatEffect = CheatEffectController()
+	/// cheat code promo activation (extension use case — reads paid from the App Group mirror, no StoreKit).
+	private lazy var cheatCodeActivator: any CheatCodeActivating = CheatCodeActivator(promoStore: PromoTrialStore.makeShared())
+	/// Debounce: true while the cheat code stays inside the detection window, so it fires **once** per
+	/// occurrence (not on every later keystroke, which would re-pop "already used"). Re-armed when the
+	/// code leaves the window (deleted / scrolled past).
+	private var cheatCodeHandled = false
 
 	/// Install a `UIInputView` subclass that adopts `UIInputViewAudioFeedback` as the controller's
 	/// root view. iOS routes `UIDevice.current.playInputClick()` through the currently visible
@@ -188,6 +200,10 @@ final class KeyboardViewController: UIInputViewController {
 			settingsNotifier.addObserver(for: .isPlus) { [weak self] in
 				self?.refreshFromStore()
 			},
+			// A Welcome/cheat code grant (host app or this keyboard) lands the promo expiry — unlock live.
+			settingsNotifier.addObserver(for: .promoPlusExpiresAt) { [weak self] in
+				self?.refreshFromStore()
+			},
 			settingsNotifier.addObserver(for: .appearance) { [weak self] in
 				self?.refreshAppearance()
 			},
@@ -247,6 +263,11 @@ final class KeyboardViewController: UIInputViewController {
 			state.isPlus = plus
 			changed = true
 		}
+		let promoExpiry = store.promoPlusExpiresAt
+		if state.promoPlusExpiresAt != promoExpiry {
+			state.promoPlusExpiresAt = promoExpiry
+			changed = true
+		}
 		let suggestionsOn = store.suggestionsEnabled
 		if state.suggestionsEnabled != suggestionsOn {
 			state.suggestionsEnabled = suggestionsOn
@@ -285,6 +306,56 @@ final class KeyboardViewController: UIInputViewController {
 		refreshEligibility()
 		refreshLanguage()
 		updatePendingEmailIfNeeded()
+		detectCheatCode()
+	}
+
+	// MARK: - cheat code cheat code
+
+	/// cheat code promo cheat (task 64 Scope 9). Window-matched against the document context on every change.
+	/// Never fires in secure fields, never deletes the typed text (it stays as a viral artifact), and
+	/// fires exactly once per occurrence via `cheatCodeHandled`.
+	private func detectCheatCode() {
+		// Never in password / secure fields.
+		guard textDocumentProxy.isSecureTextEntry != true else {
+			cheatCodeHandled = false
+			return
+		}
+		guard CheatCodeDetector.matches(context: textDocumentProxy.documentContextBeforeInput) else {
+			cheatCodeHandled = false   // re-arm: code left the window
+			return
+		}
+		guard !cheatCodeHandled else { return }   // already handled this occurrence
+		cheatCodeHandled = true
+		handleCheatCode()
+	}
+
+	private func handleCheatCode() {
+		switch cheatCodeActivator.activate(now: Date()) {
+		case let .granted(newExpiry, wasExtension):
+			let date = newExpiry.formatted(date: .abbreviated, time: .omitted)
+			let banner = wasExtension ? L10n.Promo.CheatCode.extended(date) : L10n.Promo.CheatCode.unlocked
+			// The activator posted `.promoPlusExpiresAt`; refresh now too so the bar unlocks this frame
+			// (the Darwin notification round-trips async).
+			refreshFromStore()
+			cheatEffect.fire(banner: banner)
+			playCheatCelebration()
+		case .alreadyHavePaidPlus:
+			cheatEffect.fire(banner: L10n.Promo.CheatCode.alreadyHavePlus)
+			playCheatCelebration()
+		case .alreadyUsed:
+			cheatEffect.fire(banner: L10n.Promo.CheatCode.alreadyUsed, confetti: false)   // quiet toast, no party
+		}
+	}
+
+	/// Celebratory haptic + chime for a cheat code hit. Gated on the existing toggles; isolated for easy
+	/// removal. Final choreography (which sound, intensity) is tuned on-device (task 64 Scope 11).
+	private func playCheatCelebration() {
+		if store.hapticFeedbackEnabled {
+			UINotificationFeedbackGenerator().notificationOccurred(.success)
+		}
+		if store.keyClickSoundEnabled {
+			AudioServicesPlaySystemSound(1025)   // placeholder chime — needs Full Access; tune on-device
+		}
 	}
 
 	// MARK: - Suggestion eligibility & language
@@ -511,6 +582,7 @@ final class KeyboardViewController: UIInputViewController {
 			suggestions: suggestions,
 			fieldAllowsBar: state.currentEligibility.allowDisplay,
 			decimalSeparator: Self.currentDecimalSeparator,
+			cheatEffect: cheatEffect,
 			dispatch: { [weak self] key in self?.handle(key) },
 			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
@@ -565,7 +637,7 @@ final class KeyboardViewController: UIInputViewController {
 			state.favoriteEmojis,
 			counts: state.emojiUsageCounts,
 			mode: state.favoritesSortMode,
-			isPlus: state.isPlus
+			isPlus: state.effectiveIsPlus
 		)
 	}
 
@@ -734,7 +806,7 @@ final class KeyboardViewController: UIInputViewController {
 			// Respect the free favorites cap here too: the keyboard can't present a paywall (no StoreKit
 			// in the extension), so a free user at the limit simply can't add more from the emoji panel —
 			// the host app's editor is where the upgrade is offered. Removing is always allowed.
-			guard FavoritesEntitlement.canAddFavorite(currentCount: updated.count, isPlus: state.isPlus) else {
+			guard FavoritesEntitlement.canAddFavorite(currentCount: updated.count, isPlus: state.effectiveIsPlus) else {
 				return
 			}
 			updated.append(emoji)

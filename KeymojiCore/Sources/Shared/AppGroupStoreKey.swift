@@ -28,4 +28,9 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	/// purchase/restore/entitlement refresh; read (never written) by the keyboard extension, which has
 	/// no StoreKit code. Its dedicated Darwin channel live-unlocks a running keyboard right after a buy.
 	case isPlus
+	/// *Plus trial expiry* mirror (`Date?` as an epoch-seconds string). Cheap hot-path copy of the
+	/// Keychain-owned master expiry shared by the Welcome trial and the cheat code promo bonus. Written by
+	/// the host app (Welcome activation) and the keyboard extension (cheat code activation); its Darwin
+	/// channel live-unlocks a running keyboard the instant a grant lands. See `effectiveIsPlus`.
+	case promoPlusExpiresAt
 }

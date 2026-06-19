@@ -23,7 +23,8 @@ public let app: Target = .target(
 	sources: ["\(targetName)/Sources/**"],
 	resources: ["\(targetName)/Resources/**"],
 	entitlements: .dictionary([
-		"com.apple.security.application-groups": .array([.string(appGroupIdentifier)])
+		"com.apple.security.application-groups": .array([.string(appGroupIdentifier)]),
+		"keychain-access-groups": .array([.string(keychainSharedAccessGroup)])
 	]),
 	scripts: [
 		.swiftlint,

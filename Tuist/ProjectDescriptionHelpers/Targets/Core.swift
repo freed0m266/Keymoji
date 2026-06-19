@@ -11,7 +11,8 @@ public let core: Target = .target(
 	dependencies: [
 		.target(name: resources.name),
 		.external(name: "BaseKitX"),
-		.external(name: "SwiftyBeaver")
+		.external(name: "SwiftyBeaver"),
+		.external(name: "KeychainAccess")
 	]
 )
 

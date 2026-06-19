@@ -18,6 +18,7 @@ public final class FavoriteEmojisEditorViewModelMock: FavoriteEmojisEditorViewMo
 	public private(set) var sortMode: FavoritesSortMode
 	public var isPlus: Bool
 	public var paywallContext: PaywallContext?
+	public var showLossAversionBanner: Bool
 
 	public let freeFavoritesLimit = FavoritesEntitlement.freeFavoritesLimit
 
@@ -25,6 +26,10 @@ public final class FavoriteEmojisEditorViewModelMock: FavoriteEmojisEditorViewMo
 
 	public var canAddMoreFavorites: Bool {
 		FavoritesEntitlement.canAddFavorite(currentCount: favorites.count, isPlus: isPlus)
+	}
+
+	public var lossAversionExtraCount: Int {
+		max(0, favorites.count - freeFavoritesLimit)
 	}
 
 	public var displayedFavorites: [String] {
@@ -35,12 +40,14 @@ public final class FavoriteEmojisEditorViewModelMock: FavoriteEmojisEditorViewMo
 		favorites: [String] = ["❤️", "😀", "🚀"],
 		sortMode: FavoritesSortMode = .manual,
 		counts: [String: Int] = [:],
-		isPlus: Bool = true
+		isPlus: Bool = true,
+		showLossAversionBanner: Bool = false
 	) {
 		self.favorites = favorites
 		self.sortMode = sortMode
 		self.counts = counts
 		self.isPlus = isPlus
+		self.showLossAversionBanner = showLossAversionBanner
 	}
 
 	public func toggle(_ emoji: String) {

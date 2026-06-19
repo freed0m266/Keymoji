@@ -35,6 +35,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 	) -> Bool {
 		setupLogger()
 		startPurchases()
+		// Restore the promo-trial expiry mirror from the Keychain master after a reinstall (the App Group
+		// container is wiped on uninstall; the Keychain survives). Cheap, runs once, before any UI gates read.
+		PromoTrialReconciliation.reconcileShared()
 		return true
 	}
 

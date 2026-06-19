@@ -90,6 +90,12 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 
 	private var favoritesList: some View {
 		List {
+			if viewModel.showLossAversionBanner {
+				Section {
+					lossAversionBanner
+				}
+			}
+
 			Section {
 				Picker(Texts.Sort.title, selection: sortSelection) {
 					Text(Texts.Sort.manual).tag(FavoritesSortMode.manual)
@@ -146,9 +152,37 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 		}
 	}
 
-	/// Shown to a free user who has filled (or, after a downgrade, overfilled) the free favorites cap.
+	/// Shown to a free user who has filled the cap — but not when the loss-aversion banner already owns
+	/// the upsell (a lapsed trial with extras), so only one prompt shows at a time.
 	private var showsUpsellRow: Bool {
-		!viewModel.isPlus && !viewModel.canAddMoreFavorites
+		!viewModel.isPlus && !viewModel.canAddMoreFavorites && !viewModel.showLossAversionBanner
+	}
+
+	/// Loss-aversion banner: a consumed trial lapsed and the user is over the cap. Reuses the upsell
+	/// row's shape but routes to the `.afterTrial` paywall ("You loved Plus. Get it back.").
+	private var lossAversionBanner: some View {
+		Button {
+			viewModel.requestPaywall(.afterTrial)
+		} label: {
+			HStack(spacing: 12) {
+				Icon.starCircleFill
+					.font(.system(size: 26))
+					.foregroundStyle(.tint)
+				VStack(alignment: .leading, spacing: 2) {
+					Text(Texts.LossAversion.title)
+						.font(.body.weight(.semibold))
+						.foregroundStyle(.primary)
+					Text(Texts.LossAversion.body(viewModel.lossAversionExtraCount))
+						.font(.footnote)
+						.foregroundStyle(.secondary)
+				}
+				Spacer()
+				Icon.chevronRight
+					.font(.footnote.weight(.semibold))
+					.foregroundStyle(.tertiary)
+			}
+		}
+		.buttonStyle(.plain)
 	}
 
 	private var upsellRow: some View {
