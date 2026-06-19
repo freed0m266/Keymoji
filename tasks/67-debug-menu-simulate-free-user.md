@@ -1,6 +1,21 @@
 # 67 — Debug menu pro simulaci fresh/free user stavů (DEBUG-only)
 
-**Status:** Todo
+**Status:** Done — 2026-06-19 (vše implementováno; Debug+Release build zelený, KeymojiCore 85 + Settings 14 testů zelené)
+
+## ✅ Implementováno (2026-06-19, větev `feature/67-debug-menu-simulate-free-user`)
+
+- **`DebugOverrides` (KeymojiCore, `#if DEBUG`)** — `static var forceFreeTier` přes injektovatelný `UserDefaults` (default `.standard`, host-only; testy si dají izolovaný suite). Persistentní.
+- **Maska v `PurchaseService.applyEntitlement`** — `effectiveOwned = owned && !DebugOverrides.forceFreeTier` pod `#if DEBUG`; `#else` větev beze změny. Mirror i observable `isPlus` dostanou masku + notifier `.isPlus` → UI i klávesnice live. Reálný StoreKit entitlement netknutý (toggle off → `refreshEntitlement()` → reálné Plus zpět). Přidán DEBUG test seam `applyEntitlementForTesting(_:)`.
+- **`PromoTrialStore.debugWrite(_:)` (`#if DEBUG`)** — přímý zápis celého recordu (mimo `PromoTrialStoring`), volá `private persist` ve stejném souboru. Umožní reset flagů / posun expiry do minulosti, co idempotentní `consume*` cesta neumí.
+- **Nový `Debug` feature modul** (`Features/Debug/`, Tuist `Feature(name:"Debug", dependencies:[core], hasTests:false, hasTesting:false)`, celé `#if DEBUG` → v Release prázdný framework). `DebugMenuView` + konkrétní `DebugMenuViewModel` (bez protokolu/mocku) + `debugMenuVM()`.
+- **Akce VM:** `toggleForceFreeTier()` (+ `refreshEntitlement()` live), `resetOnboarding()`, `resetGift()` / `resetCheatCode()` (vyčistí consumed flag + celý sdílený `expiresAt` + mirror nil + notify), `expireTrialNow()` (welcomeConsumed=true + expiry/mirror do minulosti + notify). Žádná akce nesahá na favorites/learned words/recents/usage counts. Live readout: effective Plus, paid mirror, force-free, onboardingComplete, welcomeConsumed, cheatCodeConsumed, promo expiry.
+- **Settings integrace** — `Settings` dep na `debug`; `#if DEBUG` „🛠 Debug" `NavigationLink` na konci formu (pod snapshot foldem → existující Settings snapshoty beze změny).
+- **Testy** — `DebugOverridesTests` (KeymojiCore): force-free maskuje owned entitlement (mirror + observable false) → po vypnutí zpět true; default false.
+- **Codex (closing):** 0 nálezů — ověřil Debug+Release build a že DEBUG override logika je v Release vykompilovaná pryč.
+
+**Pozn.:** `#else`/release větev `applyEntitlement` ověřena beze změny (Release build zelený, `Debug.framework` v Release prázdný). Kombinaci „reset onboarding" + force-free neprovádět dokud není hotový [task 68](68-onboarding-rerun-truncates-favorites.md) (viz Rizika níže).
+
+---
 
 **Priorita:** v1.x (testovací nástroj pro [task 64](64-hesoyam-promo-trial.md)) · **Úsilí:** M · **Dopad:** Medium (odemkne manuální QA tasku 64 bez ztráty reálných dat a bez deaktivace StoreKit Plus)
 
