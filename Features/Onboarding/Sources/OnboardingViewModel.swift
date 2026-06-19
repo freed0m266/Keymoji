@@ -115,13 +115,6 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		dependencies.preferences.markOnboardingComplete()
 	}
 
-	/// Single chokepoint that enforces the non-empty invariant: an empty selection (skip, or Continue
-	/// without picking) falls back to the curated 12 — never random, never empty.
-	///
-	/// Gated on the picker actually being part of this flow. The Settings "What Keymoji can do"
-	/// shortcut re-enters the tour directly at `.featureTour`, skipping the picker; closing it must
-	/// not silently overwrite favorites the user may have intentionally cleared. First-run and the
-	/// full "Setup instructions" re-run both start at/before the picker, so the invariant still holds.
 	/// Pull entitlement-derived state from the preferences provider into observable VM state. Called at
 	/// init and after a Welcome activation so the banner + grid cap update in place.
 	private func refreshEntitlement() {
@@ -131,12 +124,30 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 		welcomeTrialActiveUntil = prefs.welcomeTrialActiveUntil
 	}
 
+	/// Single chokepoint that enforces the non-empty invariant: an empty selection (skip, or Continue
+	/// without picking) falls back to the curated default — never random, never empty.
+	///
+	/// Gated on the picker actually being part of this flow. The Settings "What Keymoji can do"
+	/// shortcut re-enters the tour directly at `.featureTour`, skipping the picker; closing it must
+	/// not silently overwrite favorites the user may have intentionally cleared. First-run and the
+	/// full "Setup instructions" re-run both start at/before the picker, so the invariant still holds.
 	private func persistFavoritesIfPickerWasShown() {
 		guard initialStep.rawValue <= OnboardingStep.pickFavorites.rawValue else { return }
-		let resolved = selectedFavorites.isEmpty ? EmojiCatalog.defaultFavorites : selectedFavorites
-		// Cap the write to the free limit: the curated fallback has 12, but a free user can only keep
-		// `freeFavoritesLimit`, so save the first N rather than let the keyboard clamp it inconsistently.
-		dependencies.preferences.persistOnboardingFavorites(Array(resolved.prefix(favoritesLimit)))
+		guard !selectedFavorites.isEmpty else {
+			// Empty selection (skip, or Continue without picking) → the curated fallback. Cap *only this
+			// fallback* to the free limit: the default has 12, but a free user can only keep
+			// `freeFavoritesLimit`, so the keyboard never has to clamp right after onboarding.
+			dependencies.preferences.persistOnboardingFavorites(
+				Array(EmojiCatalog.defaultFavorites.prefix(favoritesLimit))
+			)
+			return
+		}
+		// Persist the user's own selection in full — never `prefix` it. A free re-run pre-fills the picker
+		// with the stored set, which task 64 lets exceed the free cap (favorites are kept, just hidden,
+		// after a promo downgrade); capping the write here would silently delete those extras. The cap is a
+		// selection concern (`canSelectMoreFavorites` blocks *adding* past it) and a display concern
+		// (`FavoritesEntitlement.visibleFavorites` clamps non-destructively) — not a persist concern.
+		dependencies.preferences.persistOnboardingFavorites(selectedFavorites)
 	}
 
 	func openSettings() {

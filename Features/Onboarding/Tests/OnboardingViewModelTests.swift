@@ -149,6 +149,20 @@ final class OnboardingViewModelTests: XCTestCase {
 		XCTAssertEqual(viewModel.selectedFavorites, ["🚀", "🐶"])
 	}
 
+	func testFinish_freeReRun_withFavoritesAboveCap_persistsFullSet_noTruncation() {
+		// A downgraded free user can keep >freeFavoritesLimit favorites (task 64: they're hidden, not
+		// deleted, after a promo expires). Re-running onboarding pre-fills the picker with that full set;
+		// finishing must persist all of them — `prefix(cap)` here would silently delete the extras.
+		let stored = ["❤️", "😂", "👍", "🙏", "😍", "🔥", "🎉", "🥰"]   // 8 > free cap of 6
+		XCTAssertGreaterThan(stored.count, FavoritesEntitlement.freeFavoritesLimit)
+		let spy = FavoritesPreferencesSpy(currentFavorites: stored)   // free by default
+
+		let viewModel = makeViewModel(spy)
+		viewModel.didFinishOnboarding()
+
+		XCTAssertEqual(spy.persistedFavorites, stored, "re-run must persist the full stored set, not the free-capped prefix")
+	}
+
 	// MARK: - Helpers
 
 	private func makeViewModel(_ preferences: FavoritesPreferencesSpy) -> OnboardingViewModel {
