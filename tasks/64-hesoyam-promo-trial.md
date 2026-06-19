@@ -21,6 +21,15 @@ Poslední (device-dependentní) půlka. Build app+extension zelený (ConfettiSwi
 
 Aby šlo tajné slovo měnit na jednom místě (a kód nebyl pojmenovaný po konkrétním slově), přejmenováno kódové jméno `Hesoyam*` → **`CheatCode*`** (case-sensitive: `CheatCodeActivating`/`Activator`/`Outcome`, `cheatCodeConsumed`, `consumeCheatCode`, `cheatCodeGrantDays`, `promo.cheatCode.*`, soubory `CheatCodeActivating.swift`/`CheatCodeActivatorTests.swift`). Komentáře zneutralizované, testy detektoru odvozují fixtures z `CheatCodeDetector.code`. **Jediný výskyt literálu „hesoyam" ve Swift kódu = `CheatCodeDetector.code`** (single source of truth; změna keywordu = 1 edit). Reálné slovo dál žije v review notes (Apple ho potřebuje) a historických doc (task/ADR/CONTEXT — marketing/domain term „HESOYAM promo bonus" záměrně ponechán). Build + KeymojiCore/KeyboardCore/Settings/FavoriteEmojisEditor testy zelené po renamu.
 
+### 🔑 Keychain access group — bez hardcoded team ID (2026-06-19)
+Team ID už není v žádném zdrojáku: entitlement používá `$(AppIdentifierPrefix)com.freedommartin.keymoji.shared` (codesign team-prefixne při podpisu); `KeychainPromoBacking` zjišťuje team prefix **za běhu** z keychainu (probe item → `kSecAttrAccessGroup`). Team ID žije jen v `Project.swift` `DEVELOPMENT_TEAM` + `fastlane/Appfile`. Ověřeno: app se instaluje+spouští na simu s `$(AppIdentifierPrefix)` entitlementem.
+
+### 🔍 Externí code review (2026-06-19)
+3 nálezy, adversariálně ověřeno workflow (3 agenti):
+- **#1 Onboarding truncation (P1)** — potvrzeno reálné = **[task 68](68-onboarding-rerun-truncates-favorites.md)**. Vědomě **ponecháno jako samostatný task** (ne v této větvi).
+- **#3 Keychain durability (P2) — OPRAVENO.** `PromoTrialKeychainBacking.set` → `throws`; `consume*` → `Date?` (nil když durable zápis selže); aktivátory publikují grant + mirror + notify **jen po úspěšném zápisu** (`CheatCodeOutcome.couldNotPersist` nový case → klávesnice tiše neoslaví). 5 in-memory backingů + testy aktualizované; přidán failure-path test. Premise-independent.
+- **#2 Full Access consume (P2) — ODLOŽENO na device-verify.** Premisa (klávesnice bez Full Access má App Group read-only → keyboard-side zápisy tiše no-opnou) je **device-only ověřitelná** a agent ji nepotvrdil na iOS 26 (aktuální Apple doc nenačtena). **Pokud platí, je to app-wide problém** (recents/favorites/usage/word-learning + privacy-policy claim), ne jen HESOYAM. Reconciliace na host-launchi HESOYAM částečně self-healuje. **Akce: na zařízení ověřit, jestli keyboard App Group zápisy přežijou s Full Access OFF** (instalace bez Full Access → psát → zkontrolovat recents/favorites). Ten jeden test rozhodne #2 i app-wide otázku. Pak teprve řešit (gate na `hasFullAccess` / oprava / úprava privacy policy). Zvážit samostatný task.
+
 ## ✅ Fáze 2d — picker selectionLimit + loss-aversion (Scope 7 + 12 + 8-editor, 2026-06-19)
 
 Tímto je **host-app Welcome trial vertikála kompletní** (vše simulátor-ověřeno).
