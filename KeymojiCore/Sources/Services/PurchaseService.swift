@@ -140,12 +140,31 @@ public final class PurchaseService: PurchaseServicing {
 	/// running keyboard unlocks live. Always reconciles the mirror (even when our in-memory copy already
 	/// matched) so a store that drifted — e.g. reset in a test — is corrected.
 	private func applyEntitlement(_ owned: Bool) {
-		if store.isPlus != owned {
-			store.isPlus = owned
+		#if DEBUG
+		// Debug "simulate a free user" override: mask a real (paid) entitlement to free so QA can exercise
+		// the welcome / cheat code / downgrade surfaces without resetting StoreKit. The real entitlement is
+		// untouched — turning the flag off and refreshing re-applies the true `owned` value. Release builds
+		// compile this branch out entirely (see `#else`), so no debug logic can leak into production.
+		let effectiveOwned = owned && !DebugOverrides.forceFreeTier
+		#else
+		let effectiveOwned = owned
+		#endif
+		if store.isPlus != effectiveOwned {
+			store.isPlus = effectiveOwned
 			notifier.post(.isPlus)
 		}
-		if isPlus != owned {
-			isPlus = owned
+		if isPlus != effectiveOwned {
+			isPlus = effectiveOwned
 		}
 	}
 }
+
+#if DEBUG
+extension PurchaseService {
+	/// Test seam: drive the entitlement writer directly (bypassing StoreKit) so the `forceFreeTier` mask
+	/// can be unit-tested without a real transaction. DEBUG-only — never referenced by shipping code.
+	func applyEntitlementForTesting(_ owned: Bool) {
+		applyEntitlement(owned)
+	}
+}
+#endif

@@ -222,3 +222,15 @@ public extension PromoTrialStore {
 		PromoTrialStore(backing: KeychainPromoBacking())
 	}
 }
+
+#if DEBUG
+public extension PromoTrialStore {
+	/// DEBUG-only: overwrite the entire record (consumed flags + expiry) directly. Lets the debug menu
+	/// simulate fresh / expired-trial states — resetting a one-shot flag or pushing the expiry into the
+	/// past — which the production `consume*` path (idempotent, one-way) deliberately can't do. Kept off
+	/// `PromoTrialStoring`: shipping code never mutates the record directly, only consumes grants.
+	func debugWrite(_ record: PromoTrialRecord) {
+		try? persist(record)
+	}
+}
+#endif

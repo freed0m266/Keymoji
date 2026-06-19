@@ -20,6 +20,10 @@ import LearnedWordsEditor
 import Onboarding
 import Paywall
 
+#if DEBUG
+import Debug
+#endif
+
 public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 	@Bindable private var viewModel: ViewModel
 	@State private var sheet: SheetKind?
@@ -45,6 +49,9 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				plusSection
 				supportSection
 				aboutSection
+				#if DEBUG
+				debugSection
+				#endif
 			}
 			.mainBackground()
 			.overlay(alignment: .bottom) { welcomeToastView }
@@ -312,6 +319,22 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 			Text(Texts.aboutHeader)
 		}
 	}
+
+	#if DEBUG
+	/// Developer-only entry to the simulate-free-user tools (task 67). Compiled out of Release entirely;
+	/// the `Debug` framework ships empty. Sits last in the form, below the snapshot fold.
+	private var debugSection: some View {
+		Section {
+			NavigationLink {
+				DebugMenuView(viewModel: debugMenuVM())
+			} label: {
+				Text("🛠 Debug")
+			}
+		} header: {
+			Text("Developer")
+		}
+	}
+	#endif
 
 	private enum SheetKind: Int, Identifiable {
 		case onboarding

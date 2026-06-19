@@ -12,6 +12,7 @@ public let settings = Feature(
 		.target(about),
 		.target(emojiCodes),
 		.target(favoriteEmojisEditor),
-		.target(learnedWordsEditor)
+		.target(learnedWordsEditor),
+		.target(debug)
 	]
 )

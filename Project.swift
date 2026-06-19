@@ -10,6 +10,7 @@ let features: [Feature] = [
 	paywall,
 	about,
 	emojiCodes,
+	debug,
 	settings
 ]
 let appTargets: [Target] = features.flatMap(\.allTargets)
