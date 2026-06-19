@@ -1,6 +1,107 @@
 # 64 — Welcome Plus trial (opt-in) + HESOYAM promo bonus
 
-**Status:** Todo
+**Status:** Done — 2026-06-19 (vše implementováno + build/testy zelené; **device tuning HESOYAM efektu + on-device ověření přes [debug menu task 67](67-debug-menu-simulate-free-user.md) zbývá**)
+
+## ✅ Fáze 3 — HESOYAM půlka (Scope 9, 10, 11, 13, 14 + privacy, 2026-06-19)
+
+Poslední (device-dependentní) půlka. Build app+extension zelený (ConfettiSwiftUI linkuje pod `APPLICATION_EXTENSION_API_ONLY`, ověřeno extension-safe — žádné UIScreen/UIApplication); KeymojiCore 82 + KeyboardCore 374 testů.
+
+- **Scope 9 — `CheatCodeDetector`** (KeyboardCore, pure): **window match** v posledních `code.count+10` znacích (NE strict suffix — revert log #1) + 10 testů. Flow v `KeyboardViewController.detectCheatCode()` v `textDidChange`: secure-field guard, **debounce** (`cheatCodeHandled`, fírne 1× per occurrence, re-arm po opuštění okna), **text nemaže** (viralní artefakt).
+- **Scope 10 — `HesoyamActivating`** (KeymojiCore, bez PurchaseServicing — paid čte z `AppGroupStore.isPlus` mirroru): `.granted(wasExtension:)` / `.alreadyHavePaidPlus` (efekt, no consume) / `.alreadyUsed` (no efekt) + 6 testů.
+- **Scope 11 — `CheatEffectOverlay` + `CheatEffectController`** (KeyboardUI, ConfettiSwiftUI): reference-type controller přežije root rebuildy; confetti + banner (granted/alreadyHavePlus) vs. tichý toast (alreadyUsed); `.allowsHitTesting(false)`. Haptika+chime gated v controlleru (`playCheatCelebration`, isolated, device-tune). **Žádné Rockstar assety.**
+- **Scope 13** — review notes (`fastlane/.../notes.txt`) rozšířeny o HESOYAM + welcome disclosure. **Scope 14** — `promo.hesoyam.*` lokalizace.
+- **Privacy** — `marketing/privacy-policy.html` opraveno: přiznán on-device Keychain promo záznam (řešilo fázi-1 Codex nález); odstraněn už nepravdivý „no network requests" claim (StoreKit IAP).
+- **Bit-exact mirror fix:** `AppGroupStore.promoPlusExpiresAt` přešel z `timeIntervalSince1970` na `timeIntervalSinceReferenceDate` — round-trip `Date` teď přesný (velký konstantní offset jinak shazoval low bits → flaky equality).
+
+**Codex (closing):** 1 nález (P2) — `ConfettiCannon(hapticFeedback:)` defaultně `true`, obcházel by `hapticFeedbackEnabled` + dubloval controller haptiku → **applied** `hapticFeedback: false`.
+
+**Co ještě reálně chybí (mimo kód):** doladit choreografii confetti/chime na zařízení (Scope 11 záměrně neladěno v kódu) a projet celé QA přes debug menu (task 67). HESOYAM efekt (cesta „already have Plus") jde ověřit na zařízení i s reálným Plus hned teď.
+
+### 🔤 Codename neutralizace (2026-06-19)
+
+Aby šlo tajné slovo měnit na jednom místě (a kód nebyl pojmenovaný po konkrétním slově), přejmenováno kódové jméno `Hesoyam*` → **`CheatCode*`** (case-sensitive: `CheatCodeActivating`/`Activator`/`Outcome`, `cheatCodeConsumed`, `consumeCheatCode`, `cheatCodeGrantDays`, `promo.cheatCode.*`, soubory `CheatCodeActivating.swift`/`CheatCodeActivatorTests.swift`). Komentáře zneutralizované, testy detektoru odvozují fixtures z `CheatCodeDetector.code`. **Jediný výskyt literálu „hesoyam" ve Swift kódu = `CheatCodeDetector.code`** (single source of truth; změna keywordu = 1 edit). Reálné slovo dál žije v review notes (Apple ho potřebuje) a historických doc (task/ADR/CONTEXT — marketing/domain term „HESOYAM promo bonus" záměrně ponechán). Build + KeymojiCore/KeyboardCore/Settings/FavoriteEmojisEditor testy zelené po renamu.
+
+## ✅ Fáze 2d — picker selectionLimit + loss-aversion (Scope 7 + 12 + 8-editor, 2026-06-19)
+
+Tímto je **host-app Welcome trial vertikála kompletní** (vše simulátor-ověřeno).
+
+- **Scope 7 — `EmojiCatalogPickerView.selectionLimit: Int? = nil`** (additive): cap → unselected cells `.opacity(0.35)` + `.disabled`. Onboarding „Browse all emoji" tlačítko pod gridem → sheet s pickerem (`selectionLimit: viewModel.favoritesLimit`). Settings editor sheet zůstává bez capu (paywall přes onToggle). Onboarding feature dostal dep na `emojiCatalogPicker`.
+- **Scope 12 — loss-aversion banner** v editoru: `showLossAversionBanner` (!effectiveIsPlus && hasConsumedAnyTrial && favorites > cap) → banner „Your Plus trial ended — your N extra favorites are saved" (plurál stringsdict) → paywall `.afterTrial`. Potlačí generický upsell row. `FavoriteEmojisEditorViewModel` dostal `promoStore`.
+- **Scope 8 (editor) — `.afterTrial` routing:** `toggle()` past cap → `.afterTrial` když `hasConsumedAnyTrial`, jinak `.favoritesLimit`.
+- **Testy:** FavoriteEmojisEditor 24 (3 nové loss-aversion VM + 1 nový snapshot, vizuálně ověřený) · Onboarding 21 (browse-all v 5 re-recorded snapshotech).
+
+### Stav celé host-app welcome půlky (vše zelené, simulátor-ověřeno)
+Scope 4 (gating 5 sites) · 5 (onboarding banner) · 6 (Settings PlusRowState S1–S4 + confirm + toast) · 7 (picker) · 8 (.afterTrial + editor) · 10 (WelcomeTrialActivating) · 12 (loss-aversion) · launch reconciliace · lokalizace (welcome/trial/loss-aversion + plurály). Testy: KeymojiCore 77 · KeyboardCore 366 · Onboarding 21 · Settings 14 · Paywall 18 · FavoriteEmojisEditor 24.
+
+**Zbývá (device-only HESOYAM půlka):** Scope 9 `CheatCodeDetector` (window match) + flow v `KeyboardViewController` (secure guard, debounce, text nemazat) · `HesoyamActivating` (extension, bez PurchaseServicing) · Scope 11 `CheatEffectOverlay` (ConfettiSwiftUI dep → KeyboardUI) · Scope 13 review notes · privacy-policy.html keychain update.
+
+## ✅ Fáze 2c — onboarding welcome banner (Scope 5, 2026-06-19)
+
+Banner nad gridem v pick-favorites kroku. Zelený build + **Onboarding 21 testů** (11 snapshot vč. 2 nových welcome stavů + 10 VM vč. nového activate testu). Banner snapshoty vizuálně ověřeny (offer button + „Plus active until {date}" success card s 8 vybranými = odemčený cap).
+
+- **`OnboardingPreferencesProviding`** rozšířeno: `canShowWelcomeOffer` (!paid && !welcomeConsumed && !trialActive), `welcomeTrialActiveUntil`, `@MainActor activateWelcomeTrial()` (konstruuje `WelcomeTrialActivator` se sdíleným promoStore inline → bez stored @MainActor existential).
+- **`OnboardingViewModel`:** `favoritesLimit` z `let` → observable `private(set) var` + `canShowWelcomeOffer`/`welcomeTrialActiveUntil` observable; `refreshEntitlement()` (init + po activate) → grid se odemkne **in place** (cap 6 → `.max`); `activateWelcomeTrial()` deleguje + refresh.
+- **`OnboardingView`:** `welcomeBanner` v pickFavoritesStep — paid/expired-consumed → skrytý; trial aktivní → read-only „🎁 Plus active until {date}"; welcome dostupný → tlačítko „🎁 Activate your gift…" (`withAnimation` → grid un-dim + banner morph).
+- **Lokalizace:** `welcome.onboarding.cta`, `welcome.onboarding.activeUntil`.
+- Mocky + spy (`FavoritesPreferencesSpy` modeluje effective isPlus) aktualizované.
+
+**Device test (onboarding):** Settings → Setup instructions (nebo fresh install) → pick-favorites krok → „🎁 Activate your gift" → grid se odemkne (>6 výběr) + banner „Plus active until {date}".
+
+**Zbývá:** Scope 7 picker `selectionLimit` + onboarding „Browse all" sheet · Scope 12 loss-aversion downgrade banner v editoru · pak device-only HESOYAM (Scope 9, 11, HesoyamActivating, confetti).
+
+
+
+## ✅ Fáze 2b — Settings welcome řádek (Scope 6, 2026-06-19)
+
+První **tap-testovatelný surface**. Zelený build + Settings 14 testů (8 nových state-machine + 6 snapshot).
+
+- **`PlusRowState`** (S1 `.paid` / S2 `.welcomeAvailable` / S3 `.trialActive(daysLeft:)` / S4 `.afterTrial`) v `SettingsViewModel`. Precedence: paid > active trial > welcomeConsumed?afterTrial:welcomeAvailable. HESOYAM-only expired (welcome netknutý) → stále S2 (welcome se nabízí dál).
+- **VM reaktivita:** observable mirrors `promoExpiresAt`/`welcomeConsumed`, seed v initu + observer `.promoPlusExpiresAt` (HESOYAM grant z klávesnice za běhu) → row live. `activateWelcomeTrial()` deleguje na `WelcomeTrialActivating` + recompute. `trialActiveUntil` pro toast.
+- **View:** 4-stavový řádek; S2 → **confirm alert** („Activate a free month of Plus? … aktivovat jde jen jednou") → activate → S3 + **toast** „Plus active until {date}" (3s); S4 → paywall `.afterTrial`.
+- **Lokalizace:** `welcome.settings.*` + `settings.plus.trialDaysLeft` s **plurály přes `Localizable.stringsdict`** (Tuist accessor ze `.strings`, runtime plural ze stringsdict; ověřeno `tr()` přes `Bundle.module.localizedString`).
+- **8 unit testů** state machine (real VM + in-memory backing + PurchaseServiceMock): welcomeAvailable/paid/activate→trialActive(30)/idempotence/paid no-op/expiredWelcome→afterTrial/activeHesoyam→trialActive/expiredHesoyam→welcomeAvailable.
+
+**Device test (Settings welcome):** Settings → „🎁 Activate a free month of Plus" → confirm → řádek „Keymoji Plus trial — 30 days left" + toast → klávesnice odemkne neomezené favorites live (notifier).
+
+**Zbývá:** Scope 5 onboarding welcome banner + „Procházet všechny" · Scope 7 picker `selectionLimit` · Scope 12 loss-aversion downgrade banner v editoru · onboarding welcome lokalizace + snapshoty · pak device-only HESOYAM (Scope 9, 11, HesoyamActivating, confetti).
+
+
+
+## ✅ Fáze 2a — gating core + use case + reconciliace (2026-06-19)
+
+Sdílené jádro, na kterém staví všechny surfaces. **Bezpečná no-op migrace** (promo expiry je nil dokud
+nevznikne grant), plně ověřeno: zelený build app+extension + KeymojiCore 77 · KeyboardCore 366 ·
+FavoriteEmojisEditor 20 · Settings 6 · Paywall 18 testů; app se instaluje + spouští na simu.
+
+- **Scope 4 — gating migrace na `effectiveIsPlus` (všech 5 sites):** FavoriteEmojisEditorVM (`isPlus` + sortMode fallback) · OnboardingPreferences.isPlus · SettingsVM.isPlus · PaywallVM.isPlus (+ inject `store`) · KeyboardState (`promoPlusExpiresAt` mirror + `effectiveIsPlus` computed; clamp + favorite-add gate; `KeyboardViewController` čte mirror v `refreshFromStore` + observuje `.promoPlusExpiresAt`). `PurchaseService.isPlus` + `AppGroupStore.isPlus` zůstávají **paid-only**.
+- **Scope 8 — `.afterTrial`** PaywallContext + headline „You loved Plus. Get it back." (`paywall.headlineAfterTrial`).
+- **Scope 10 — `WelcomeTrialActivating`** use case ([WelcomeTrialActivating.swift](../KeymojiCore/Sources/Shared/WelcomeTrialActivating.swift)): paid guard → idempotent welcomeConsumed guard → consume → App Group mirror → notify. + `makeShared()` factory + 4 testy. (HesoyamActivating = fáze HESOYAM.)
+- **Launch reconciliace** ([PromoTrialReconciliation.swift](../KeymojiCore/Sources/Shared/PromoTrialReconciliation.swift)): App Group ← Keychain master při startu (přežije reinstal); tolerant compare (1s) proti float driftu epoch-string round-tripu; wired v `KeymojiApp` `didFinishLaunching`.
+
+**Pozn. reaktivita:** host VM počítají effective z `store.promoPlusExpiresAt` on-read (ne `@Observable`-tracked) → grant během otevřené obrazovky se projeví až na next appear. Klávesnice je výjimka — má skutečný mirror + notifier observer (live unlock). Surfaces (onboarding/Settings), kde aktivace probíhá v daném VM, si recompute řeší samy (fáze 2b).
+
+**Zbývá:** Scope 5 welcome onboarding banner · Scope 6 Settings PlusRowState (S1–S4) + confirm alert + toast · Scope 7 picker `selectionLimit` · Scope 12 loss-aversion downgrade banner · Scope 14 welcome/trial lokalizace (plurály) + snapshoty · pak device-only HESOYAM (Scope 9, 11, HesoyamActivating, confetti).
+
+---
+
+
+
+## ✅ Fáze 1 — foundation (2026-06-19, větev `feature/64-hesoyam-promo-trial`)
+
+Postaveno **verifikovatelné jádro** (zelený build app+extension + 73 KeymojiCore testů), checkpoint
+před UI surfaces dle dohody (foundation-first):
+
+- **`effectiveIsPlus(paid:promoExpiresAt:now:)`** — čistá funkce ([EffectiveEntitlement.swift](../KeymojiCore/Sources/Shared/EffectiveEntitlement.swift)) + 5 testů. **Zatím nikým nevoláno** — migrace ~5 gating sites (Scope 4) je fáze 2.
+- **`PromoTrialStore`** (Keychain) — `PromoTrialRecord` + `PromoTrialStoring` + `nextExpiry` stacking math + idempotentní `consumeWelcome`/`consumeHesoyam` + injektovatelný backing (testy bez entitlements) + `KeychainPromoBacking` (KeychainAccess) + 12 testů. ([PromoTrialStore.swift](../KeymojiCore/Sources/Shared/PromoTrialStore.swift))
+- **`AppGroupStore.promoPlusExpiresAt: Date?`** (epoch-string serial.) + `case promoPlusExpiresAt` v `AppGroupStoreKey` (→ `.promoPlusExpiresAt` notifier kanál zdarma) + 3 testy.
+- **SPM:** KeychainAccess → KeymojiCore. **ConfettiSwiftUI vědomě odloženo** na fázi efektu (nepřidávat nepoužitý dep do extension-only KeyboardUI buildu předem).
+- **Entitlements:** `keychain-access-groups` na host i extension přes **`$(AppIdentifierPrefix)com.freedommartin.keymoji.shared`** (codesign team-prefixne při podpisu — žádný hardcoded team ID). Group name `com.freedommartin.keymoji.shared` v `Constants.swift` ↔ `promoKeychainGroupName` v KeymojiCore; team prefix `KeychainPromoBacking` **zjišťuje za běhu** z keychainu (probe), takže team ID není v žádném zdrojáku (jen v `Project.swift` `DEVELOPMENT_TEAM`).
+
+**Zbývá (fáze 2+):** Scope 4 gating migrace · Scope 5–6 welcome onboarding+Settings · Scope 7 picker `selectionLimit` · Scope 8 `.afterTrial` paywall · Scope 9–11 HESOYAM detekce+flow+confetti overlay · Scope 10 use cases · Scope 12 loss-aversion downgrade · host-app launch reconciliace App Group ↔ Keychain · Scope 13 review notes · Scope 14 lokalizace · zbylé testy + snapshoty.
+
+**Codex (fáze 1):** 2 nálezy (P2). (1) „gates ještě nečtou effectiveIsPlus" — **fáze 2 dle plánu, ne bug.** (2) **`marketing/privacy-policy.html:344`** tvrdí „does not use Full Access for … keychain access" — s promo Keychainem to bude nepřesné; runtime nepřesné teprve až přibude aktivační surface. **Vyřešit ve fázi completion** (vedle Scope 13 review notes) — vyžaduje produktové/právní rozhodnutí o formulaci.
+
+---
 
 **Priorita:** v1.x (po/se [taskem 63](63-monetization-keymoji-plus.md)) · **Úsilí:** L–XL · **Dopad:** High (akvizice + konverze + discoverability)
 
