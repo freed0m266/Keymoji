@@ -2,6 +2,14 @@
 
 **Status:** Done — 2026-06-15
 
+> **Amendment (2026-06-19):** [Task 64](64-hesoyam-promo-trial.md) přidává **opt-in welcome
+> Plus trial** (30 dní, nabízený v onboardingu + Settings) + HESOYAM bonus (+60 dní stackující).
+> Gating na všech 5 `isPlus` call-sites se posouvá z `AppGroupStore.isPlus` (paid-only) na
+> `effectiveIsPlus(paid:, promoExpiresAt:, now:)`. `AppGroupStore.isPlus` **zůstává paid-only**
+> jako čistý StoreKit truth source. Mimo scope „14denní Plus preview" pravidlo dál platí pro
+> *forced* trial — opt-in welcome trial je vědomé otočení tohoto rozhodnutí, viz
+> [ADR 0001](../docs/adr/0001-opt-in-welcome-plus-trial.md).
+
 **Priorita:** v1.x (před prvním veřejným releasem) · **Úsilí:** L · **Dopad:** High
 
 ## Cíl

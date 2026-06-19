@@ -47,3 +47,33 @@ _Avoid_: symbols 1, page one.
 **Alternate symbol page**:
 Second sub-page of the *symbols page* (`#+=` toggle). Carries the less-common symbols.
 _Avoid_: symbols 2, extra symbols.
+
+## Monetization
+
+**Keymoji Plus**:
+The non-consumable in-app purchase entitlement (`com.freedommartin.keymoji.plus`, $3.99 / 99 Kč). Source of
+truth `AppGroupStore.isPlus`, paid-only, permanent once owned. Does **not** include trial activations — those
+live alongside as the *Plus trial expiry*.
+_Avoid_: Premium, Pro, subscription.
+
+**Welcome Plus trial**:
+An **opt-in** 30-day Plus grant offered during onboarding (and in Settings until consumed). One-shot per
+device; recorded in Keychain. Activating it sets the *Plus trial expiry*.
+_Avoid_: Free trial (subscription-flavoured), preview, intro period.
+
+**HESOYAM promo bonus**:
+A 60-day Plus grant triggered by typing `hesoyam` on the keyboard. One-shot per device; **stacks** onto the
+current *Plus trial expiry* (`expiry = max(now, currentExpiry) + 60d`). Named after the GTA: San Andreas
+cheat — homage only, no Rockstar assets.
+_Avoid_: Promo trial, easter egg trial.
+
+**Plus trial expiry**:
+A single `Date?` (`AppGroupStore.promoPlusExpiresAt`, mirrored from Keychain) shared by *Welcome Plus trial*
+and *HESOYAM promo bonus*. Both grants extend it via the same `max(now, currentExpiry) + grantDays` rule.
+_Avoid_: Trial end, expiration date (overloaded), grant deadline.
+
+**Effective Plus**:
+The unified entitlement used at every gate (favorites limit, frequency sort, paging, paywall headlines):
+`paid OR (promoPlusExpiresAt != nil && now < promoPlusExpiresAt)`. `AppGroupStore.isPlus` deliberately stays
+paid-only so the StoreKit truth source stays clean.
+_Avoid_: Has Plus (ambiguous), entitled.
