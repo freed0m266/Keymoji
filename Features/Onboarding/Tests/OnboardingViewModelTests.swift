@@ -119,6 +119,26 @@ final class OnboardingViewModelTests: XCTestCase {
 		XCTAssertEqual(viewModel.selectedFavorites, ["🚀", "🎈"], "re-toggling removes and keeps the rest in order")
 	}
 
+	// MARK: - Welcome trial
+
+	func testActivateWelcomeTrial_relaxesCap_andShowsActiveBanner() {
+		let spy = FavoritesPreferencesSpy(currentFavorites: [], canShowWelcomeOffer: true)
+		let viewModel = makeViewModel(spy)
+
+		// Before: free user, offer visible, capped.
+		XCTAssertTrue(viewModel.canShowWelcomeOffer)
+		XCTAssertNil(viewModel.welcomeTrialActiveUntil)
+		XCTAssertEqual(viewModel.favoritesLimit, FavoritesEntitlement.freeFavoritesLimit)
+
+		viewModel.activateWelcomeTrial()
+
+		// After: gift consumed → success banner, cap relaxed so the grid un-dims in place.
+		XCTAssertEqual(spy.activateWelcomeCount, 1)
+		XCTAssertFalse(viewModel.canShowWelcomeOffer)
+		XCTAssertNotNil(viewModel.welcomeTrialActiveUntil)
+		XCTAssertEqual(viewModel.favoritesLimit, .max)
+	}
+
 	// MARK: - Re-run pre-fill
 
 	func testInit_preFillsSelectionFromStoredFavorites() {
@@ -145,19 +165,39 @@ final class OnboardingViewModelTests: XCTestCase {
 private final class FavoritesPreferencesSpy: OnboardingPreferencesProviding, @unchecked Sendable {
 	let isOnboardingComplete = false
 	let currentFavorites: [String]
-	let isPlus: Bool
 
 	private let lock = NSLock()
 	private var _persistedFavorites: [String]?
 	private var _markCompleteCount = 0
+	private var _paid: Bool
+	private var _canShowWelcomeOffer: Bool
+	private var _welcomeTrialActiveUntil: Date?
+	private var _activateWelcomeCount = 0
 
-	init(currentFavorites: [String], isPlus: Bool = false) {
+	init(
+		currentFavorites: [String],
+		isPlus: Bool = false,
+		canShowWelcomeOffer: Bool = false,
+		welcomeTrialActiveUntil: Date? = nil
+	) {
 		self.currentFavorites = currentFavorites
-		self.isPlus = isPlus
+		self._paid = isPlus
+		self._canShowWelcomeOffer = canShowWelcomeOffer
+		self._welcomeTrialActiveUntil = welcomeTrialActiveUntil
 	}
 
 	var persistedFavorites: [String]? { lock.withLock { _persistedFavorites } }
 	var markCompleteCount: Int { lock.withLock { _markCompleteCount } }
+	var activateWelcomeCount: Int { lock.withLock { _activateWelcomeCount } }
+
+	/// *Effective* Plus, mirroring the real provider: paid OR an active trial. Lets the activation test
+	/// observe the cap relaxing after `activateWelcomeTrial()` sets a future expiry.
+	var isPlus: Bool {
+		lock.withLock { _paid || (_welcomeTrialActiveUntil.map { Date() < $0 } ?? false) }
+	}
+
+	var canShowWelcomeOffer: Bool { lock.withLock { _canShowWelcomeOffer } }
+	var welcomeTrialActiveUntil: Date? { lock.withLock { _welcomeTrialActiveUntil } }
 
 	func markOnboardingComplete() {
 		lock.withLock { _markCompleteCount += 1 }
@@ -165,5 +205,13 @@ private final class FavoritesPreferencesSpy: OnboardingPreferencesProviding, @un
 
 	func persistOnboardingFavorites(_ favorites: [String]) {
 		lock.withLock { _persistedFavorites = favorites }
+	}
+
+	func activateWelcomeTrial() {
+		lock.withLock {
+			_activateWelcomeCount += 1
+			_welcomeTrialActiveUntil = Date(timeIntervalSinceNow: 30 * 24 * 60 * 60)
+			_canShowWelcomeOffer = false
+		}
 	}
 }

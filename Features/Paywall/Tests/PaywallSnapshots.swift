@@ -29,6 +29,13 @@ final class PaywallSnapshots: XCTestCase {
 		)
 	}
 
+	func testPaywall_afterTrial_purchasable_dark() {
+		// Loss-aversion headline after a Plus trial lapses (task 64 Scope 8).
+		assertSnapshot(
+			PaywallView(viewModel: PaywallViewModelMock(context: .afterTrial))
+		)
+	}
+
 	func testPaywall_loadingPrice_dark() {
 		assertSnapshot(
 			PaywallView(

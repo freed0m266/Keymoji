@@ -61,6 +61,24 @@ final class AppGroupStoreTests: XCTestCase {
 		XCTAssertFalse(store.isPlus)
 	}
 
+	func testPromoPlusExpiresAt_defaultsToNil() {
+		XCTAssertNil(store.promoPlusExpiresAt)
+	}
+
+	func testPromoPlusExpiresAt_roundTrips() {
+		// Truncate to whole seconds: the accessor serializes via `timeIntervalSince1970`, so sub-second
+		// precision isn't preserved (and isn't needed for a day-scale expiry).
+		let expiry = Date(timeIntervalSince1970: 1_700_000_000)
+		store.promoPlusExpiresAt = expiry
+		XCTAssertEqual(store.promoPlusExpiresAt, expiry)
+	}
+
+	func testPromoPlusExpiresAt_canBeCleared() {
+		store.promoPlusExpiresAt = Date(timeIntervalSince1970: 1_700_000_000)
+		store.promoPlusExpiresAt = nil
+		XCTAssertNil(store.promoPlusExpiresAt)
+	}
+
 	// MARK: - Default fallback distinguishes unset from `false`
 
 	func testBoolDefault_returnsDefaultWhenUnset() {

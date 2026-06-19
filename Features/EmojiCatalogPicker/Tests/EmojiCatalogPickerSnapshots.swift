@@ -40,6 +40,20 @@ final class EmojiCatalogPickerSnapshots: XCTestCase {
 		assertSnapshot(view)
 	}
 
+	func testEmojiCatalogPicker_atSelectionLimit_dimsRest_dark() {
+		// 6 selected with a cap of 6 → every unselected cell dims/disables (task 64 Scope 7).
+		let view = NavigationStack {
+			EmojiCatalogPickerView(
+				selectedEmojis: ["😀", "❤️", "🚀", "🎉", "🐶", "✨"],
+				onToggle: { _ in },
+				onDone: {},
+				selectionLimit: 6
+			)
+		}
+		.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
 	private func assertSnapshot<V: View>(
 		_ view: V,
 		record: Bool = false,

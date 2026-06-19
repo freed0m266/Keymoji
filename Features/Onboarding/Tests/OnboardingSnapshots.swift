@@ -69,6 +69,35 @@ final class OnboardingSnapshots: XCTestCase {
 		assertOnboardingSnapshot(view, size: Self.iPhoneSESize)
 	}
 
+	// Welcome trial banner states (task 64 Scope 5). Fixed expiry date keeps the success banner stable.
+	private static let fixedTrialExpiry = Date(timeIntervalSince1970: 1_800_000_000)
+
+	func testStep_pickFavorites_welcomeTrialActive_dark() {
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(
+				currentStep: .pickFavorites,
+				selectedFavorites: ["❤️", "🔥", "🎉", "😄", "👍", "🙏", "✨", "🎯"],
+				favoritesLimit: .max,
+				canShowWelcomeOffer: false,
+				welcomeTrialActiveUntil: Self.fixedTrialExpiry
+			)
+		)
+		assertOnboardingSnapshot(view)
+	}
+
+	func testStep_pickFavorites_welcomeUnavailable_dark() {
+		// Paid (or consumed+expired): no offer, no active trial → banner hidden.
+		let view = OnboardingView(
+			viewModel: OnboardingViewModelMock(
+				currentStep: .pickFavorites,
+				favoritesLimit: .max,
+				canShowWelcomeOffer: false,
+				welcomeTrialActiveUntil: nil
+			)
+		)
+		assertOnboardingSnapshot(view)
+	}
+
 	func testStep4_featureTour_dark() {
 		let view = OnboardingView(
 			viewModel: OnboardingViewModelMock(currentStep: .featureTour)

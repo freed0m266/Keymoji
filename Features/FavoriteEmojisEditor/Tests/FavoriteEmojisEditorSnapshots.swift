@@ -64,6 +64,21 @@ final class FavoriteEmojisEditorSnapshots: XCTestCase {
 		assertSnapshot(view)
 	}
 
+	func testFavoriteEmojisEditor_lossAversion_dark() {
+		// Lapsed trial: 8 favorites kept but free → loss-aversion banner ("Your Plus trial ended").
+		let view = NavigationStack {
+			FavoriteEmojisEditorView(
+				viewModel: FavoriteEmojisEditorViewModelMock(
+					favorites: ["❤️", "😂", "👍", "🙏", "😍", "🔥", "🎉", "🥰"],
+					isPlus: false,
+					showLossAversionBanner: true
+				)
+			)
+		}
+		.preferredColorScheme(.dark)
+		assertSnapshot(view)
+	}
+
 	private func assertSnapshot<V: View>(
 		_ view: V,
 		record: Bool = false,
