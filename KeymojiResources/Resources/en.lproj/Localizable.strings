@@ -29,6 +29,7 @@
 "onboarding.favorites.cta" = "Continue";
 "onboarding.favorites.skip" = "Skip for now";
 "onboarding.favorites.footer" = "You can change these any time in Settings.";
+"onboarding.favorites.browseAll" = "Browse all emoji";
 
 "onboarding.tour.title" = "What Keymoji can do";
 "onboarding.tour.subtitle" = "A few things stock keyboards don't.";
@@ -105,6 +106,9 @@
 "settings.favorites.frequencyLockedFooter" = "Auto-sort by most-used is a Keymoji Plus feature. Unlock it to order favorites by how often you use them.";
 "settings.favorites.limitTitle" = "Unlock unlimited favorites";
 "settings.favorites.limitCaption" = "%1$d of %2$d free favorites used";
+// Loss-aversion banner after a Plus trial lapses (task 64 Scope 12). Plurals in Localizable.stringsdict.
+"settings.favorites.lossAversion.title" = "Your Plus trial ended";
+"settings.favorites.lossAversion.body" = "Your %d extra favorites are saved — bring them back.";
 "settings.emojiCodes.row" = "Emoji codes reference";
 "settings.emojiCodes.footer" = "Browse all shortcodes the keyboard recognises.";
 
@@ -117,10 +121,31 @@
 "settings.plus.unlock" = "Unlock Keymoji Plus";
 "settings.plus.unlocked" = "Keymoji Plus — Unlocked";
 "settings.plus.footer" = "A one-time unlock for unlimited favorite emoji, multiple favorite pages, and auto-sort by most-used. The keyboard itself is always free.";
+// Plural variants live in Localizable.stringsdict (this is the fallback + the Tuist accessor signature).
+"settings.plus.trialDaysLeft" = "Keymoji Plus trial — %d days left";
+
+// Welcome Plus trial — onboarding pick-favorites banner (task 64 Scope 5). The 🎁 is drawn separately.
+"welcome.onboarding.cta" = "Activate your gift — a month of Plus, free";
+"welcome.onboarding.activeUntil" = "Plus active until %@";
+
+// Welcome Plus trial — Settings row (task 64 Scope 6). Framed as a gift, never "free trial".
+"welcome.settings.cta" = "🎁 Activate a free month of Plus";
+"welcome.settings.confirm.title" = "Activate a free month of Plus?";
+"welcome.settings.confirm.message" = "Take it now or save it for later — but you can only activate it once.";
+"welcome.settings.confirm.activate" = "Activate";
+"welcome.settings.confirm.cancel" = "Cancel";
+"welcome.settings.toast" = "Plus active until %@";
+
+// Cheat code promo bonus — keyboard celebration banners (task 64 Scope 9). Trigger string is input, not branding.
+"promo.cheatCode.unlocked" = "🎉 Plus unlocked — 60 days";
+"promo.cheatCode.extended" = "🎉 Plus extended — now until %@";
+"promo.cheatCode.alreadyUsed" = "Promo already used 🔒";
+"promo.cheatCode.alreadyHavePlus" = "You already have Plus ✨";
 
 "paywall.headlineLimit" = "You've filled your %d free favorites.";
 "paywall.headlineFrequency" = "Auto-sort is a Keymoji Plus feature.";
 "paywall.headlineSettings" = "Keymoji Plus";
+"paywall.headlineAfterTrial" = "You loved Plus. Get it back.";
 "paywall.subtitle" = "More of the emoji you already love — unlocked once, yours forever.";
 "paywall.benefitUnlimited" = "Unlimited favorite emoji";
 "paywall.benefitPages" = "Multiple favorite pages";

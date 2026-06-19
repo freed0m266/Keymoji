@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Plural rule for the Settings Plus trial countdown row (task 64 Scope 6). The matching
+	     "settings.plus.trialDaysLeft" entry in Localizable.strings supplies the Tuist accessor
+	     signature + fallback; this stringsdict resolves the actual plural at runtime. -->
+	<key>settings.plus.trialDaysLeft</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>Keymoji Plus trial — %#@days@</string>
+		<key>days</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>1 day left</string>
+			<key>other</key>
+			<string>%d days left</string>
+		</dict>
+	</dict>
+	<!-- Loss-aversion banner body (task 64 Scope 12): "your N extra favorites are saved". -->
+	<key>settings.favorites.lossAversion.body</key>
+	<dict>
+		<key>NSStringLocalizedFormatKey</key>
+		<string>%#@favorites@</string>
+		<key>favorites</key>
+		<dict>
+			<key>NSStringFormatSpecTypeKey</key>
+			<string>NSStringPluralRuleType</string>
+			<key>NSStringFormatValueTypeKey</key>
+			<string>d</string>
+			<key>one</key>
+			<string>Your extra favorite is saved — bring it back.</string>
+			<key>other</key>
+			<string>Your %d extra favorites are saved — bring them back.</string>
+		</dict>
+	</dict>
+</dict>
+</plist>
