@@ -1,6 +1,6 @@
 # 68 — Re-run onboardingu ořezává existující favorites na free cap (data loss)
 
-**Status:** Todo
+**Status:** Done — 2026-06-19 (persist už neořezává uživatelovu selekci; cap aplikován jen na curated fallback při prázdné selekci. VM test re-runu free usera s >6 favorites zelený; všech 11 OnboardingViewModel testů prošlo. Codex review: 0 nálezů.)
 
 **Priorita:** v1.x · **Úsilí:** S · **Dopad:** High (data loss — downgradnutý free user přijde o favorites, které mu [task 64](64-hesoyam-promo-trial.md) slibuje zachovat)
 
