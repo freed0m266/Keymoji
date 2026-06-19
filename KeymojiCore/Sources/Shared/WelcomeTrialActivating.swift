@@ -41,7 +41,9 @@ public final class WelcomeTrialActivator: WelcomeTrialActivating {
 		// Already taken on this device — idempotent no-op (covers a double tap and the onboarding↔Settings race).
 		guard !promoStore.record.welcomeConsumed else { return nil }
 
-		let expiry = promoStore.consumeWelcome(now: Date())
+		// Publish the grant only if it durably persisted to the Keychain (review finding #3); a failed
+		// write returns nil so we never mirror/notify a gift that wasn't recorded.
+		guard let expiry = promoStore.consumeWelcome(now: Date()) else { return nil }
 		appGroup.promoPlusExpiresAt = expiry
 		notifier.post(.promoPlusExpiresAt)
 		return expiry

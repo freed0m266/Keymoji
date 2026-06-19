@@ -7,8 +7,16 @@ final class CheatCodeActivatorTests: XCTestCase {
 	private final class InMemoryBacking: PromoTrialKeychainBacking, @unchecked Sendable {
 		private var storage: [String: Data] = [:]
 		func data(forKey key: String) -> Data? { storage[key] }
-		func set(_ data: Data, forKey key: String) { storage[key] = data }
+		func set(_ data: Data, forKey key: String) throws { storage[key] = data }
 		func removeAll() { storage.removeAll() }
+	}
+
+	/// Backing whose write always fails — simulates a Keychain/entitlement/transient error (finding #3).
+	private struct WriteError: Error {}
+	private final class FailingBacking: PromoTrialKeychainBacking, @unchecked Sendable {
+		func data(forKey key: String) -> Data? { nil }
+		func set(_ data: Data, forKey key: String) throws { throw WriteError() }
+		func removeAll() {}
 	}
 
 	private let suiteName = "keymoji.CheatCodeActivatorTests"
@@ -47,9 +55,21 @@ final class CheatCodeActivatorTests: XCTestCase {
 		XCTAssertEqual(appGroup.promoPlusExpiresAt, expiry)
 	}
 
+	func testActivate_whenKeychainWriteFails_couldNotPersist_andNothingPublished() {
+		// Durable write fails → the one-shot token must NOT be spent and nothing is mirrored (finding #3).
+		let failingStore = PromoTrialStore(backing: FailingBacking())
+		let activator = CheatCodeActivator(promoStore: failingStore, appGroup: appGroup, notifier: notifier)
+
+		let outcome = activator.activate(now: Date())
+
+		XCTAssertEqual(outcome, .couldNotPersist)
+		XCTAssertFalse(failingStore.record.cheatCodeConsumed, "token must not be spent on a failed write")
+		XCTAssertNil(appGroup.promoPlusExpiresAt, "no grant mirrored when persistence failed")
+	}
+
 	func testActivate_duringRunningWelcomeTrial_extends() {
 		let t = Date(timeIntervalSince1970: 1_000_000)
-		let welcomeExpiry = promoStore.consumeWelcome(now: t)   // trial running: t+30d
+		let welcomeExpiry = promoStore.consumeWelcome(now: t)!  // trial running: t+30d (in-memory never fails)
 		appGroup.promoPlusExpiresAt = welcomeExpiry
 
 		let t2 = t.addingTimeInterval(10 * day)

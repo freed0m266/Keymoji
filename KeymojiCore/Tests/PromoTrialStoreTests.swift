@@ -8,7 +8,7 @@ final class PromoTrialStoreTests: XCTestCase {
 	private final class InMemoryBacking: PromoTrialKeychainBacking, @unchecked Sendable {
 		private var storage: [String: Data] = [:]
 		func data(forKey key: String) -> Data? { storage[key] }
-		func set(_ data: Data, forKey key: String) { storage[key] = data }
+		func set(_ data: Data, forKey key: String) throws { storage[key] = data }
 		func removeAll() { storage.removeAll() }
 	}
 
@@ -102,7 +102,7 @@ final class PromoTrialStoreTests: XCTestCase {
 
 	func testCheatCode_stacksOntoRunningWelcome() {
 		let t = Date(timeIntervalSince1970: 1_000_000)
-		let welcomeExpiry = store.consumeWelcome(now: t)           // t + 30d
+		let welcomeExpiry = store.consumeWelcome(now: t)!          // t + 30d (in-memory backing never fails)
 		// 10 days into the welcome trial, type cheat code.
 		let t2 = t.addingTimeInterval(10 * day)
 		let stacked = store.consumeCheatCode(now: t2)

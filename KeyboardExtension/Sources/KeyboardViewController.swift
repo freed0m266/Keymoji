@@ -344,6 +344,10 @@ final class KeyboardViewController: UIInputViewController {
 			playCheatCelebration()
 		case .alreadyUsed:
 			cheatEffect.fire(banner: L10n.Promo.CheatCode.alreadyUsed, confetti: false)   // quiet toast, no party
+		case .couldNotPersist:
+			// Durable write failed — no token spent, nothing to celebrate. Stay silent; the debounce
+			// re-arms when the code leaves the window, so the user can simply type it again.
+			break
 		}
 	}
 

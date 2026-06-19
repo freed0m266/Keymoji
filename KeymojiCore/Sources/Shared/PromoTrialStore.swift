@@ -34,11 +34,12 @@ public protocol PromoTrialStoring: Sendable {
 	/// Whether a promo grant is currently active against the system clock (`expiresAt` in the future).
 	var isPromoActive: Bool { get }
 	/// Activate the Welcome trial (+30 days). Idempotent: a second call returns the existing expiry and
-	/// leaves the record untouched. Returns the (new or existing) expiry.
-	@discardableResult func consumeWelcome(now: Date) -> Date
+	/// leaves the record untouched. Returns the (new or existing) expiry, or **`nil` if the durable
+	/// Keychain write failed** — so a caller never publishes a grant that wasn't persisted.
+	@discardableResult func consumeWelcome(now: Date) -> Date?
 	/// Activate the cheat code promo bonus (+60 days), stacking onto any current expiry. Idempotent: a
-	/// second call returns the existing expiry and leaves the record untouched.
-	@discardableResult func consumeCheatCode(now: Date) -> Date
+	/// second call returns the existing expiry. Returns `nil` if the durable Keychain write failed.
+	@discardableResult func consumeCheatCode(now: Date) -> Date?
 }
 
 public extension PromoTrialStoring {
@@ -51,7 +52,9 @@ public extension PromoTrialStoring {
 /// `KeychainAccess`; tests use an in-memory dictionary so the grant logic runs without entitlements.
 public protocol PromoTrialKeychainBacking: Sendable {
 	func data(forKey key: String) -> Data?
-	func set(_ data: Data, forKey key: String)
+	/// Persist `data`. **Throws** on failure so the store never reports a one-shot grant that wasn't
+	/// durably written (a swallowed write would defeat the anti-abuse record — review finding #3).
+	func set(_ data: Data, forKey key: String) throws
 	func removeAll()
 }
 
@@ -83,12 +86,12 @@ public final class PromoTrialStore: PromoTrialStoring, @unchecked Sendable {
 	}
 
 	@discardableResult
-	public func consumeWelcome(now: Date) -> Date {
+	public func consumeWelcome(now: Date) -> Date? {
 		consume(now: now, addDays: Self.welcomeGrantDays, alreadyConsumed: \.welcomeConsumed) { $0.welcomeConsumed = true }
 	}
 
 	@discardableResult
-	public func consumeCheatCode(now: Date) -> Date {
+	public func consumeCheatCode(now: Date) -> Date? {
 		consume(now: now, addDays: Self.cheatCodeGrantDays, alreadyConsumed: \.cheatCodeConsumed) { $0.cheatCodeConsumed = true }
 	}
 
@@ -109,22 +112,28 @@ public final class PromoTrialStore: PromoTrialStoring, @unchecked Sendable {
 		addDays: Int,
 		alreadyConsumed flag: KeyPath<PromoTrialRecord, Bool>,
 		mark: (inout PromoTrialRecord) -> Void
-	) -> Date {
+	) -> Date? {
 		var current = record
-		// Idempotent: a consumed grant never grants again. Return the standing expiry untouched.
+		// Idempotent: a consumed grant never grants again. Return the standing expiry untouched (already durable).
 		if current[keyPath: flag] {
 			return current.expiresAt ?? now
 		}
 		let newExpiry = Self.nextExpiry(currentExpiry: current.expiresAt, now: now, addDays: addDays)
 		mark(&current)
 		current.expiresAt = newExpiry
-		persist(current)
+		// Only report success if the durable write landed — a failed write must NOT burn the one-shot
+		// token or publish a grant (review finding #3). The in-memory record change is local and discarded.
+		do {
+			try persist(current)
+		} catch {
+			return nil
+		}
 		return newExpiry
 	}
 
-	private func persist(_ record: PromoTrialRecord) {
-		guard let data = try? JSONEncoder().encode(record) else { return }
-		backing.set(data, forKey: Self.recordKey)
+	private func persist(_ record: PromoTrialRecord) throws {
+		let data = try JSONEncoder().encode(record)
+		try backing.set(data, forKey: Self.recordKey)
 	}
 }
 
@@ -162,8 +171,8 @@ public struct KeychainPromoBacking: PromoTrialKeychainBacking, @unchecked Sendab
 		try? keychain.getData(key)
 	}
 
-	public func set(_ data: Data, forKey key: String) {
-		try? keychain.set(data, key: key)
+	public func set(_ data: Data, forKey key: String) throws {
+		try keychain.set(data, key: key)
 	}
 
 	public func removeAll() {

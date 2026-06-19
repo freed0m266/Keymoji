@@ -243,6 +243,6 @@ final class FavoriteEmojisEditorViewModelTests: XCTestCase {
 private final class InMemoryPromoBacking: PromoTrialKeychainBacking, @unchecked Sendable {
 	private var storage: [String: Data] = [:]
 	func data(forKey key: String) -> Data? { storage[key] }
-	func set(_ data: Data, forKey key: String) { storage[key] = data }
+	func set(_ data: Data, forKey key: String) throws { storage[key] = data }
 	func removeAll() { storage.removeAll() }
 }

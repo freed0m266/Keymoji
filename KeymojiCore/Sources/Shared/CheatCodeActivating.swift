@@ -1,6 +1,6 @@
 import Foundation
 
-/// Outcome of typing the cheat code cheat code — drives the keyboard's effect + banner copy.
+/// Outcome of typing the cheat code — drives the keyboard's effect + banner copy.
 public enum CheatCodeOutcome: Equatable, Sendable {
 	/// Promo granted (or extended). `wasExtension` is true when a trial was already running before this
 	/// grant (Welcome or an earlier promo) — drives "Plus extended" vs "Plus unlocked — 60 days".
@@ -9,6 +9,9 @@ public enum CheatCodeOutcome: Equatable, Sendable {
 	case alreadyHavePaidPlus
 	/// The cheat code bonus was already consumed on this device — no effect, no grant.
 	case alreadyUsed
+	/// The durable Keychain write failed — the token was **not** spent and nothing is published, so the
+	/// keyboard must not celebrate (review finding #3). The user can simply try again.
+	case couldNotPersist
 }
 
 /// Activates the cheat code promo bonus from the keyboard extension. The extension counterpart of
@@ -45,7 +48,8 @@ public final class CheatCodeActivator: CheatCodeActivating {
 
 		// "Extension" vs "cold unlock": was a trial already running the instant before we granted?
 		let wasExtension = promoStore.record.expiresAt.map { now < $0 } ?? false
-		let newExpiry = promoStore.consumeCheatCode(now: now)
+		// Burn the one-shot token only if it durably persisted; otherwise publish nothing and report failure.
+		guard let newExpiry = promoStore.consumeCheatCode(now: now) else { return .couldNotPersist }
 		appGroup.promoPlusExpiresAt = newExpiry
 		notifier.post(.promoPlusExpiresAt)
 		return .granted(newExpiry: newExpiry, wasExtension: wasExtension)
