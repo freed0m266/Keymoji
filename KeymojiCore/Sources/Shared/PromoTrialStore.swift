@@ -4,23 +4,19 @@ import Security
 // thread-safe Security framework, so we treat it as concurrency-safe (see `KeychainPromoBacking`).
 @preconcurrency import KeychainAccess
 
-/// The durable anti-abuse record behind both free-Plus grants: which one-shot grants the device has
-/// already consumed, and the single stacked *Plus trial expiry* they feed. Persisted in the Keychain
-/// (survives reinstall best-effort) and mirrored cheaply into `AppGroupStore.promoPlusExpiresAt` for
-/// the gating hot path.
+/// The durable anti-abuse record behind the Welcome trial: whether the one-shot grant has been consumed
+/// on this device, and the *Plus trial expiry* it sets. Persisted in the Keychain (survives reinstall
+/// best-effort) and mirrored cheaply into `AppGroupStore.promoPlusExpiresAt` for the gating hot path.
 public struct PromoTrialRecord: Codable, Sendable, Equatable {
 	/// Whether the opt-in Welcome trial (+30 days) has been activated on this device. One-shot.
 	public var welcomeConsumed: Bool
-	/// Whether the cheat code promo bonus (+60 days) has been activated on this device. One-shot.
-	public var cheatCodeConsumed: Bool
-	/// The shared expiry both grants extend via `max(now, currentExpiry) + grantDays`. `nil` until the
-	/// first grant. Never cleared once set — a lapsed expiry simply lies in the past, which keeps the
-	/// idempotence flags meaningful (a consumed grant can't be re-taken after it expires).
+	/// The *Plus trial expiry* the Welcome grant sets (`now + 30d`). `nil` until activated. Never cleared
+	/// once set — a lapsed expiry simply lies in the past, which keeps the idempotence flag meaningful
+	/// (a consumed grant can't be re-taken after it expires).
 	public var expiresAt: Date?
 
-	public init(welcomeConsumed: Bool = false, cheatCodeConsumed: Bool = false, expiresAt: Date? = nil) {
+	public init(welcomeConsumed: Bool = false, expiresAt: Date? = nil) {
 		self.welcomeConsumed = welcomeConsumed
-		self.cheatCodeConsumed = cheatCodeConsumed
 		self.expiresAt = expiresAt
 	}
 }
@@ -37,15 +33,11 @@ public protocol PromoTrialStoring: Sendable {
 	/// leaves the record untouched. Returns the (new or existing) expiry, or **`nil` if the durable
 	/// Keychain write failed** — so a caller never publishes a grant that wasn't persisted.
 	@discardableResult func consumeWelcome(now: Date) -> Date?
-	/// Activate the cheat code promo bonus (+60 days), stacking onto any current expiry. Idempotent: a
-	/// second call returns the existing expiry. Returns `nil` if the durable Keychain write failed.
-	@discardableResult func consumeCheatCode(now: Date) -> Date?
 }
 
 public extension PromoTrialStoring {
-	/// Grant lengths, named so the math can't drift between the store and its tests.
+	/// Grant length, named so the math can't drift between the store and its tests.
 	static var welcomeGrantDays: Int { 30 }
-	static var cheatCodeGrantDays: Int { 60 }
 }
 
 /// Minimal raw byte store the `PromoTrialStore` reads/writes through. The production conformer wraps
@@ -87,39 +79,15 @@ public final class PromoTrialStore: PromoTrialStoring, @unchecked Sendable {
 
 	@discardableResult
 	public func consumeWelcome(now: Date) -> Date? {
-		consume(now: now, addDays: Self.welcomeGrantDays, alreadyConsumed: \.welcomeConsumed) { $0.welcomeConsumed = true }
-	}
-
-	@discardableResult
-	public func consumeCheatCode(now: Date) -> Date? {
-		consume(now: now, addDays: Self.cheatCodeGrantDays, alreadyConsumed: \.cheatCodeConsumed) { $0.cheatCodeConsumed = true }
-	}
-
-	// MARK: - Grant math
-
-	/// The single stacking rule shared by both grants: extend the *later* of "now" and the current
-	/// expiry by `addDays`. Stacking on a running trial adds to its end; granting after a lapsed one
-	/// starts fresh from now. Uses a flat 24h day — clock drift / DST is an accepted rounding error.
-	public static func nextExpiry(currentExpiry: Date?, now: Date, addDays: Int) -> Date {
-		let base = max(now, currentExpiry ?? now)
-		return base.addingTimeInterval(TimeInterval(addDays) * 24 * 60 * 60)
-	}
-
-	// MARK: - Private
-
-	private func consume(
-		now: Date,
-		addDays: Int,
-		alreadyConsumed flag: KeyPath<PromoTrialRecord, Bool>,
-		mark: (inout PromoTrialRecord) -> Void
-	) -> Date? {
 		var current = record
 		// Idempotent: a consumed grant never grants again. Return the standing expiry untouched (already durable).
-		if current[keyPath: flag] {
+		if current.welcomeConsumed {
 			return current.expiresAt ?? now
 		}
-		let newExpiry = Self.nextExpiry(currentExpiry: current.expiresAt, now: now, addDays: addDays)
-		mark(&current)
+		// Welcome is the only (one-shot) grant, so `expiresAt` is always nil here — grant a flat 30 days
+		// from now. Flat 24h day: clock drift / DST is an accepted rounding error.
+		let newExpiry = now.addingTimeInterval(TimeInterval(Self.welcomeGrantDays) * 24 * 60 * 60)
+		current.welcomeConsumed = true
 		current.expiresAt = newExpiry
 		// Only report success if the durable write landed — a failed write must NOT burn the one-shot
 		// token or publish a grant (review finding #3). The in-memory record change is local and discarded.
@@ -130,6 +98,8 @@ public final class PromoTrialStore: PromoTrialStoring, @unchecked Sendable {
 		}
 		return newExpiry
 	}
+
+	// MARK: - Private
 
 	private func persist(_ record: PromoTrialRecord) throws {
 		let data = try JSONEncoder().encode(record)

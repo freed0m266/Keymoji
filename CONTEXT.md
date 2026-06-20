@@ -62,15 +62,9 @@ An **opt-in** 30-day Plus grant offered during onboarding (and in Settings until
 device; recorded in Keychain. Activating it sets the *Plus trial expiry*.
 _Avoid_: Free trial (subscription-flavoured), preview, intro period.
 
-**HESOYAM promo bonus**:
-A 60-day Plus grant triggered by typing `hesoyam` on the keyboard. One-shot per device; **stacks** onto the
-current *Plus trial expiry* (`expiry = max(now, currentExpiry) + 60d`). Named after the GTA: San Andreas
-cheat — homage only, no Rockstar assets.
-_Avoid_: Promo trial, easter egg trial.
-
 **Plus trial expiry**:
-A single `Date?` (`AppGroupStore.promoPlusExpiresAt`, mirrored from Keychain) shared by *Welcome Plus trial*
-and *HESOYAM promo bonus*. Both grants extend it via the same `max(now, currentExpiry) + grantDays` rule.
+A single `Date?` (`AppGroupStore.promoPlusExpiresAt`, mirrored from Keychain), set by the *Welcome Plus
+trial* to `now + 30d`.
 _Avoid_: Trial end, expiration date (overloaded), grant deadline.
 
 **Effective Plus**:

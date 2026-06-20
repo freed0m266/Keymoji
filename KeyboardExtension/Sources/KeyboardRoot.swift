@@ -16,9 +16,6 @@ struct KeyboardRoot: View {
 	/// Locale decimal separator for the `.numeric(.decimal)` numpad (task 59). Threaded in from the
 	/// controller (which reads `Locale.current`) so `KeyboardCore` stays pure.
 	let decimalSeparator: String
-	/// Drives the cheat code celebration overlay. Held by the controller (reference type) so its confetti
-	/// trigger + banner survive this root being rebuilt on every `makeRoot()`.
-	let cheatEffect: CheatEffectController
 	let dispatch: (Key) -> Void
 	let toggleFavoriteEmoji: (String) -> Void
 	let selectSuggestion: (Suggestion) -> Void
@@ -56,7 +53,5 @@ struct KeyboardRoot: View {
 			canEscalateBackspace: canEscalateBackspace,
 			onTrackpadModeEntered: onTrackpadModeEntered
 		)
-		// Celebration overlay sits above the keys, never intercepts touches (typing keeps working).
-		.overlay { CheatEffectOverlay(controller: cheatEffect) }
 	}
 }

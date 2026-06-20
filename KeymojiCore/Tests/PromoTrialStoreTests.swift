@@ -33,31 +33,8 @@ final class PromoTrialStoreTests: XCTestCase {
 	func testEmptyRecord_defaultsToUnconsumedNoExpiry() {
 		let record = store.record
 		XCTAssertFalse(record.welcomeConsumed)
-		XCTAssertFalse(record.cheatCodeConsumed)
 		XCTAssertNil(record.expiresAt)
 		XCTAssertFalse(store.isPromoActive)
-	}
-
-	// MARK: - nextExpiry math
-
-	func testNextExpiry_firstGrant_fromNil_startsFromNow() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		let result = PromoTrialStore.nextExpiry(currentExpiry: nil, now: t, addDays: 30)
-		XCTAssertEqual(result, t.addingTimeInterval(30 * day))
-	}
-
-	func testNextExpiry_afterExpiredTrial_startsFromNow() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		let expired = t.addingTimeInterval(-1 * day)
-		let result = PromoTrialStore.nextExpiry(currentExpiry: expired, now: t, addDays: 60)
-		XCTAssertEqual(result, t.addingTimeInterval(60 * day))
-	}
-
-	func testNextExpiry_duringRunningTrial_stacksOntoExpiry() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		let running = t.addingTimeInterval(20 * day)   // day 10 of a 30-day trial
-		let result = PromoTrialStore.nextExpiry(currentExpiry: running, now: t, addDays: 60)
-		XCTAssertEqual(result, t.addingTimeInterval(80 * day))   // 20 remaining + 60 granted
 	}
 
 	// MARK: - consumeWelcome
@@ -67,7 +44,6 @@ final class PromoTrialStoreTests: XCTestCase {
 		let expiry = store.consumeWelcome(now: t)
 		XCTAssertEqual(expiry, t.addingTimeInterval(30 * day))
 		XCTAssertTrue(store.record.welcomeConsumed)
-		XCTAssertFalse(store.record.cheatCodeConsumed)
 		XCTAssertEqual(store.record.expiresAt, expiry)
 	}
 
@@ -79,46 +55,6 @@ final class PromoTrialStoreTests: XCTestCase {
 		XCTAssertEqual(second, first)
 		XCTAssertTrue(store.record.welcomeConsumed)
 		XCTAssertEqual(store.record.expiresAt, first)
-	}
-
-	// MARK: - consumeCheatCode
-
-	func testConsumeCheatCode_fresh_grants60DaysFromNow() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		let expiry = store.consumeCheatCode(now: t)
-		XCTAssertEqual(expiry, t.addingTimeInterval(60 * day))
-		XCTAssertTrue(store.record.cheatCodeConsumed)
-		XCTAssertFalse(store.record.welcomeConsumed)
-	}
-
-	func testConsumeCheatCode_isIdempotent() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		let first = store.consumeCheatCode(now: t)
-		let second = store.consumeCheatCode(now: t.addingTimeInterval(10 * day))
-		XCTAssertEqual(second, first)
-	}
-
-	// MARK: - Stacking across grants
-
-	func testCheatCode_stacksOntoRunningWelcome() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		let welcomeExpiry = store.consumeWelcome(now: t)!          // t + 30d (in-memory backing never fails)
-		// 10 days into the welcome trial, type cheat code.
-		let t2 = t.addingTimeInterval(10 * day)
-		let stacked = store.consumeCheatCode(now: t2)
-		XCTAssertEqual(stacked, welcomeExpiry.addingTimeInterval(60 * day))   // (t+30d) + 60d
-		XCTAssertTrue(store.record.welcomeConsumed)
-		XCTAssertTrue(store.record.cheatCodeConsumed)
-		XCTAssertEqual(store.record.expiresAt, stacked)
-	}
-
-	func testCheatCode_afterExpiredWelcome_startsFreshFromNow() {
-		let t = Date(timeIntervalSince1970: 1_000_000)
-		_ = store.consumeWelcome(now: t)                            // t + 30d
-		// 40 days later the welcome trial has lapsed; cheat code starts a fresh 60-day grant.
-		let t2 = t.addingTimeInterval(40 * day)
-		let fresh = store.consumeCheatCode(now: t2)
-		XCTAssertEqual(fresh, t2.addingTimeInterval(60 * day))
 	}
 
 	// MARK: - isPromoActive

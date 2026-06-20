@@ -136,12 +136,6 @@
 "welcome.settings.confirm.cancel" = "Cancel";
 "welcome.settings.toast" = "Plus active until %@";
 
-// Cheat code promo bonus — keyboard celebration banners (task 64 Scope 9). Trigger string is input, not branding.
-"promo.cheatCode.unlocked" = "🎉 Plus unlocked — 60 days";
-"promo.cheatCode.extended" = "🎉 Plus extended — now until %@";
-"promo.cheatCode.alreadyUsed" = "Promo already used 🔒";
-"promo.cheatCode.alreadyHavePlus" = "You already have Plus ✨";
-
 "paywall.headlineLimit" = "You've filled your %d free favorites.";
 "paywall.headlineFrequency" = "Auto-sort is a Keymoji Plus feature.";
 "paywall.headlineSettings" = "Keymoji Plus";

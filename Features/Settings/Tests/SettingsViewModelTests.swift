@@ -106,22 +106,4 @@ final class SettingsViewModelTests: XCTestCase {
 		XCTAssertEqual(vm.plusRowState, .afterTrial)
 		XCTAssertNil(vm.trialActiveUntil)
 	}
-
-	func testActiveCheatCode_welcomeNeverTaken_isTrialActive_notWelcomeAvailable() {
-		// A cheat code grant is active but Welcome was never consumed — don't upsell mid-trial.
-		let vm = makeVM { appGroup, _ in
-			appGroup.promoPlusExpiresAt = Date(timeIntervalSinceNow: 10 * 24 * 60 * 60)
-		}
-		guard case .trialActive = vm.plusRowState else {
-			return XCTFail("Expected .trialActive, got \(vm.plusRowState)")
-		}
-	}
-
-	func testExpiredCheatCode_welcomeNeverTaken_stillOffersWelcome() {
-		// cheat code expired and Welcome was never taken → the gift is still available (not afterTrial).
-		let vm = makeVM { appGroup, _ in
-			appGroup.promoPlusExpiresAt = Date(timeIntervalSinceNow: -60)
-		}
-		XCTAssertEqual(vm.plusRowState, .welcomeAvailable)
-	}
 }

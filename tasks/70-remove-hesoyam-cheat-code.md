@@ -1,6 +1,8 @@
 # 70 — Odstranit HESOYAM / cheat code (a mrtvou stacking matiku)
 
-**Status:** Todo
+**Status:** Done — 2026-06-20
+
+**Status (původní):** Todo
 
 **Priorita:** v1.x (před App Store releasem, [task 47](47-app-store-listing.md)) · **Úsilí:** S–M · **Dopad:** Medium (méně kódu, méně rizik; **odstraní jediné existenční App Review 2.3.1 riziko** — skrytou funkci)
 

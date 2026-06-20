@@ -57,10 +57,9 @@ final class FavoriteEmojisEditorViewModel: BaseViewModel, FavoriteEmojisEditorVi
 
 	let freeFavoritesLimit = FavoritesEntitlement.freeFavoritesLimit
 
-	/// *Effective* Plus — paid **or** an active promo trial (Welcome / cheat code). Gates the favorites cap
-	/// and frequency sort. Reads the promo expiry from the store on access; a grant made while the editor
-	/// is open (e.g. cheat code in another field) is reflected on the next appear, not live (acceptable —
-	/// the editor is short-lived and re-reads on open).
+	/// *Effective* Plus — paid **or** an active Welcome promo trial. Gates the favorites cap and frequency
+	/// sort. Reads the promo expiry from the store on access; a grant made while the editor is open is
+	/// reflected on the next appear, not live (acceptable — the editor is short-lived and re-reads on open).
 	var isPlus: Bool {
 		effectiveIsPlus(paid: purchaseService.isPlus, promoExpiresAt: store.promoPlusExpiresAt, now: Date())
 	}
@@ -69,11 +68,11 @@ final class FavoriteEmojisEditorViewModel: BaseViewModel, FavoriteEmojisEditorVi
 		FavoritesEntitlement.canAddFavorite(currentCount: favorites.count, isPlus: isPlus)
 	}
 
-	/// Whether either one-shot grant has ever been consumed on this device — distinguishes a lapsed-trial
-	/// downgrade (loss aversion, `.afterTrial`) from a plain free user hitting the cap (`.favoritesLimit`).
+	/// Whether the one-shot Welcome grant has ever been consumed on this device — distinguishes a
+	/// lapsed-trial downgrade (loss aversion, `.afterTrial`) from a plain free user hitting the cap
+	/// (`.favoritesLimit`).
 	private var hasConsumedAnyTrial: Bool {
-		let record = promoStore.record
-		return record.welcomeConsumed || record.cheatCodeConsumed
+		promoStore.record.welcomeConsumed
 	}
 
 	var showLossAversionBanner: Bool {

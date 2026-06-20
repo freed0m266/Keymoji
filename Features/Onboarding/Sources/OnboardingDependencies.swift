@@ -52,7 +52,7 @@ public struct OnboardingPreferences: OnboardingPreferencesProviding {
 	}
 
 	public var isPlus: Bool {
-		// *Effective* Plus — paid or an active promo trial. An active Welcome/cheat code grant lifts the
+		// *Effective* Plus — paid or an active promo trial. An active Welcome grant lifts the
 		// onboarding favorites cap exactly like a paid unlock would.
 		effectiveIsPlus(paid: store.isPlus, promoExpiresAt: store.promoPlusExpiresAt, now: Date())
 	}
@@ -60,7 +60,7 @@ public struct OnboardingPreferences: OnboardingPreferencesProviding {
 	public var canShowWelcomeOffer: Bool {
 		guard !store.isPlus else { return false }                 // paid — nothing to gift
 		guard !promoStore.record.welcomeConsumed else { return false }   // already taken
-		return welcomeTrialActiveUntil == nil                     // not mid-trial (e.g. cheat code running)
+		return welcomeTrialActiveUntil == nil                     // not mid-trial
 	}
 
 	public var welcomeTrialActiveUntil: Date? {

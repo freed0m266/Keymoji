@@ -19,7 +19,7 @@ public enum PlusRowState: Equatable, Sendable {
 	case paid
 	/// Free user who hasn't taken the Welcome gift and isn't in a trial — offer it (confirm → activate).
 	case welcomeAvailable
-	/// A promo trial (Welcome and/or cheat code) is running. Info only, no CTA (don't upsell mid-trial).
+	/// A Welcome promo trial is running. Info only, no CTA (don't upsell mid-trial).
 	case trialActive(daysLeft: Int)
 	/// The Welcome trial was taken and has expired — the loss-aversion paywall entry (`.afterTrial`).
 	case afterTrial
@@ -121,8 +121,8 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 
 	private(set) var learnedWordCount: Int = 0
 
-	/// Observable mirrors of the promo state so the row recomputes live: after an in-screen activation,
-	/// and when a cheat code grant lands from the keyboard while Settings is open (`.promoPlusExpiresAt`).
+	/// Observable mirrors of the promo state so the row recomputes live after an in-screen activation
+	/// (and any cross-process change to the shared promo expiry, via `.promoPlusExpiresAt`).
 	private var promoExpiresAt: Date?
 	private var welcomeConsumed: Bool = false
 
@@ -140,7 +140,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 			return .trialActive(daysLeft: daysLeft)
 		}
 		// Not paid, no active trial. If the Welcome gift was already taken (and lapsed) → loss-aversion
-		// paywall. Otherwise it's still on the table — even for a user whose cheat code-only trial expired.
+		// paywall. Otherwise it's still on the table (the gift hasn't been taken).
 		return welcomeConsumed ? .afterTrial : .welcomeAvailable            // S4 / S2
 	}
 
@@ -184,7 +184,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		super.init()
 		self.learnedWordCount = recentsStore.count
 		refreshPromoState()
-		// A grant from another surface (cheat code on the keyboard) lands the expiry — refresh the row live.
+		// A cross-process change to the shared promo expiry lands here — refresh the row live.
 		promoObservation = notifier.addObserver(for: .promoPlusExpiresAt) { [weak self] in
 			self?.refreshPromoState()
 		}

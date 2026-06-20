@@ -79,7 +79,7 @@ public struct KeyboardState: Sendable, Equatable {
 
 	/// *Plus trial expiry* runtime mirror of `AppGroupStore.promoPlusExpiresAt`, refreshed on
 	/// `viewWillAppear` and the `.promoPlusExpiresAt` Darwin notification (live unlock the instant a
-	/// Welcome/cheat code grant lands). `nil` when no promo grant is active.
+	/// Welcome grant lands). `nil` when no promo grant is active.
 	public var promoPlusExpiresAt: Date?
 
 	/// *Effective* Plus — the single gating call for the keyboard: paid (`isPlus`) **or** an active

@@ -34,9 +34,9 @@ public final class WelcomeTrialActivator: WelcomeTrialActivating {
 
 	@discardableResult
 	public func activate() -> Date? {
-		// Paid Plus already covers everything — don't burn the one-shot gift on someone who owns Plus.
-		// Guard on the **paid** flag, not effective Plus: a user mid-cheat code (promo, not paid) may still
-		// take Welcome — the grants stack onto the same expiry.
+		// Paid Plus already covers everything — don't burn the one-shot gift on someone who owns Plus. Guard
+		// on the **paid** flag, not effective Plus (an already-running Welcome trial is caught by the
+		// idempotence guard below).
 		guard !purchaseService.isPlus else { return nil }
 		// Already taken on this device — idempotent no-op (covers a double tap and the onboarding↔Settings race).
 		guard !promoStore.record.welcomeConsumed else { return nil }

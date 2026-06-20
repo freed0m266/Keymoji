@@ -142,7 +142,7 @@ public final class PurchaseService: PurchaseServicing {
 	private func applyEntitlement(_ owned: Bool) {
 		#if DEBUG
 		// Debug "simulate a free user" override: mask a real (paid) entitlement to free so QA can exercise
-		// the welcome / cheat code / downgrade surfaces without resetting StoreKit. The real entitlement is
+		// the welcome / downgrade surfaces without resetting StoreKit. The real entitlement is
 		// untouched — turning the flag off and refreshing re-applies the true `owned` value. Release builds
 		// compile this branch out entirely (see `#else`), so no debug logic can leak into production.
 		let effectiveOwned = owned && !DebugOverrides.forceFreeTier

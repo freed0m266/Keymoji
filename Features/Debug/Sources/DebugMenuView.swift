@@ -39,7 +39,6 @@ public struct DebugMenuView: View {
 			row("Force free tier", bool: viewModel.forceFreeTier)
 			row("Onboarding complete", bool: viewModel.onboardingComplete)
 			row("Welcome consumed", bool: viewModel.welcomeConsumed)
-			row("Cheat code consumed", bool: viewModel.cheatCodeConsumed)
 			row("Promo expiry", value: expiryText)
 		} header: {
 			Text("Current state")
@@ -72,14 +71,12 @@ public struct DebugMenuView: View {
 		Section {
 			Button("Reset onboarding") { viewModel.resetOnboarding() }
 			Button("Reset gift (Welcome)", role: .destructive) { viewModel.resetGift() }
-			Button("Reset cheat code", role: .destructive) { viewModel.resetCheatCode() }
 		} header: {
 			Text("Reset flows")
 		} footer: {
 			Text(
-				"Reset onboarding takes effect after the next app launch. Resetting either promo grant clears "
-				+ "the whole shared Plus-trial clock (the two grants stack into one expiry). "
-				+ "Favorites and learned words are never touched."
+				"Reset onboarding takes effect after the next app launch. Resetting the gift clears the "
+				+ "Plus-trial clock. Favorites and learned words are never touched."
 			)
 		}
 	}

@@ -12,8 +12,7 @@ public let keyboardUI: Target = .target(
 		.target(name: keyboardCore.name),
 		.target(name: design.name),
 		.target(name: resources.name),
-		.target(name: core.name),
-		.external(name: "ConfettiSwiftUI")
+		.target(name: core.name)
 	],
 	settings: .settings(
 		base: ["APPLICATION_EXTENSION_API_ONLY": "YES"]

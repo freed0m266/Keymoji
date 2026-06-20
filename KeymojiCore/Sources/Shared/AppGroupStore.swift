@@ -104,8 +104,8 @@ public extension AppGroupStore {
 		set { setBool(newValue, forKey: .isPlus) }
 	}
 
-	/// Cheap hot-path mirror of the Keychain-owned *Plus trial expiry* (Welcome trial + cheat code promo,
-	/// stacked into one `Date`). Serialized as a string so it survives without a custom `Date` codec and
+	/// Cheap hot-path mirror of the Keychain-owned *Plus trial expiry* (set by the Welcome trial).
+	/// Serialized as a string so it survives without a custom `Date` codec and
 	/// reads identically host app ↔ extension. `nil` means "no promo grant active" (key absent or
 	/// cleared). The keyboard reads this — never the Keychain — on the gating hot path; the host app
 	/// reconciles it from Keychain at launch (see `PromoTrialStoring`).

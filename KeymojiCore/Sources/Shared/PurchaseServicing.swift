@@ -11,8 +11,8 @@ public enum PaywallContext: String, Identifiable, Sendable, CaseIterable {
 	case frequencySort
 	/// User opened the paywall from the Settings "Keymoji Plus" row.
 	case settings
-	/// User had a Plus trial (Welcome and/or cheat code) that has since expired — the loss-aversion entry
-	/// point. Drives the "You loved Plus. Get it back." headline. See task 64 Scope 8.
+	/// User had a Welcome Plus trial that has since expired — the loss-aversion entry point. Drives the
+	/// "You loved Plus. Get it back." headline. See task 64 Scope 8.
 	case afterTrial
 
 	public var id: String { rawValue }

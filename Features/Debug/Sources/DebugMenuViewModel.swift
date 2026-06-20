@@ -18,8 +18,8 @@ import KeymojiCore
 /// Two mutation strategies, matching the task's hybrid decision:
 /// - **Override** (Plus): a real StoreKit entitlement can't be reset from inside the app, so `forceFreeTier`
 ///   *masks* it. Toggle off → `refreshEntitlement()` re-applies the true value and real Plus returns.
-/// - **Reset** (onboarding / gift / cheat code): really rewrites the app-owned flag so the corresponding
-///   flow can be replayed for real.
+/// - **Reset** (onboarding / gift): really rewrites the app-owned flag so the corresponding flow can be
+///   replayed for real.
 @Observable
 @MainActor
 public final class DebugMenuViewModel: BaseViewModel {
@@ -44,7 +44,6 @@ public final class DebugMenuViewModel: BaseViewModel {
 	public private(set) var promoExpiresAt: Date?
 	public private(set) var onboardingComplete: Bool = false
 	public private(set) var welcomeConsumed: Bool = false
-	public private(set) var cheatCodeConsumed: Bool = false
 
 	/// Effective Plus exactly as every gate computes it (paid mirror OR an active promo trial). With
 	/// `forceFreeTier` on and no active promo, this reads `false` — the simulated free-user state.
@@ -95,21 +94,11 @@ public final class DebugMenuViewModel: BaseViewModel {
 		refresh()
 	}
 
-	/// Reset the opt-in Welcome gift so it can be taken again. Clears `welcomeConsumed` **and the whole
-	/// shared promo expiry** (the two grants stack into one `Date` that can't be unstacked → resetting any
-	/// grant zeroes the promo clock, deliberately). Mirrors `nil` + notify so a running keyboard relocks.
+	/// Reset the opt-in Welcome gift so it can be taken again. Clears `welcomeConsumed` and the *Plus trial
+	/// expiry* it set. Mirrors `nil` + notify so a running keyboard relocks.
 	public func resetGift() {
 		var record = promoStore.record
 		record.welcomeConsumed = false
-		record.expiresAt = nil
-		clearPromo(record)
-	}
-
-	/// Reset the cheat code promo so it fires again. Same shared-expiry caveat as `resetGift()`: clears
-	/// `cheatCodeConsumed` and zeroes the promo clock.
-	public func resetCheatCode() {
-		var record = promoStore.record
-		record.cheatCodeConsumed = false
 		record.expiresAt = nil
 		clearPromo(record)
 	}
@@ -145,9 +134,7 @@ public final class DebugMenuViewModel: BaseViewModel {
 		paidMirror = store.isPlus
 		promoExpiresAt = store.promoPlusExpiresAt
 		onboardingComplete = store.onboardingComplete
-		let record = promoStore.record
-		welcomeConsumed = record.welcomeConsumed
-		cheatCodeConsumed = record.cheatCodeConsumed
+		welcomeConsumed = promoStore.record.welcomeConsumed
 	}
 }
 

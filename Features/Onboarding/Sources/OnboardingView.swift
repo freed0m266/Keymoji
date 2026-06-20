@@ -230,7 +230,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 
 	/// The opt-in Welcome gift, shown above the grid in the pick-favorites step (task 64 Scope 5).
 	/// Hidden for paid users and once a consumed trial has lapsed; a button while available, then a
-	/// read-only success card while a trial (Welcome or cheat code) is running.
+	/// read-only success card while the Welcome trial is running.
 	@ViewBuilder
 	private var welcomeBanner: some View {
 		if let until = viewModel.welcomeTrialActiveUntil {
