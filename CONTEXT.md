@@ -30,7 +30,8 @@ completion. Stored lowercased in the app-group container; PII-adjacent.
 **Number row**:
 The optional digit row `1234567890` shown above the letters, gated by the user's "Always show
 number row" setting. A Keymoji addition, not a native iOS element. Never shown in landscape or in
-emoji-search.
+emoji-search. Digits carry no long-press shortcut (task 69 dropped the old `1→!` … `0→)` alternates);
+the shifted symbols live on the *symbols page*.
 _Avoid_: digit row, numbers bar.
 
 **Symbols page**:
