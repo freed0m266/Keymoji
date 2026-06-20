@@ -58,14 +58,13 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(primaries, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
 	}
 
-	func testNumberRow_alternatesMatchShiftedSymbols() {
+	func testNumberRow_hasNoAlternates() {
+		// Task 69 dropped the digit long-press shortcuts (`1→!` … `0→)`): no digit carries alternates.
 		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default)
 		let numberRow = layout.rows.first { $0.id == "numberRow" }!
-		let alternates = numberRow.keys.compactMap { key -> String? in
-			if case .text(let t) = key.alternates.first ?? .text("") { return t }
-			return nil
+		for key in numberRow.keys {
+			XCTAssertTrue(key.alternates.isEmpty, "digit \(key.id) must have no long-press alternates")
 		}
-		XCTAssertEqual(alternates, ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"])
 	}
 
 	// MARK: - Letters lower
@@ -120,8 +119,8 @@ final class LayoutBuilderTests: XCTestCase {
 			if case .text(let t) = content { return t }
 			return nil
 		}
-		// Cell 0 is the (uppercased) base letter; the accents follow, also uppercased.
-		XCTAssertEqual(alternates, ["E", "É", "Ě", "È", "Ê", "Ë", "Ē", "Ė", "Ę"])
+		// Accents only (task 69 dropped the base-letter cell), all uppercased when shifted.
+		XCTAssertEqual(alternates, ["É", "Ě", "È", "Ê", "Ë", "Ē", "Ė", "Ę"])
 	}
 
 	func testLettersCapsLock_primaryIsUppercase() {
@@ -147,17 +146,17 @@ final class LayoutBuilderTests: XCTestCase {
 
 	// MARK: - Letter alternates (default `.all` set)
 
-	func testLetterE_allSet_hasBaseThenCzechDiacritics() {
-		// With ≥1 accent the popup leads with the base letter (cell 0), then the accents.
+	func testLetterE_allSet_hasCzechDiacriticsNoBase() {
+		// Task 69: the popover holds accents only — no base-letter cell. The first accent leads.
 		let row = letterRow(at: "letters.row1", page: .letters(.lower))
 		let eKey = row.keys.first { $0.id == "letter.e" }!
 		let alternates = eKey.alternates.compactMap { content -> String? in
 			if case .text(let t) = content { return t }
 			return nil
 		}
-		XCTAssertEqual(alternates.first, "e")
-		XCTAssertEqual(alternates[safe: 1], "é")
-		XCTAssertEqual(alternates[safe: 2], "ě")
+		XCTAssertEqual(alternates.first, "é")
+		XCTAssertEqual(alternates[safe: 1], "ě")
+		XCTAssertFalse(alternates.contains("e"), "base letter must not appear in the popover (task 69)")
 	}
 
 	func testLetterB_hasNoAlternates() {
@@ -166,12 +165,13 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertTrue(bKey.alternates.isEmpty)
 	}
 
-	func testLetterA_allSet_hasBasePlusEightAlternates() {
-		// `.all` keeps the legacy 8 accents for `a`; the base letter prepended makes 9 cells.
+	func testLetterA_allSet_hasEightAccentsNoBase() {
+		// `.all` keeps the legacy 8 accents for `a`; with the base cell dropped (task 69) that's
+		// exactly 8 popover cells, the first being the leading accent (not the base `a`).
 		let row = letterRow(at: "letters.row2", page: .letters(.lower))
 		let aKey = row.keys.first { $0.id == "letter.a" }!
-		XCTAssertEqual(aKey.alternates.count, 9)
-		XCTAssertEqual(aKey.alternates.first, .text("a"))
+		XCTAssertEqual(aKey.alternates.count, 8)
+		XCTAssertEqual(aKey.alternates.first, .text("á"))
 	}
 
 	// MARK: - Symbols page primary
@@ -197,15 +197,13 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertEqual(chars, ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"])
 	}
 
-	func testSymbolsPrimary_digitsCarryNumberRowAlternates() {
-		// The digit row on the symbol page shares `numberRowMapping`, so each digit keeps its
-		// long-press alternate (`1→!` … `0→)`), exactly like the number row.
+	func testSymbolsPrimary_digitsHaveNoAlternates() {
+		// The digit row on the symbol page shares `makeDigitKeys()`, so it inherits the task-69
+		// removal of digit long-press shortcuts — no key carries an alternate.
 		let row = symbolRow(at: "symbols.primary.rowA", page: .symbols(.primary))
-		let alternates = row.keys.compactMap { key -> String? in
-			if case .text(let t) = key.alternates.first ?? .text("") { return t }
-			return nil
+		for key in row.keys {
+			XCTAssertTrue(key.alternates.isEmpty, "digit \(key.id) must have no long-press alternates")
 		}
-		XCTAssertEqual(alternates, ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")"])
 	}
 
 	func testSymbolsPrimary_digitRow_usesStandardKeyHeight() {
@@ -603,14 +601,14 @@ final class LayoutBuilderTests: XCTestCase {
 
 	func testQwertz_yAndZKeepTheirAccentAlternates() {
 		// Alternates are keyed by `Character`, so they travel with the letter regardless of position.
-		// Each leads with the base letter (cell 0), then the `.all` accents.
+		// Accents only, no base cell (task 69).
 		let row1 = letterRow(at: "letters.row1", page: .letters(.lower), letterLayout: .qwertz)
 		let zKey = row1.keys.first { $0.id == "letter.z" }!
 		let zAlternates = zKey.alternates.compactMap { content -> String? in
 			if case .text(let t) = content { return t }
 			return nil
 		}
-		XCTAssertEqual(zAlternates, ["z", "ž", "ź", "ż"])
+		XCTAssertEqual(zAlternates, ["ž", "ź", "ż"])
 
 		let row3 = letterRow(at: "letters.row3", page: .letters(.lower), letterLayout: .qwertz)
 		let yKey = row3.keys.first { $0.id == "letter.y" }!
@@ -618,7 +616,7 @@ final class LayoutBuilderTests: XCTestCase {
 			if case .text(let t) = content { return t }
 			return nil
 		}
-		XCTAssertEqual(yAlternates, ["y", "ý", "ÿ"])
+		XCTAssertEqual(yAlternates, ["ý", "ÿ"])
 	}
 
 	func testQwertz_emojiSearchHonorsLetterLayout() {
@@ -646,15 +644,16 @@ final class LayoutBuilderTests: XCTestCase {
 
 	// MARK: - Letter alternate sets (task 58)
 
-	func testCzechSet_rKey_hasBaseThenAccent() {
-		// Single-accent letter: popup is `[base, accent]` — releasing without sliding inserts the base.
+	func testCzechSet_rKey_hasSingleAccentNoBase() {
+		// Single-accent letter: popover is just `[ř]` (task 69 — no base cell). A one-cell popover
+		// still shows; releasing without sliding commits `ř`.
 		let row = letterRow(at: "letters.row1", page: .letters(.lower), alternateSet: .czech)
 		let rKey = row.keys.first { $0.id == "letter.r" }!
-		XCTAssertEqual(rKey.alternates, [.text("r"), .text("ř")])
+		XCTAssertEqual(rKey.alternates, [.text("ř")])
 	}
 
 	func testCzechSet_eKey_orderedByFrequency() {
-		XCTAssertEqual(alternateTexts("e", page: .letters(.lower), alternateSet: .czech), ["e", "é", "ě"])
+		XCTAssertEqual(alternateTexts("e", page: .letters(.lower), alternateSet: .czech), ["é", "ě"])
 	}
 
 	func testCzechSet_letterWithoutDiacritic_hasNoAlternates() {
@@ -667,40 +666,39 @@ final class LayoutBuilderTests: XCTestCase {
 	func testGermanSet_excludesEszett() {
 		// German set is ä/ö/ü only — `s` carries no ß (avoids the ß→SS uppercasing problem).
 		XCTAssertTrue(alternateTexts("s", page: .letters(.lower), alternateSet: .german).isEmpty)
-		XCTAssertEqual(alternateTexts("a", page: .letters(.lower), alternateSet: .german), ["a", "ä"])
-		XCTAssertEqual(alternateTexts("o", page: .letters(.lower), alternateSet: .german), ["o", "ö"])
+		XCTAssertEqual(alternateTexts("a", page: .letters(.lower), alternateSet: .german), ["ä"])
+		XCTAssertEqual(alternateTexts("o", page: .letters(.lower), alternateSet: .german), ["ö"])
 	}
 
-	func testShiftedSet_basePrefixIsUppercased() {
-		// Both the prepended base and the accents are uppercased when shifted.
+	func testShiftedSet_accentsAreUppercased() {
+		// Accents are uppercased when shifted; no base cell to uppercase (task 69).
 		let row = letterRow(at: "letters.row1", page: .letters(.upper), alternateSet: .czech)
 		let rKey = row.keys.first { $0.id == "letter.r" }!
-		XCTAssertEqual(rKey.alternates, [.text("R"), .text("Ř")])
+		XCTAssertEqual(rKey.alternates, [.text("Ř")])
 	}
 
-	func testAllSet_matchesLegacyPlusBasePrefix() {
-		// `.all` keeps the legacy comprehensive map; only difference is the base prefix at cell 0.
+	func testAllSet_matchesLegacyAccents() {
+		// `.all` keeps the legacy comprehensive accent map, now with no leading base cell (task 69).
 		XCTAssertEqual(
 			alternateTexts("a", page: .letters(.lower), alternateSet: .all),
-			["a", "á", "à", "â", "ä", "ã", "å", "ā", "æ"]
+			["á", "à", "â", "ä", "ã", "å", "ā", "æ"]
 		)
 	}
 
-	func testNumberRowUnchanged_noBasePrefix() {
-		// The number row keeps its single-alternate auto-commit (`1`→`!`); the base-prefix logic is
-		// letters-only, so digits must NOT gain a base cell.
+	func testNumberRow_neverHasAlternates() {
+		// Digits carry no long-press alternates regardless of the chosen accent set (task 69).
 		let layout = LayoutBuilder.layout(page: .letters(.lower), showNumberRow: true, returnKeyType: .default, alternateSet: .czech)
 		let numberRow = layout.rows.first { $0.id == "numberRow" }!
 		let oneKey = numberRow.keys.first { $0.id == "number.1" }!
-		XCTAssertEqual(oneKey.alternates, [.text("!")])
+		XCTAssertTrue(oneKey.alternates.isEmpty)
 	}
 
 	func testSetSelection_changesLetterAlternates() {
 		// The chosen set actually drives the data: `a` differs between Czech (1 accent) and `.all` (8).
 		let czech = alternateTexts("a", page: .letters(.lower), alternateSet: .czech)
 		let all = alternateTexts("a", page: .letters(.lower), alternateSet: .all)
-		XCTAssertEqual(czech, ["a", "á"])
-		XCTAssertEqual(all.count, 9)
+		XCTAssertEqual(czech, ["á"])
+		XCTAssertEqual(all.count, 8)
 		XCTAssertNotEqual(czech, all)
 	}
 

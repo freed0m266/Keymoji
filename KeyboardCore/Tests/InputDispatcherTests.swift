@@ -596,6 +596,66 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(proxy.deleteCount, 0)
 	}
 
+	// MARK: - Cursor line offset (vertical trackpad mode)
+
+	func testCursorLineOffset_up_withNewline_jumpsByComputedOffset() {
+		// Cursor after "def" on line 2; one line up lands at column 3 of "abc" → -4 chars.
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "abc\ndef"
+		proxy.documentContextAfterInput = ""
+		dispatch(makeKey(.cursorLineOffset(-1)), &state)
+		XCTAssertEqual(proxy.cursorOffsets, [-4])
+	}
+
+	func testCursorLineOffset_down_withNewline_jumpsByComputedOffset() {
+		// Cursor after "ab"; one line down preserves column 2 within "defg" → +4 chars.
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "ab"
+		proxy.documentContextAfterInput = "c\ndefg"
+		dispatch(makeKey(.cursorLineOffset(1)), &state)
+		XCTAssertEqual(proxy.cursorOffsets, [4])
+	}
+
+	func testCursorLineOffset_noNewline_fallsThroughToHorizontal() {
+		// Single-paragraph text: no `\n` to walk → fall through to `lines * 4` horizontal chars.
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "abc"
+		proxy.documentContextAfterInput = "def"
+		dispatch(makeKey(.cursorLineOffset(-2)), &state)
+		XCTAssertEqual(proxy.cursorOffsets, [-8])
+	}
+
+	func testCursorLineOffset_down_noNewline_fallsThroughPositive() {
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "abc"
+		proxy.documentContextAfterInput = "def"
+		dispatch(makeKey(.cursorLineOffset(1)), &state)
+		XCTAssertEqual(proxy.cursorOffsets, [4])
+	}
+
+	func testCursorLineOffset_zero_skipsProxyCall() {
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "abc\ndef"
+		dispatch(makeKey(.cursorLineOffset(0)), &state)
+		XCTAssertTrue(proxy.cursorOffsets.isEmpty)
+	}
+
+	func testCursorLineOffset_resetsSpaceTracking() {
+		var state = KeyboardState(lastInsertWasSpace: true, lastSpaceInsertedAt: Date())
+		proxy.documentContextBeforeInput = "abc\ndef"
+		dispatch(makeKey(.cursorLineOffset(-1)), &state)
+		XCTAssertFalse(state.lastInsertWasSpace)
+		XCTAssertNil(state.lastSpaceInsertedAt)
+	}
+
+	func testCursorLineOffset_doesNotInsertOrDelete() {
+		var state = KeyboardState()
+		proxy.documentContextBeforeInput = "abc\ndef"
+		dispatch(makeKey(.cursorLineOffset(-1)), &state)
+		XCTAssertTrue(proxy.inserted.isEmpty)
+		XCTAssertEqual(proxy.deleteCount, 0)
+	}
+
 	// MARK: - Helpers
 
 	private func dispatch(_ key: Key, _ state: inout KeyboardState, now: () -> Date = Date.init) {
