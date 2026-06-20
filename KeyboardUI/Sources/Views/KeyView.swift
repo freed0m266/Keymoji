@@ -46,9 +46,15 @@ struct KeyView: View {
 	/// True once trackpad mode has actually engaged (armed + crossed activation drag distance).
 	/// While true, drags emit `.cursorOffset` keys instead of triggering the normal `.space` tap.
 	@State private var isTrackpadActive = false
-	/// Last drag location (in KeyView coords) at which we emitted a cursor offset. Each character
-	/// of horizontal motion past this anchor emits a one-character offset and advances the anchor.
+	/// Last drag location (in KeyView coords) at which we emitted a horizontal cursor offset. Each
+	/// character of horizontal motion past this anchor emits a one-character offset and advances it.
 	@State private var trackpadAnchorX: CGFloat = 0
+	/// Vertical counterpart of `trackpadAnchorX` (task 69): each `trackpadPointsPerLine` of vertical
+	/// motion past this anchor emits a one-line cursor offset and advances the anchor.
+	@State private var trackpadAnchorY: CGFloat = 0
+	/// True once the user has slid a finger far enough below the open popover to cancel it (task 69).
+	/// Sticky until release: the popover stays hidden and touch-up commits nothing.
+	@State private var isCancelArmed = false
 
 	/// 350ms — parity with Apple's long-press delay, so alternates pop as fast as the stock keyboard.
 	private static let longPressDelay: Duration = .milliseconds(350)
@@ -65,16 +71,23 @@ struct KeyView: View {
 	/// Hold duration on space before trackpad mode is *armed*. After this elapses the user only
 	/// needs to drag a few points to actually engage the trackpad.
 	private static let trackpadArmDelay: Duration = .milliseconds(300)
-	/// Minimum horizontal drag (in points) once armed before trackpad mode engages. Keeps a
+	/// Minimum drag radius (in points, either axis) once armed before trackpad mode engages. Keeps a
 	/// stationary long-press from accidentally swallowing a regular `.space` tap.
 	private static let trackpadActivationDistance: CGFloat = 6
-	/// How many points of horizontal drag equal one character of cursor movement. Tuned to match
-	/// the feel of Apple's stock trackpad — comfortable on iPhone portrait without over-shooting.
-	private static let trackpadPointsPerCharacter: CGFloat = 10
+	/// How many points of horizontal drag equal one character of cursor movement. Lowered from 10 to
+	/// 6 (task 69 beta feedback — 10 pt/char felt sluggish, needing big strokes for small moves).
+	private static let trackpadPointsPerCharacter: CGFloat = 6
+	/// How many points of vertical drag equal one line of cursor movement (task 69). Coarser than the
+	/// horizontal step — a line jump is a bigger, more deliberate motion than nudging by a character.
+	private static let trackpadPointsPerLine: CGFloat = 22
 
 	private static let popoverCellSize = CGSize(width: 40, height: 44)
 	private static let popoverCellSpacing: CGFloat = 2
 	private static let popoverHorizontalPadding: CGFloat = 4
+	/// The popover hovers above the key: its overlay is offset by `-cellHeight - 12`, so in
+	/// KeyView-local coords (origin at the cap's top-leading) its bottom edge sits at y = -12.
+	/// Sliding a finger a full cell height below that (→ y > 32) cancels the long-press (task 69).
+	private static let popoverBottomY: CGFloat = -12
 
 	init(
 		key: Key,
@@ -163,7 +176,7 @@ struct KeyView: View {
 					handleTouchDown(at: value.location)
 				}
 				if isShowingPopover {
-					updateHighlight(from: value.location)
+					handlePopoverDrag(at: value.location)
 				}
 				if isSpaceKey {
 					handleSpaceDrag(at: value.location)
@@ -186,9 +199,11 @@ struct KeyView: View {
 		didCommitAlternate = false
 		didRepeatBackspace = false
 		isWordDeleting = false
+		isCancelArmed = false
 		isTrackpadArmed = false
 		isTrackpadActive = false
 		trackpadAnchorX = location.x
+		trackpadAnchorY = location.y
 
 		// Fire the "key tap" haptic + click at touch-down (matches Apple/SwiftKey feel — feedback
 		// when the finger lands, not when it lifts). Fires on every key except continuous trackpad
@@ -215,7 +230,7 @@ struct KeyView: View {
 		case .insertText, .insertRawText, .backspace, .deleteWord, .space, .return,
 		     .shift, .switchPage, .dismissKeyboard, .suggestionAccept:
 			return true
-		case .cursorOffset:
+		case .cursorOffset, .cursorLineOffset:
 			return false
 		}
 	}
@@ -254,7 +269,10 @@ struct KeyView: View {
 		isTrackpadArmed = false
 		isTrackpadActive = false
 
-		if isShowingPopover {
+		if isCancelArmed {
+			// The user slid down out of the popover to bail out (task 69). Silently consume the
+			// gesture — no alternate, no base letter, nothing typed.
+		} else if isShowingPopover {
 			commitAlternate(at: highlightedAlternateIndex)
 			isShowingPopover = false
 		} else if didCommitAlternate || didRepeatBackspace || wasTrackpadActive {
@@ -266,6 +284,7 @@ struct KeyView: View {
 		didCommitAlternate = false
 		didRepeatBackspace = false
 		isWordDeleting = false
+		isCancelArmed = false
 	}
 
 	// MARK: - Trackpad mode (long-press space)
@@ -287,30 +306,47 @@ struct KeyView: View {
 
 		if !isTrackpadActive {
 			// Wait for the activation drag before engaging — keeps stationary long-press from
-			// silently swallowing the upcoming `.space` tap.
-			let drag = location.x - trackpadAnchorX
-			guard abs(drag) >= Self.trackpadActivationDistance else { return }
+			// silently swallowing the upcoming `.space` tap. Either axis counts now (task 69 made
+			// scrubbing 2D), so the dead zone is a radius, not an x-only threshold.
+			let dx = location.x - trackpadAnchorX
+			let dy = location.y - trackpadAnchorY
+			guard hypot(dx, dy) >= Self.trackpadActivationDistance else { return }
 			isTrackpadActive = true
-			// Treat the activation distance as a dead zone: anchor at the activation crossing
-			// point, not at the current location, so any drag past the threshold immediately
-			// counts toward the first cursor offset. Quick fling-and-release would otherwise
-			// move nothing because the first `onChanged` after arming often jumps several
-			// dozen points past the threshold in a single frame.
-			let direction: CGFloat = drag > 0 ? 1 : -1
-			trackpadAnchorX += direction * Self.trackpadActivationDistance
+			// Treat the activation distance as a dead zone on the dominant axis: anchor at the
+			// crossing point, not at the current location, so any drag past the threshold
+			// immediately counts toward the first offset. Quick fling-and-release would otherwise
+			// move nothing because the first `onChanged` after arming often jumps several dozen
+			// points past the threshold in a single frame.
+			if abs(dx) >= abs(dy) {
+				trackpadAnchorX += (dx > 0 ? 1 : -1) * Self.trackpadActivationDistance
+			} else {
+				trackpadAnchorY += (dy > 0 ? 1 : -1) * Self.trackpadActivationDistance
+			}
 			onTrackpadModeChanged(true)
 			// Fall through to emit any remaining offset from this same frame.
 		}
 
-		// Stage 1: horizontal only. Emit one cursor-offset key per `trackpadPointsPerCharacter`
-		// crossed since the last anchor, then advance the anchor by that many points. Carrying the
-		// remainder across frames keeps long slow drags accurate (no rounding drift).
+		// Per-frame dominant axis (task 69): whichever of |dx| / |dy| is larger decides what this
+		// frame emits. Each axis anchors independently and carries its remainder across frames, so a
+		// long slow drag stays accurate (no rounding drift) and a diagonal resolves cleanly.
 		let dx = location.x - trackpadAnchorX
-		let charsRaw = (dx / Self.trackpadPointsPerCharacter).rounded(.towardZero)
-		guard charsRaw != 0 else { return }
-		let chars = Int(charsRaw)
-		emitCursorOffset(chars)
-		trackpadAnchorX += CGFloat(chars) * Self.trackpadPointsPerCharacter
+		let dy = location.y - trackpadAnchorY
+
+		if abs(dx) >= abs(dy) {
+			// Horizontal: one cursor-offset per `trackpadPointsPerCharacter` crossed since the anchor.
+			let charsRaw = (dx / Self.trackpadPointsPerCharacter).rounded(.towardZero)
+			guard charsRaw != 0 else { return }
+			let chars = Int(charsRaw)
+			emitCursorOffset(chars)
+			trackpadAnchorX += CGFloat(chars) * Self.trackpadPointsPerCharacter
+		} else {
+			// Vertical: one line-offset per `trackpadPointsPerLine` crossed since the anchor.
+			let linesRaw = (dy / Self.trackpadPointsPerLine).rounded(.towardZero)
+			guard linesRaw != 0 else { return }
+			let lines = Int(linesRaw)
+			emitCursorLineOffset(lines)
+			trackpadAnchorY += CGFloat(lines) * Self.trackpadPointsPerLine
+		}
 	}
 
 	private func emitCursorOffset(_ offset: Int) {
@@ -319,6 +355,18 @@ struct KeyView: View {
 			primary: key.primary,
 			alternates: [],
 			action: .cursorOffset(offset),
+			visualWeight: key.visualWeight,
+			role: key.role
+		)
+		onTap(synthesized)
+	}
+
+	private func emitCursorLineOffset(_ lines: Int) {
+		let synthesized = Key(
+			id: "\(key.id).trackpadLine",
+			primary: key.primary,
+			alternates: [],
+			action: .cursorLineOffset(lines),
 			visualWeight: key.visualWeight,
 			role: key.role
 		)
@@ -401,20 +449,30 @@ struct KeyView: View {
 			try? await Task.sleep(for: Self.longPressDelay)
 			guard !Task.isCancelled, isPressed else { return }
 
-			if key.alternates.count == 1 {
-				// Single-alternate shortcut: commit immediately, no popover.
-				commitAlternate(at: 0)
-				didCommitAlternate = true
-				onPopoverEntry()
-			} else {
-				highlightedAlternateIndex = 0
-				isShowingPopover = true
-				onPopoverEntry()
-			}
+			// Every key with ≥1 alternate now shows the popover, even a single-alternate one (task 69
+			// dropped the auto-commit shortcut). The first alt is highlighted from frame 0, so a
+			// hold + release with no slide commits it.
+			highlightedAlternateIndex = 0
+			isShowingPopover = true
+			onPopoverEntry()
 		}
 	}
 
 	// MARK: - Highlight tracking
+
+	/// Drives the popover while a finger is held down on it. Sliding far enough below the popover's
+	/// bottom edge cancels the long-press (task 69) — matching iOS native, which lets you bail out by
+	/// dragging down off the key. Otherwise the slide just retargets the highlighted alternate.
+	private func handlePopoverDrag(at location: CGPoint) {
+		// One full cell height below the popover's bottom edge arms the (sticky) cancel.
+		let cancelThreshold = Self.popoverBottomY + Self.popoverCellSize.height
+		if location.y > cancelThreshold {
+			isCancelArmed = true
+			isShowingPopover = false
+			return
+		}
+		updateHighlight(from: location)
+	}
 
 	private func updateHighlight(from location: CGPoint) {
 		// `location` is in KeyView coords. The popover sits above the key — its leading-edge X
@@ -535,6 +593,7 @@ struct KeyView: View {
 		case .dismissKeyboard:        return "Dismiss keyboard"
 		case .switchPage:             return "Switch keyboard layout"
 		case .cursorOffset:           return "Move cursor"
+		case .cursorLineOffset:       return "Move cursor by line"
 		case .suggestionAccept(let displayText, _): return displayText
 		}
 	}

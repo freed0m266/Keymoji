@@ -73,14 +73,13 @@ public enum LayoutBuilder {
 
 	// MARK: - Number row
 
-	private static let numberRowMapping: [(digit: String, alternate: String)] = [
-		("1", "!"), ("2", "@"), ("3", "#"), ("4", "$"), ("5", "%"),
-		("6", "^"), ("7", "&"), ("8", "*"), ("9", "("), ("0", ")")
-	]
+	private static let digitTitles = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
 
 	/// The ten digit keys, shared between the number row (letters page) and the primary symbol page
-	/// in native config. Each carries its `numberRowMapping` alternate (`1→!` … `0→)`) and uses the
-	/// `.standard` visual weight (10 keys = full row width, no `referenceWeight`).
+	/// in native config. No long-press alternates (task 69 dropped the old `1→!` … `0→)` shortcuts —
+	/// the symbols page is the discoverable home for those glyphs, and a hidden digit popover only
+	/// confused beta testers). Uses the `.standard` visual weight (10 keys = full row width, no
+	/// `referenceWeight`).
 	///
 	/// The key IDs (`number.1` … `number.0`) are shared too — that's safe because the number row and
 	/// the symbol page are mutually exclusive on screen (the symbol page only carries digits when the
@@ -89,12 +88,12 @@ public enum LayoutBuilder {
 	/// `KeyboardRow.isNumberRow`), while the symbol page wraps them in a standard `symbols.*.rowA` ID
 	/// (height 42) so the digits line up with the symbol row beneath them.
 	private static func makeDigitKeys() -> [Key] {
-		numberRowMapping.map { entry in
+		digitTitles.map { digit in
 			Key(
-				id: "number.\(entry.digit)",
-				primary: .text(entry.digit),
-				alternates: [.text(entry.alternate)],
-				action: .insertText(entry.digit),
+				id: "number.\(digit)",
+				primary: .text(digit),
+				alternates: [],
+				action: .insertText(digit),
 				visualWeight: .standard,
 				role: .character
 			)
@@ -158,8 +157,9 @@ public enum LayoutBuilder {
 
 	/// Long-press accent variants per base letter, scoped to the user's active `LetterAlternateSet`.
 	/// Each map holds **only the accents** (lowercase) for that language, ordered by in-language
-	/// frequency — the base letter is prepended later in `makeLetterKey`, and uppercase variants are
-	/// derived via `posixUppercased()`. A letter absent from the map has no accents (→ no popup).
+	/// frequency — these become the popover cells verbatim in `makeLetterKey` (no base-letter cell;
+	/// task 69), and uppercase variants are derived via `posixUppercased()`. A letter absent from the
+	/// map has no accents (→ no popover).
 	private static func letterAlternates(for set: LetterAlternateSet) -> [Character: [String]] {
 		switch set {
 		case .czech:   return czechAlternates
@@ -270,14 +270,13 @@ public enum LayoutBuilder {
 		let lower = String(char)
 		let displayed = shouldUppercase(shift) ? lower.posixUppercased() : lower
 		let accents = letterAlternates(for: alternateSet)[char] ?? []
-		// No accents in the active set → empty alternates → no popup (releasing inserts the base via
-		// the regular tap). With ≥1 accent the popup always shows, and cell 0 is the (cased) base
-		// letter — so a hold + release without sliding inserts the base letter, exactly like a tap;
-		// the accent is reached by sliding. `KeyView`'s `count == 1` auto-commit branch is therefore
-		// never hit by letters (they're either 0 or ≥2 alternates); it stays reserved for the number row.
-		let alternates: [KeyContent] = accents.isEmpty
-			? []
-			: [.text(displayed)] + accents.map { .text(shouldUppercase(shift) ? $0.posixUppercased() : $0) }
+		// The popover holds *only* the accents — no base-letter cell (task 69). Releasing the hold
+		// without sliding commits the first accent; the base letter is still reached by a plain tap
+		// (no hold). No accents in the active set → empty alternates → no popover at all. A single
+		// accent (e.g. Czech `r` → `[ř]`) shows a one-cell popover, so `KeyView` no longer needs a
+		// `count == 1` auto-commit shortcut. `map` over empty `accents` yields empty alternates for
+		// free, so no early-return is needed.
+		let alternates: [KeyContent] = accents.map { .text(shouldUppercase(shift) ? $0.posixUppercased() : $0) }
 		return Key(
 			id: "letter.\(lower)",
 			primary: .text(displayed),

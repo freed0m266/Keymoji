@@ -96,6 +96,11 @@ public enum KeyAction: Sendable, Equatable {
 	/// Move the cursor by `offset` characters (negative = left). Emitted by `KeyView` while
 	/// the user drags inside trackpad-mode (long-press on space). Does not insert/delete text.
 	case cursorOffset(Int)
+	/// Move the cursor by `lines` text lines (negative = up, positive = down), preserving the
+	/// current column. Emitted by `KeyView` when a trackpad-mode drag is vertically dominant.
+	/// The dispatcher resolves it to a character offset via newline-walking (`CursorLineWalker`),
+	/// since iOS exposes no 2D cursor API to keyboard extensions. Does not insert/delete text.
+	case cursorLineOffset(Int)
 	/// Accept a word-completion chip: delete the in-progress word prefix and insert
 	/// `replacementText` followed by a space. `displayText` is carried for parity/analytics; the
 	/// committed text is `replacementText` (they're equal for plain word chips).

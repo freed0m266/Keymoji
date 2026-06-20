@@ -11,6 +11,11 @@ public enum InputDispatcher {
 	/// Window within which two space taps collapse into ". ". Matches Apple-like behavior.
 	public static let doubleSpaceWindow: TimeInterval = 0.5
 
+	/// Characters moved per "nominal line" when a vertical trackpad scrub finds no `\n` to walk and
+	/// falls back to horizontal motion. ≈ `trackpadPointsPerLine / trackpadPointsPerCharacter`
+	/// (22 / 6 ≈ 3.67), rounded so a single-line flick still advances a sensible amount.
+	private static let cursorLineFallthroughChars = 4
+
 	/// Dispatch the user's tap to text proxy and state-machine. Haptic feedback and the
 	/// keyboard click sound are *not* a dispatcher concern — `KeyView` fires both on touch-down
 	/// for the press-feel feel (matches Apple/SwiftKey), and on each backspace repeat fire.
@@ -107,6 +112,26 @@ public enum InputDispatcher {
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
 
+		case .cursorLineOffset(let lines):
+			// Vertical trackpad-mode scrubbing. Resolve "move N lines" into a character offset by
+			// walking newlines in the document context. When there's no `\n` in the target direction
+			// (single-paragraph text, or the target line is past the capped context window), fall
+			// through to a horizontal scrub of equivalent magnitude (22pt/line ÷ 6pt/char ≈ 3.67,
+			// rounded to `cursorLineFallthroughChars`). Same sign so up→left, down→right.
+			if lines != 0 {
+				let jump = CursorLineWalker.computeLineJumpOffset(
+					lines: lines,
+					before: proxy.documentContextBeforeInput ?? "",
+					after: proxy.documentContextAfterInput ?? ""
+				)
+				let offset = jump != 0 ? jump : lines * cursorLineFallthroughChars
+				if offset != 0 {
+					proxy.adjustTextPosition(byCharacterOffset: offset)
+				}
+			}
+			state.lastInsertWasSpace = false
+			state.lastSpaceInsertedAt = nil
+
 		case .suggestionAccept(_, let replacementText):
 			// Replace the in-progress word with the chosen completion + a trailing space (SH3).
 			if let prefix = WordPrefixExtractor.activeWordPrefix(
@@ -177,7 +202,7 @@ public enum InputDispatcher {
 			// layer is responsible for clearing `searchQuery` when leaving the mode.
 			return false
 
-		case .shift, .return, .dismissKeyboard, .cursorOffset, .suggestionAccept:
+		case .shift, .return, .dismissKeyboard, .cursorOffset, .cursorLineOffset, .suggestionAccept:
 			// None of these are meaningful in search mode; swallow so a stray keypress
 			// can't fire `return` into the host or toggle shift state. (The suggestion bar is
 			// suppressed in search mode anyway, so `.suggestionAccept` shouldn't arrive here.)
