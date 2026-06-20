@@ -65,6 +65,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 49. [49 — Favorites bar: TabView paging místo free-scroll](49-favorites-bar-tabview-paging.md)
 50. [60 — Favorites editor: název emoji místo shortcode + odvozené názvy vlajek](60-favorites-show-emoji-name.md)
 62. [62 — Onboarding: výběr oblíbených emoji (s garantovaným ne-prázdným fallbackem)](62-onboarding-pick-favorites.md)
+69. [69 — Beta feedback round 1: popover bez base + downward-cancel + trackpad 2D scrubbing](69-beta-feedback-popover-trackpad.md) — round 1 beta UX fix dvou každodenních gest v `KeyView`.
 
 ## v1.2 — Word suggestions
 
@@ -91,7 +92,10 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## Monetizace
 
 63. [63 — Keymoji Plus (freemium + jednorázový unlock $3.99)](63-monetization-keymoji-plus.md) — zavést **před** prvním veřejným releasem.
-64. [64 — „HESOYAM" promo cheat → 30denní Plus trial](64-hesoyam-promo-trial.md) — viralní easter egg + loss-aversion konverze (závisí na 63).
+64. [64 — „HESOYAM" promo cheat → 30denní Plus trial](64-hesoyam-promo-trial.md) — viralní easter egg + loss-aversion konverze (závisí na 63). **(HESOYAM půlka zrušena [taskem 70](70-remove-hesoyam-cheat-code.md).)**
+67. [67 — Debug menu pro simulaci fresh/free user stavů (DEBUG-only)](67-debug-menu-simulate-free-user.md) — QA nástroj pro promo/trial obrazovky, kompiluje se jen v DEBUG (závisí na 63, 64).
+68. [68 — Re-run onboardingu ořezává favorites na free cap (data loss)](68-onboarding-rerun-truncates-favorites.md) — drží invariant z 64 „favorites se po downgradu nemažou" (závisí na 64).
+70. [70 — Odstranit HESOYAM / cheat code (a mrtvou stacking matiku)](70-remove-hesoyam-cheat-code.md) — čistý removal nefunkční cheat vrstvy; ruší HESOYAM půlku tasku 64, Welcome trial zůstává beze změny (odstraní jediné App Review 2.3.1 riziko).
 
 ## Pre-App-Store
 
@@ -101,6 +105,8 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 ## Tech debt / Refactoring
 
 33. [33 — Refactor: splitnout Favorites na 2 moduly, rename + sjednotit ViewModel pattern](33-feature-modules-and-vm-refactor.md)
+71. [71 — Refactor: extrahovat sdílené UI komponenty z host-app views do KeymojiUI](71-extract-shared-ui-components-host-app.md) — pixel-perfect, žádná změna UI; host-app půlka.
+72. [72 — Refactor: pročistit a rozdělit UI klávesnicové extension (KeyboardUI)](72-extract-shared-ui-components-keyboard.md) — sesterský refactor, extension-only (nemůže importovat KeymojiUI).
 
 ## Mimo scope úplně
 
