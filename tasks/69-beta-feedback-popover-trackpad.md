@@ -1,6 +1,8 @@
 # 69 — Beta feedback round 1: popover bez base + downward-cancel + trackpad 2D scrubbing
 
-**Status:** Spec — připraveno z grill session 2026-06-20 (`/grill-with-docs`). Implementace v další session.
+**Status:** Done — 2026-06-20
+
+**Status (původní):** Spec — připraveno z grill session 2026-06-20 (`/grill-with-docs`). Implementace v další session.
 
 **Priorita:** v1.1 (přímý beta-feedback fix) · **Úsilí:** M · **Dopad:** High (dva každodenní gesta — long-press a space-hold scrubbing — uživatelé to používají při každém psaní s diakritikou a při opravách)
 
