@@ -34,7 +34,6 @@ struct KeyView: View {
 	@State private var isPressed = false
 	@State private var isShowingPopover = false
 	@State private var highlightedAlternateIndex = 0
-	@State private var didCommitAlternate = false
 	@State private var didRepeatBackspace = false
 	@State private var isWordDeleting = false
 	@State private var longPressTask: Task<Void, Never>?
@@ -55,6 +54,11 @@ struct KeyView: View {
 	/// True once the user has slid a finger far enough below the open popover to cancel it (task 69).
 	/// Sticky until release: the popover stays hidden and touch-up commits nothing.
 	@State private var isCancelArmed = false
+	/// Finger Y (in KeyView coords) captured the first frame the popover is on screen — the reference
+	/// the downward cancel drag is measured against. Anchoring here (not at touch-down, ~350ms earlier)
+	/// means downward drift *during* the long-press hold doesn't pre-spend the cancel budget, and "drag
+	/// down from where the accents appeared" is literally true. `nil` until captured; reset each press.
+	@State private var popoverDragAnchorY: CGFloat?
 
 	/// 350ms — parity with Apple's long-press delay, so alternates pop as fast as the stock keyboard.
 	private static let longPressDelay: Duration = .milliseconds(350)
@@ -84,10 +88,12 @@ struct KeyView: View {
 	private static let popoverCellSize = CGSize(width: 40, height: 44)
 	private static let popoverCellSpacing: CGFloat = 2
 	private static let popoverHorizontalPadding: CGFloat = 4
-	/// The popover hovers above the key: its overlay is offset by `-cellHeight - 12`, so in
-	/// KeyView-local coords (origin at the cap's top-leading) its bottom edge sits at y = -12.
-	/// Sliding a finger a full cell height below that (→ y > 32) cancels the long-press (task 69).
-	private static let popoverBottomY: CGFloat = -12
+	/// How far *down* (from where the finger was when the popover appeared) the user must drag to
+	/// cancel the popover (task 69). Only a deliberate downward slide off the key arms the cancel —
+	/// moving sideways to pick an accent or up onto the popover never trips it. Generous on purpose:
+	/// the cap is only 42 pt tall, so a smaller value would fire while the finger is still picking an
+	/// accent near the key. ~1.3 key heights down — below the cap but short of the next row's letters.
+	private static let popoverCancelDistance: CGFloat = 56
 
 	init(
 		key: Key,
@@ -196,10 +202,14 @@ struct KeyView: View {
 
 	private func handleTouchDown(at location: CGPoint) {
 		isPressed = true
-		didCommitAlternate = false
 		didRepeatBackspace = false
 		isWordDeleting = false
 		isCancelArmed = false
+		// Normalize popover state at the start of every press so a fresh touch is authoritative,
+		// regardless of how the previous gesture ended (defense-in-depth — today only the commit path
+		// clears `isShowingPopover`).
+		isShowingPopover = false
+		popoverDragAnchorY = nil
 		isTrackpadArmed = false
 		isTrackpadActive = false
 		trackpadAnchorX = location.x
@@ -275,16 +285,16 @@ struct KeyView: View {
 		} else if isShowingPopover {
 			commitAlternate(at: highlightedAlternateIndex)
 			isShowingPopover = false
-		} else if didCommitAlternate || didRepeatBackspace || wasTrackpadActive {
+		} else if didRepeatBackspace || wasTrackpadActive {
 			// First action already fired during the hold — don't double-fire here. For trackpad,
 			// suppressing the trailing `.space` tap matches Apple stock behavior.
 		} else {
 			onTap(key)
 		}
-		didCommitAlternate = false
 		didRepeatBackspace = false
 		isWordDeleting = false
 		isCancelArmed = false
+		popoverDragAnchorY = nil
 	}
 
 	// MARK: - Trackpad mode (long-press space)
@@ -460,18 +470,35 @@ struct KeyView: View {
 
 	// MARK: - Highlight tracking
 
-	/// Drives the popover while a finger is held down on it. Sliding far enough below the popover's
-	/// bottom edge cancels the long-press (task 69) — matching iOS native, which lets you bail out by
-	/// dragging down off the key. Otherwise the slide just retargets the highlighted alternate.
+	/// Drives the popover while a finger is held down on it. A deliberate *downward* drag off the key
+	/// cancels the long-press (task 69) — matching iOS native, which lets you bail out by sliding down.
+	/// Otherwise the horizontal position just retargets the highlighted alternate.
+	///
+	/// Cancel keys off how far the finger has moved *down* from where it was when the popover appeared
+	/// (`popoverDragAnchorY`), not the finger's absolute Y. That's what fixes the original bug: the cap
+	/// is only 42 pt tall, so an absolute threshold sat *inside* the key and fired the moment the finger
+	/// drifted into its lower half while reaching sideways for an accent. Sideways / upward motion keeps
+	/// the downward delta at / below zero, so it can never cancel now.
 	private func handlePopoverDrag(at location: CGPoint) {
-		// One full cell height below the popover's bottom edge arms the (sticky) cancel.
-		let cancelThreshold = Self.popoverBottomY + Self.popoverCellSize.height
-		if location.y > cancelThreshold {
+		guard let anchorY = popoverDragAnchorY else {
+			// First frame the popover is on screen: anchor here, just retarget — never cancel yet.
+			popoverDragAnchorY = location.y
+			updateHighlight(from: location)
+			return
+		}
+		if Self.shouldArmPopoverCancel(draggedDown: location.y - anchorY) {
 			isCancelArmed = true
 			isShowingPopover = false
 			return
 		}
 		updateHighlight(from: location)
+	}
+
+	/// Whether a downward drag of `draggedDown` points (positive = down) from the popover anchor is a
+	/// deliberate-enough slide to cancel the long-press. Pure + `static` so it's unit-testable without
+	/// a live gesture — the threshold/coordinate math is exactly what silently re-breaks otherwise.
+	static func shouldArmPopoverCancel(draggedDown: CGFloat) -> Bool {
+		draggedDown > popoverCancelDistance
 	}
 
 	private func updateHighlight(from location: CGPoint) {
