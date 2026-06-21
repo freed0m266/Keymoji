@@ -173,9 +173,9 @@ public enum LayoutBuilder {
 	}
 
 	private static let czechAlternates: [Character: [String]] = [
-		"a": ["á"], "c": ["č"], "d": ["ď"], "e": ["é", "ě"], "i": ["í"],
+		"a": ["á"], "c": ["č"], "d": ["ď"], "e": ["ě", "é"], "i": ["í"],
 		"n": ["ň"], "o": ["ó"], "r": ["ř"], "s": ["š"], "t": ["ť"],
-		"u": ["ú", "ů"], "y": ["ý"], "z": ["ž"]
+		"u": ["ů", "ú"], "y": ["ý"], "z": ["ž"]
 	]
 
 	private static let slovakAlternates: [Character: [String]] = [
