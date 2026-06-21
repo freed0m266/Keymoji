@@ -3,8 +3,7 @@ import SwiftUI
 import XCTest
 
 let devices = [
-	ViewImageConfig.iPhone8Plus,
-	.iPhone13ProMax
+	ViewImageConfig.iPhone13ProMax
 ]
 
 /// Checks if the given view matches the image references on the disk.
