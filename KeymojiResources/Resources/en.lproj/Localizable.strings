@@ -106,7 +106,6 @@
 "settings.favorites.frequencyLockedFooter" = "Auto-sort by most-used is a Keymoji Plus feature. Unlock it to order favorites by how often you use them.";
 "settings.favorites.limitTitle" = "Unlock unlimited favorites";
 "settings.favorites.limitCaption" = "%1$d of %2$d free favorites used";
-// Loss-aversion banner after a Plus trial lapses (task 64 Scope 12). Plurals in Localizable.stringsdict.
 "settings.favorites.lossAversion.title" = "Your Plus trial ended";
 "settings.favorites.lossAversion.body" = "Your %d extra favorites are saved — bring them back.";
 "settings.emojiCodes.row" = "Emoji codes reference";
@@ -121,15 +120,12 @@
 "settings.plus.unlock" = "Unlock Keymoji Plus";
 "settings.plus.unlocked" = "Keymoji Plus — Unlocked";
 "settings.plus.footer" = "A one-time unlock for unlimited favorite emoji, multiple favorite pages, and auto-sort by most-used. The keyboard itself is always free.";
-// Plural variants live in Localizable.stringsdict (this is the fallback + the Tuist accessor signature).
 "settings.plus.trialDaysLeft" = "Keymoji Plus trial — %d days left";
 
-// Welcome Plus trial — onboarding pick-favorites banner (task 64 Scope 5). The 🎁 is drawn separately.
 "welcome.onboarding.cta" = "Activate your gift — a month of Plus, free";
 "welcome.onboarding.activeUntil" = "Plus active until %@";
 
-// Welcome Plus trial — Settings row (task 64 Scope 6). Framed as a gift, never "free trial".
-"welcome.settings.cta" = "🎁 Activate a free month of Plus";
+"welcome.settings.cta" = "Activate a free month of Plus";
 "welcome.settings.confirm.title" = "Activate a free month of Plus?";
 "welcome.settings.confirm.message" = "Take it now or save it for later — but you can only activate it once.";
 "welcome.settings.confirm.activate" = "Activate";

@@ -10,7 +10,6 @@ public let keyboardUI: Target = .target(
 	sources: "\(targetName)/Sources/**",
 	dependencies: [
 		.target(name: keyboardCore.name),
-		.target(name: design.name),
 		.target(name: resources.name),
 		.target(name: core.name)
 	],

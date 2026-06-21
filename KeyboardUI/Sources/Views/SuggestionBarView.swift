@@ -1,6 +1,5 @@
 import SwiftUI
 import KeyboardCore
-import KeymojiUI
 
 /// The suggestion bar that sits above the keyboard. Renders an arbitrary `[Suggestion]`, drawing
 /// each chip per its `renderStyle`:
