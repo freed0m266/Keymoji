@@ -69,31 +69,16 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 
 	private var legalSection: some View {
 		Section {
-			chevronRow(title: Texts.privacyPolicyLink) {
+			ListButton(title: Texts.privacyPolicyLink) {
 				viewModel.openPrivacyPolicy()
 			}
-			chevronRow(title: Texts.support) {
+			ListButton(title: Texts.support) {
 				viewModel.openSupportEmail()
 			}
 		} header: {
 			Text(Texts.legalHeader)
 		} footer: {
 			Text(Texts.copyright(currentYear))
-		}
-	}
-
-	private func chevronRow(title: String, action: @escaping () -> Void) -> some View {
-		Button(action: action) {
-			HStack {
-				Text(title)
-					.foregroundStyle(.primary)
-				
-				Spacer()
-				
-				Icon.chevronRight
-					.font(.footnote.weight(.semibold))
-					.foregroundStyle(.tertiary)
-			}
 		}
 	}
 }

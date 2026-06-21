@@ -33,6 +33,13 @@ public extension Icon {
 			.scaledToFit()
 			.frame(width: size, height: size)
 	}
+
+	/// Large tinted hero glyph atop an onboarding step.
+	func heroIcon(size: CGFloat = 90) -> some View {
+		self
+			.size(size)
+			.foregroundStyle(.tint)
+	}
 }
 
 public extension Icon {
@@ -46,6 +53,8 @@ public extension Icon {
 	static var keyboardBadgeEye: Icon = "keyboard.badge.eye"
 	/// lock.shield
 	static var lockShield: Icon = "lock.shield"
+	/// sparkles
+	static var sparkles: Icon = "sparkles"
 	/// star.fill
 	static var starFill: Icon = "star.fill"
 	/// star.circle.fill

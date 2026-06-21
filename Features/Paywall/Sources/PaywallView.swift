@@ -82,19 +82,13 @@ public struct PaywallView<ViewModel: PaywallViewModeling>: View {
 
 	private var header: some View {
 		VStack(spacing: 16) {
-			Text("✨")
-				.font(.system(size: 52))
-				.frame(width: 96, height: 96)
-				.glassEffect()
+			GlassEmojiBadge("✨")
 
 			Text(headline)
-				.font(.title2.weight(.bold))
-				.multilineTextAlignment(.center)
+				.heroTitle()
 
 			Text(Texts.subtitle)
-				.font(.callout)
-				.foregroundStyle(.secondary)
-				.multilineTextAlignment(.center)
+				.heroDescription()
 		}
 	}
 
@@ -205,9 +199,7 @@ public struct PaywallView<ViewModel: PaywallViewModeling>: View {
 				.font(.title.weight(.bold))
 				.multilineTextAlignment(.center)
 			Text(Texts.successBody)
-				.font(.callout)
-				.foregroundStyle(.secondary)
-				.multilineTextAlignment(.center)
+				.heroDescription()
 			Spacer()
 			PrimaryButton(Texts.successCta, action: onFinish)
 				.padding(.bottom, 32)

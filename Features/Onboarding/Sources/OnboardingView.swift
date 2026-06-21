@@ -59,17 +59,13 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 	private var addKeyboardStep: some View {
 		VStack(spacing: 24) {
 			Icon.keyboardBadgeEye
-				.size(90)
-				.foregroundStyle(.tint)
+				.heroIcon()
 
 			Text(Texts.Step1.title)
-				.font(.title2.weight(.bold))
-				.multilineTextAlignment(.center)
+				.heroTitle()
 
 			Text(Texts.Step1.description)
-				.font(.callout)
-				.foregroundStyle(.secondary)
-				.multilineTextAlignment(.center)
+				.heroDescription()
 				.padding(.horizontal, 24)
 
 			if viewModel.isKeyboardActivated {
@@ -90,17 +86,13 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 	private var allowFullAccessStep: some View {
 		VStack(spacing: 24) {
 			Icon.lockShield
-				.size(90)
-				.foregroundStyle(.tint)
+				.heroIcon()
 
 			Text(Texts.Step2.title)
-				.font(.title2.weight(.bold))
-				.multilineTextAlignment(.center)
+				.heroTitle()
 
 			Text(Texts.Step2.description)
-				.font(.callout)
-				.foregroundStyle(.secondary)
-				.multilineTextAlignment(.center)
+				.heroDescription()
 				.padding(.horizontal, 24)
 
 			Text(Texts.Step2.privacy)
@@ -125,17 +117,13 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 	private var selectKeyboardStep: some View {
 		VStack(spacing: 24) {
 			Icon.globe
-				.size(90)
-				.foregroundStyle(.tint)
+				.heroIcon()
 
 			Text(Texts.Step3.title)
-				.font(.title2.weight(.bold))
-				.multilineTextAlignment(.center)
+				.heroTitle()
 
 			Text(Texts.Step3.description)
-				.font(.callout)
-				.foregroundStyle(.secondary)
-				.multilineTextAlignment(.center)
+				.heroDescription()
 				.padding(.horizontal, 24)
 
 			Spacer()
@@ -146,9 +134,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 			.padding(.horizontal, 32)
 
 			Text(Texts.Step3.footer)
-				.font(.footnote)
-				.foregroundStyle(.tertiary)
-				.multilineTextAlignment(.center)
+				.heroFootnote()
 				.padding(.horizontal, 32)
 				.padding(.bottom, 8)
 		}
@@ -162,26 +148,27 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 		GeometryReader { proxy in
 			ScrollView {
 				VStack(spacing: 20) {
-					Text("⭐️")
-						.font(.system(size: 48))
-						.frame(width: 94, height: 94)
-						.glassEffect()
+					GlassEmojiBadge("⭐️")
 
 					Text(Texts.Favorites.title)
-						.font(.title2.weight(.bold))
-						.multilineTextAlignment(.center)
+						.heroTitle()
 
 					Text(Texts.Favorites.description)
-						.font(.callout)
-						.foregroundStyle(.secondary)
-						.multilineTextAlignment(.center)
+						.heroDescription()
 						.padding(.horizontal, 24)
 
 					welcomeBanner
 
 					LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 8) {
 						ForEach(EmojiCatalog.defaultFavorites, id: \.self) { glyph in
-							favoriteCell(glyph, isSelected: viewModel.selectedFavorites.contains(glyph))
+							EmojiSelectableCell(
+								glyph: glyph,
+								isSelected: viewModel.selectedFavorites.contains(glyph),
+								// Free users cap out at the free favorites limit — dim the remaining cells (no
+								// mid-onboarding upsell) so a tap that wouldn't register reads as "full", not broken.
+								isDimmed: !viewModel.selectedFavorites.contains(glyph) && !viewModel.canSelectMoreFavorites,
+								onTap: { viewModel.toggleFavorite(glyph) }
+							)
 						}
 					}
 					.padding(.horizontal, 24)
@@ -202,9 +189,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 						}
 
 						Text(Texts.Favorites.footer)
-							.font(.footnote)
-							.foregroundStyle(.tertiary)
-							.multilineTextAlignment(.center)
+							.heroFootnote()
 					}
 					.padding(.horizontal, 32)
 				}
@@ -273,39 +258,6 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 		.contentShape(.rect)
 	}
 
-	private func favoriteCell(_ glyph: String, isSelected: Bool) -> some View {
-		// Free users cap out at the free favorites limit — dim the remaining cells (no mid-onboarding
-		// upsell) so a tap that wouldn't register reads as "full", not broken.
-		let isDimmed = !isSelected && !viewModel.canSelectMoreFavorites
-		return Button {
-			viewModel.toggleFavorite(glyph)
-		} label: {
-			ZStack(alignment: .topTrailing) {
-				Text(glyph)
-					.font(.system(size: 30))
-					.frame(maxWidth: .infinity)
-					.frame(height: 52)
-					.background(
-						RoundedRectangle(cornerRadius: 8)
-							.fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
-					)
-
-				if isSelected {
-					Icon.checkmarkCircleFill
-						.font(.system(size: 14))
-						.foregroundStyle(Color.accentColor, Color(.systemBackground))
-						.padding(2)
-				}
-			}
-			.contentShape(.rect)
-			.opacity(isDimmed ? 0.35 : 1)
-		}
-		.buttonStyle(.plain)
-		.disabled(isDimmed)
-		.accessibilityLabel(glyph)
-		.accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
-	}
-
 	private var featureTourStep: some View {
 		ScrollView {
 			VStack(alignment: .leading, spacing: 18) {
@@ -334,9 +286,7 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 				.padding(.horizontal, 32)
 
 				Text(Texts.Tour.footer)
-					.font(.footnote)
-					.foregroundStyle(.tertiary)
-					.multilineTextAlignment(.center)
+					.heroFootnote()
 					.padding(.horizontal, 32)
 			}
 		}

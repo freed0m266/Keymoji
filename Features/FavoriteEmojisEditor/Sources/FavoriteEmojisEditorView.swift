@@ -90,10 +90,12 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 
 	private var favoritesList: some View {
 		List {
-			if viewModel.showLossAversionBanner {
-				Section {
-					lossAversionBanner
-				}
+			if !viewModel.showLossAversionBanner {
+				lossAversionBanner
+			}
+
+			if !showsUpsellRow {
+				upsellRow
 			}
 
 			Section {
@@ -106,12 +108,6 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 			} footer: {
 				if !viewModel.isPlus {
 					Text(Texts.frequencyLockedFooter)
-				}
-			}
-
-			if showsUpsellRow {
-				Section {
-					upsellRow
 				}
 			}
 
@@ -161,51 +157,23 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 	/// Loss-aversion banner: a consumed trial lapsed and the user is over the cap. Reuses the upsell
 	/// row's shape but routes to the `.afterTrial` paywall ("You loved Plus. Get it back.").
 	private var lossAversionBanner: some View {
-		Button {
+		ListButton(
+			title: Texts.LossAversion.title,
+			caption: Texts.LossAversion.body(viewModel.lossAversionExtraCount),
+			icon: .sparkles
+		) {
 			viewModel.requestPaywall(.afterTrial)
-		} label: {
-			HStack(spacing: 12) {
-				Icon.starCircleFill
-					.font(.system(size: 26))
-					.foregroundStyle(.tint)
-				VStack(alignment: .leading, spacing: 2) {
-					Text(Texts.LossAversion.title)
-						.font(.body.weight(.semibold))
-						.foregroundStyle(.primary)
-					Text(Texts.LossAversion.body(viewModel.lossAversionExtraCount))
-						.font(.footnote)
-						.foregroundStyle(.secondary)
-				}
-				Spacer()
-				Icon.chevronRight
-					.font(.footnote.weight(.semibold))
-					.foregroundStyle(.tertiary)
-			}
 		}
 		.buttonStyle(.plain)
 	}
 
 	private var upsellRow: some View {
-		Button {
+		ListButton(
+			title: Texts.limitTitle,
+			caption: Texts.limitCaption(viewModel.favorites.count, viewModel.freeFavoritesLimit),
+			icon: .sparkles
+		) {
 			viewModel.requestPaywall(.favoritesLimit)
-		} label: {
-			HStack(spacing: 12) {
-				Icon.starCircleFill
-					.font(.system(size: 26))
-					.foregroundStyle(.tint)
-				VStack(alignment: .leading, spacing: 2) {
-					Text(Texts.limitTitle)
-						.font(.body.weight(.semibold))
-						.foregroundStyle(.primary)
-					Text(Texts.limitCaption(viewModel.favorites.count, viewModel.freeFavoritesLimit))
-						.font(.footnote)
-						.foregroundStyle(.secondary)
-				}
-				Spacer()
-				Icon.chevronRight
-					.font(.footnote.weight(.semibold))
-					.foregroundStyle(.tertiary)
-			}
 		}
 		.buttonStyle(.plain)
 	}

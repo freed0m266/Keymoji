@@ -9,6 +9,7 @@
 import SwiftUI
 import KeyboardCore
 import KeymojiResources
+import KeymojiUI
 
 /// Categorized emoji grid presented as a sheet from the Favorites editor. Tapping a cell
 /// toggles the emoji's membership in the user's favorites; the checkmark badge reflects
@@ -26,7 +27,6 @@ public struct EmojiCatalogPickerView: View {
 
 	private static let glyphSize: CGFloat = 28
 	private static let cellMinWidth: CGFloat = 44
-	private static let cellHeight: CGFloat = 52
 	private static let gridSpacing: CGFloat = 4
 
 	private var columns: [GridItem] {
@@ -52,7 +52,12 @@ public struct EmojiCatalogPickerView: View {
 					Section {
 						LazyVGrid(columns: columns, spacing: Self.gridSpacing) {
 							ForEach(EmojiCatalog.emojis(for: category)) { emoji in
-								cell(for: emoji.glyph, isSelected: selectedEmojis.contains(emoji.glyph))
+								EmojiSelectableCell(
+									glyph: emoji.glyph,
+									isSelected: selectedEmojis.contains(emoji.glyph),
+									isDimmed: isBeyondLimit(isSelected: selectedEmojis.contains(emoji.glyph)),
+									onTap: { onToggle(emoji.glyph) }
+								)
 							}
 						}
 						.padding(.horizontal, 16)
@@ -99,35 +104,6 @@ public struct EmojiCatalogPickerView: View {
 		return selectedEmojis.count >= limit
 	}
 
-	private func cell(for emoji: String, isSelected: Bool) -> some View {
-		let dimmed = isBeyondLimit(isSelected: isSelected)
-		return Button {
-			onToggle(emoji)
-		} label: {
-			ZStack(alignment: .topTrailing) {
-				Text(emoji)
-					.font(.system(size: Self.glyphSize))
-					.frame(maxWidth: .infinity)
-					.frame(height: Self.cellHeight)
-					.background(
-						RoundedRectangle(cornerRadius: 8)
-							.fill(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
-					)
-				if isSelected {
-					Image(systemName: "checkmark.circle.fill")
-						.font(.system(size: 14))
-						.foregroundStyle(Color.accentColor, Color(.systemBackground))
-						.padding(2)
-				}
-			}
-			.contentShape(Rectangle())
-			.opacity(dimmed ? 0.35 : 1)
-		}
-		.buttonStyle(.plain)
-		.disabled(dimmed)
-		.accessibilityLabel(emoji)
-		.accessibilityAddTraits(isSelected ? [.isSelected, .isButton] : .isButton)
-	}
 }
 
 #if DEBUG
