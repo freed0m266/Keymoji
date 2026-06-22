@@ -31,7 +31,6 @@ public struct EmojiSearchView: View {
 		self.onKeyClick = onKeyClick
 	}
 
-	private static let glyphSize: CGFloat = 28
 	private static let cellWidth: CGFloat = 42
 	private static let cellHeight: CGFloat = 44
 
@@ -86,12 +85,7 @@ public struct EmojiSearchView: View {
 			.buttonStyle(.plain)
 			.accessibilityLabel("Clear search")
 		}
-		.padding(.horizontal, 10)
-		.frame(height: 32)
-		.background(
-			RoundedRectangle(cornerRadius: 8, style: .continuous)
-				.fill(Color(.systemGray3).opacity(0.45))
-		)
+		.searchFieldChrome()
 		.padding(.horizontal, 10)
 	}
 
@@ -104,7 +98,15 @@ public struct EmojiSearchView: View {
 			} else {
 				LazyHStack(spacing: 2) {
 					ForEach(results, id: \.self) { emoji in
-						resultCell(for: emoji)
+						EmojiCell(
+							emoji: emoji,
+							width: Self.cellWidth,
+							height: Self.cellHeight
+						) {
+							onKeyTapHaptic()
+							onKeyClick()
+							onSelectEmoji(emoji)
+						}
 					}
 				}
 				.padding(.horizontal, 10)
@@ -127,33 +129,6 @@ public struct EmojiSearchView: View {
 			.frame(height: Self.cellHeight)
 	}
 
-	private func resultCell(for emoji: String) -> some View {
-		Button {
-			onKeyTapHaptic()
-			onKeyClick()
-			onSelectEmoji(emoji)
-		} label: {
-			Text(emoji)
-				.font(.system(size: Self.glyphSize))
-				.lineLimit(1)
-				.minimumScaleFactor(0.8)
-				.frame(width: Self.cellWidth, height: Self.cellHeight)
-				.contentShape(Rectangle())
-		}
-		.buttonStyle(EmojiSearchResultButtonStyle())
-		.accessibilityLabel(emoji)
-		.accessibilityAddTraits(.isKeyboardKey)
-	}
-}
-
-private struct EmojiSearchResultButtonStyle: ButtonStyle {
-	func makeBody(configuration: Configuration) -> some View {
-		ZStack {
-			RoundedRectangle(cornerRadius: 5)
-				.fill(configuration.isPressed ? Color(.systemGray3) : Color.clear)
-			configuration.label
-		}
-	}
 }
 
 #if DEBUG

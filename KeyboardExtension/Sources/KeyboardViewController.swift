@@ -522,7 +522,6 @@ final class KeyboardViewController: UIInputViewController {
 			fieldAllowsBar: state.currentEligibility.allowDisplay,
 			decimalSeparator: Self.currentDecimalSeparator,
 			dispatch: { [weak self] key in self?.handle(key) },
-			toggleFavoriteEmoji: { [weak self] emoji in self?.toggleFavorite(emoji) },
 			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
 			onKeyClick: { [weak self] kind in self?.clickSound.play(for: kind) },
@@ -731,27 +730,6 @@ final class KeyboardViewController: UIInputViewController {
 			state.returnKeyType = newType
 			rebuild()
 		}
-	}
-
-	/// Toggles `emoji` in the user's favorites and persists the change cross-process so the
-	/// host app's Favorites editor reflects it on next read. Mutates `state` + rebuilds the
-	/// view so the panel updates immediately without waiting for the next `viewWillAppear`.
-	private func toggleFavorite(_ emoji: String) {
-		var updated = state.favoriteEmojis
-		if let index = updated.firstIndex(of: emoji) {
-			updated.remove(at: index)
-		} else {
-			// Respect the free favorites cap here too: the keyboard can't present a paywall (no StoreKit
-			// in the extension), so a free user at the limit simply can't add more from the emoji panel —
-			// the host app's editor is where the upgrade is offered. Removing is always allowed.
-			guard FavoritesEntitlement.canAddFavorite(currentCount: updated.count, isPlus: state.effectiveIsPlus) else {
-				return
-			}
-			updated.append(emoji)
-		}
-		state.favoriteEmojis = updated
-		store.favoriteEmojis = updated
-		rebuild()
 	}
 
 	/// Moves the just-inserted emoji to the head of `recentEmojis` (deduped) and persists.

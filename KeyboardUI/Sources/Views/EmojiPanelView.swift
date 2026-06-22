@@ -9,7 +9,6 @@ public struct EmojiPanelView: View {
 	let recents: [String]
 	let favorites: [String]
 	let onSelectEmoji: (String) -> Void
-	let onToggleFavorite: (String) -> Void
 	let onSwitchToLetters: () -> Void
 	let onDelete: () -> Void
 	let onEnterSearch: () -> Void
@@ -22,7 +21,6 @@ public struct EmojiPanelView: View {
 		recents: [String],
 		favorites: [String] = [],
 		onSelectEmoji: @escaping (String) -> Void,
-		onToggleFavorite: @escaping (String) -> Void = { _ in },
 		onSwitchToLetters: @escaping () -> Void = {},
 		onDelete: @escaping () -> Void = {},
 		onEnterSearch: @escaping () -> Void = {},
@@ -32,7 +30,6 @@ public struct EmojiPanelView: View {
 		self.recents = recents
 		self.favorites = favorites
 		self.onSelectEmoji = onSelectEmoji
-		self.onToggleFavorite = onToggleFavorite
 		self.onSwitchToLetters = onSwitchToLetters
 		self.onDelete = onDelete
 		self.onEnterSearch = onEnterSearch
@@ -51,7 +48,6 @@ public struct EmojiPanelView: View {
 		self._selectedCategory = State(initialValue: initial)
 	}
 
-	private static let glyphSize: CGFloat = 28
 	private static let cellMinWidth: CGFloat = 38
 	private static let cellHeight: CGFloat = 40
 	private static let gridSpacing: CGFloat = 4
@@ -133,12 +129,7 @@ public struct EmojiPanelView: View {
 				Spacer()
 			}
 			.foregroundStyle(.secondary)
-			.padding(.horizontal, 10)
-			.frame(height: 32)
-			.background(
-				RoundedRectangle(cornerRadius: 8, style: .continuous)
-					.fill(Color(.systemGray3).opacity(0.45))
-			)
+			.searchFieldChrome()
 			.padding(.horizontal, 10)
 			.padding(.top, 6)
 			.padding(.bottom, 4)
@@ -253,20 +244,13 @@ public struct EmojiPanelView: View {
 					ForEach(currentEmojis, id: \.self) { emoji in
 						EmojiCell(
 							emoji: emoji,
-							glyphSize: Self.glyphSize,
-							height: Self.cellHeight,
-							onTap: {
-								onKeyTapHaptic()
-								onKeyClick(.character)
-								onSelectEmoji(emoji)
-							},
-							onLongPress: {
-								// Long-press toggles favorite membership. Fire the popover-entry haptic
-								// to confirm the toggle landed without ambiguity vs. an ordinary tap.
-								onKeyTapHaptic()
-								onToggleFavorite(emoji)
-							}
-						)
+							width: nil,
+							height: Self.cellHeight
+						) {
+							onKeyTapHaptic()
+							onKeyClick(.character)
+							onSelectEmoji(emoji)
+						}
 					}
 				}
 				.padding(.horizontal, 6)
@@ -282,48 +266,6 @@ public struct EmojiPanelView: View {
 		Text("No recent emojis yet")
 			.font(.footnote)
 			.foregroundStyle(.secondary)
-	}
-}
-
-/// Individual emoji cell. A `Button` (rather than a custom `DragGesture`) so that the parent
-/// `ScrollView` keeps the vertical drag — pulling down to scroll the grid never inserts an
-/// emoji. The custom `ButtonStyle` supplies the press-highlight backdrop, and the action only
-/// fires if the user releases on the same cell.
-private struct EmojiCell: View {
-	let emoji: String
-	let glyphSize: CGFloat
-	let height: CGFloat
-	let onTap: () -> Void
-	let onLongPress: () -> Void
-
-	var body: some View {
-		Button(action: onTap) {
-			Text(emoji)
-				.font(.system(size: glyphSize))
-				.minimumScaleFactor(0.8)
-				.lineLimit(1)
-				.frame(maxWidth: .infinity)
-				.frame(height: height)
-				.contentShape(Rectangle())
-		}
-		.buttonStyle(EmojiCellButtonStyle())
-		// SwiftUI cancels the Button's tap action when this long-press fires first, so the two
-		// gestures stay mutually exclusive: a quick tap inserts, a held finger toggles favorite.
-		.onLongPressGesture(minimumDuration: 0.45, perform: onLongPress)
-		.accessibilityElement()
-		.accessibilityLabel(emoji)
-		.accessibilityAddTraits(.isKeyboardKey)
-	}
-}
-
-private struct EmojiCellButtonStyle: ButtonStyle {
-	func makeBody(configuration: Configuration) -> some View {
-		ZStack {
-			RoundedRectangle(cornerRadius: 5)
-				.fill(configuration.isPressed ? Color(.systemGray3) : Color.clear)
-
-			configuration.label
-		}
 	}
 }
 

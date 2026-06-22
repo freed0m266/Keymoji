@@ -17,7 +17,6 @@ struct KeyboardRoot: View {
 	/// controller (which reads `Locale.current`) so `KeyboardCore` stays pure.
 	let decimalSeparator: String
 	let dispatch: (Key) -> Void
-	let toggleFavoriteEmoji: (String) -> Void
 	let selectSuggestion: (Suggestion) -> Void
 	let onKeyTapHaptic: () -> Void
 	let onKeyClick: (ClickSoundKind) -> Void
@@ -44,7 +43,6 @@ struct KeyboardRoot: View {
 			suggestions: suggestions,
 			fieldAllowsBar: fieldAllowsBar,
 			onKey: dispatch,
-			onToggleFavoriteEmoji: toggleFavoriteEmoji,
 			onSelectSuggestion: selectSuggestion,
 			onKeyTapHaptic: onKeyTapHaptic,
 			onKeyClick: onKeyClick,

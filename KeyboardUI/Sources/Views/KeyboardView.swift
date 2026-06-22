@@ -24,7 +24,6 @@ public struct KeyboardView: View {
 	/// word/Slack suggestions turned off (see `showsBarContent`). Defaults to `true` (eligible field).
 	public let fieldAllowsBar: Bool
 	public let onKey: (Key) -> Void
-	public let onToggleFavoriteEmoji: (String) -> Void
 	public let onSelectSuggestion: (Suggestion) -> Void
 	public let onKeyTapHaptic: () -> Void
 	public let onKeyClick: (ClickSoundKind) -> Void
@@ -51,7 +50,6 @@ public struct KeyboardView: View {
 		suggestions: [Suggestion] = [],
 		fieldAllowsBar: Bool = true,
 		onKey: @escaping (Key) -> Void,
-		onToggleFavoriteEmoji: @escaping (String) -> Void = { _ in },
 		onSelectSuggestion: @escaping (Suggestion) -> Void = { _ in },
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping (ClickSoundKind) -> Void = { _ in },
@@ -68,7 +66,6 @@ public struct KeyboardView: View {
 		self.suggestions = suggestions
 		self.fieldAllowsBar = fieldAllowsBar
 		self.onKey = onKey
-		self.onToggleFavoriteEmoji = onToggleFavoriteEmoji
 		self.onSelectSuggestion = onSelectSuggestion
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
@@ -209,7 +206,6 @@ public struct KeyboardView: View {
 			recents: recentEmojis,
 			favorites: favoriteEmojis,
 			onSelectEmoji: { emoji in insertEmojiKey(emoji) },
-			onToggleFavorite: onToggleFavoriteEmoji,
 			onSwitchToLetters: {
 				let key = Key(
 					id: "emojiPanel.switchToLetters",
