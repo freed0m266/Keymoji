@@ -1,6 +1,6 @@
 # 72 — Refactor: pročistit a rozdělit UI klávesnicové extension (KeyboardUI)
 
-**Status:** Spec — připraveno z grill session 2026-06-20 (`/grill-with-docs`). Implementace v další session.
+**Status:** Done — 2026-06-20
 
 **Priorita:** Tech debt · **Úsilí:** M · **Dopad:** None (čistý refactor, žádná uživatelská změna)
 
