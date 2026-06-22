@@ -653,7 +653,12 @@ final class LayoutBuilderTests: XCTestCase {
 	}
 
 	func testCzechSet_eKey_orderedByFrequency() {
-		XCTAssertEqual(alternateTexts("e", page: .letters(.lower), alternateSet: .czech), ["é", "ě"])
+		// Ordered by Czech *in-language* frequency, most-frequent first: ě is more common than é in
+		// written Czech (corpus data — ČNK/Králík lineage ě≈1.65% vs é≈1.33%; STT Media ě≈1.93% vs
+		// é≈1.21%). The first accent is the one auto-committed on a long-press-and-release, so the more
+		// frequent ě must lead. (The cross-language `.all` set deliberately orders é first — a different
+		// criterion; see `allAlternates`.) Code order set by commit c45610b "Reorder Czech diacritic alts".
+		XCTAssertEqual(alternateTexts("e", page: .letters(.lower), alternateSet: .czech), ["ě", "é"])
 	}
 
 	func testCzechSet_letterWithoutDiacritic_hasNoAlternates() {
