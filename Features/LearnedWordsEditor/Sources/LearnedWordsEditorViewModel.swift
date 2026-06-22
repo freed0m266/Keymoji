@@ -23,10 +23,13 @@ public enum LearnedWordsSort: Sendable, Hashable {
 
 @MainActor
 public protocol LearnedWordsEditorViewModeling: Observable, AnyObject {
-	/// Already sorted per `sort`.
+	/// The displayed rows: sorted per `sort`, then filtered by `searchText`. With a large pool (task 73
+	/// targets 10k) this is what the lazy `List` renders, so it stays navigable.
 	var words: [LearnedWord] { get }
 	var sort: LearnedWordsSort { get set }
-	/// Offsets into the *currently displayed* (sorted) array.
+	/// Case-insensitive substring filter over the learned words. Empty shows everything.
+	var searchText: String { get set }
+	/// Offsets into the *currently displayed* (sorted + filtered) array.
 	func remove(at offsets: IndexSet)
 	func clearAll()
 }
@@ -39,10 +42,19 @@ public func learnedWordsEditorVM() -> some LearnedWordsEditorViewModeling {
 @Observable
 final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewModeling {
 
+	/// Displayed rows: `allWords` sorted, then filtered by `searchText`.
 	private(set) var words: [LearnedWord] = []
+	/// The full sorted pool, kept in memory so re-sorting and filtering don't re-read the store. Loaded
+	/// once on init; at the task-73 target (10k) the read is from the in-memory index and the sort is a
+	/// one-time cost on screen open (not the typing hot path).
+	private var allWords: [LearnedWord] = []
 
 	var sort: LearnedWordsSort {
-		didSet { applySort() }
+		didSet { applySortAndFilter() }
+	}
+
+	var searchText: String = "" {
+		didSet { applyFilter() }
 	}
 
 	private let store: PersonalRecentsStore
@@ -62,8 +74,8 @@ final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewMo
 	// MARK: - Public API
 
 	func remove(at offsets: IndexSet) {
-		// Map offsets to words from the *displayed* array — store order is dictionary-undefined,
-		// so deleting by index into the store would remove the wrong entries.
+		// Map offsets to words from the *displayed* (sorted + filtered) array — store order is
+		// dictionary-undefined, so deleting by index into the store would remove the wrong entries.
 		let removed = offsets.map { words[$0].word }
 		for word in removed { store.remove(word) }
 		reload()
@@ -71,18 +83,27 @@ final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewMo
 
 	func clearAll() {
 		store.clear()
+		allWords = []
 		words = []
 	}
 
 	// MARK: - Private API
 
 	private func reload() {
-		words = sorted(store.allLearnedWords())
+		allWords = sorted(store.allLearnedWords())
+		applyFilter()
 	}
 
-	/// Re-sort the in-memory list without re-reading from disk.
-	private func applySort() {
-		words = sorted(words)
+	/// Re-sort the in-memory pool (no disk re-read) and reapply the active filter.
+	private func applySortAndFilter() {
+		allWords = sorted(allWords)
+		applyFilter()
+	}
+
+	/// Project `allWords` to the displayed `words` through the case-insensitive substring filter.
+	private func applyFilter() {
+		let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+		words = query.isEmpty ? allWords : allWords.filter { $0.word.localizedCaseInsensitiveContains(query) }
 	}
 
 	private func sorted(_ input: [LearnedWord]) -> [LearnedWord] {

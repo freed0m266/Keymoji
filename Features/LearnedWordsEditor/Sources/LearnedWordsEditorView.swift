@@ -24,8 +24,15 @@ public struct LearnedWordsEditorView<ViewModel: LearnedWordsEditorViewModeling>:
 		@Bindable var viewModel = viewModel
 		return Group {
 			if viewModel.words.isEmpty {
-				emptyState
+				if viewModel.searchText.isEmpty {
+					emptyState
+				} else {
+					// Pool isn't empty — the active filter just matched nothing. System-localized.
+					ContentUnavailableView.search(text: viewModel.searchText)
+				}
 			} else {
+				// `List` is lazy: only on-screen rows are realized, so the pool scrolls smoothly even at
+				// the task-73 target of 10k learned words. The search field keeps that pool navigable.
 				List {
 					Section {
 						Picker(Texts.title, selection: $viewModel.sort) {
@@ -47,6 +54,7 @@ public struct LearnedWordsEditorView<ViewModel: LearnedWordsEditorViewModeling>:
 		}
 		.navigationTitle(Texts.title)
 		.navigationBarTitleDisplayMode(.inline)
+		.searchable(text: $viewModel.searchText)
 		.toolbar {
 			if !viewModel.words.isEmpty {
 				ToolbarItem(placement: .topBarLeading) {

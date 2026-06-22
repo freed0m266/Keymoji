@@ -15,22 +15,41 @@ import KeyboardCore
 @MainActor
 public final class LearnedWordsEditorViewModelMock: LearnedWordsEditorViewModeling {
 	public private(set) var words: [LearnedWord] = []
+	private var allWords: [LearnedWord] = []
 
 	public var sort: LearnedWordsSort {
-		didSet { words = Self.sorted(words, by: sort) }
+		didSet { applySortAndFilter() }
+	}
+
+	public var searchText: String = "" {
+		didSet { applyFilter() }
 	}
 
 	public init(words: [LearnedWord] = [], sort: LearnedWordsSort = .mostUsed) {
 		self.sort = sort
-		self.words = Self.sorted(words, by: sort)
+		self.allWords = Self.sorted(words, by: sort)
+		self.words = allWords
 	}
 
 	public func remove(at offsets: IndexSet) {
-		words.remove(atOffsets: offsets)
+		let removed = offsets.map { words[$0].word }
+		allWords.removeAll { removed.contains($0.word) }
+		applyFilter()
 	}
 
 	public func clearAll() {
+		allWords = []
 		words = []
+	}
+
+	private func applySortAndFilter() {
+		allWords = Self.sorted(allWords, by: sort)
+		applyFilter()
+	}
+
+	private func applyFilter() {
+		let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+		words = query.isEmpty ? allWords : allWords.filter { $0.word.localizedCaseInsensitiveContains(query) }
 	}
 
 	private static func sorted(_ input: [LearnedWord], by sort: LearnedWordsSort) -> [LearnedWord] {

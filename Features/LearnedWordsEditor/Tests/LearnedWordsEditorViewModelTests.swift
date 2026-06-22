@@ -14,9 +14,23 @@ import KeyboardCore
 @MainActor
 final class LearnedWordsEditorViewModelTests: XCTestCase {
 
+	private var tempDirs: [URL] = []
+
+	override func tearDown() {
+		for dir in tempDirs { try? FileManager.default.removeItem(at: dir) }
+		tempDirs = []
+		super.tearDown()
+	}
+
+	/// An isolated, file-backed store in a throwaway temp directory (task 73). Using the directory init
+	/// — not `PersonalRecentsStore(store:)` — keeps each test's pool separate; the production init shares
+	/// one in-memory index per App Group container, which would cross-contaminate tests.
 	private func makeStore() -> PersonalRecentsStore {
-		let suite = "keymoji.tests.learnedWordsEditor.\(UUID().uuidString)"
-		return PersonalRecentsStore(store: AppGroupStore(suiteName: suite))
+		let dir = FileManager.default.temporaryDirectory
+			.appendingPathComponent("keymoji.tests.learnedWordsEditor.\(UUID().uuidString)", isDirectory: true)
+		try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+		tempDirs.append(dir)
+		return PersonalRecentsStore(directory: dir)
 	}
 
 	private func seed(_ store: PersonalRecentsStore) {
@@ -87,5 +101,31 @@ final class LearnedWordsEditorViewModelTests: XCTestCase {
 		vm.clearAll()
 		XCTAssertTrue(vm.words.isEmpty)
 		XCTAssertEqual(store.count, 0)
+	}
+
+	func testSearch_filtersByCaseInsensitiveSubstring() {
+		let store = makeStore()
+		seed(store) // apple, banana, cherry
+		let vm = LearnedWordsEditorViewModel(store: store, sort: .alphabetical)
+
+		vm.searchText = "an"
+		XCTAssertEqual(vm.words.map(\.word), ["banana"])
+
+		vm.searchText = "E" // case-insensitive: apple, cherry both contain "e"
+		XCTAssertEqual(vm.words.map(\.word), ["apple", "cherry"])
+
+		vm.searchText = ""
+		XCTAssertEqual(vm.words.map(\.word), ["apple", "banana", "cherry"])
+	}
+
+	func testSearch_thenRemove_deletesTheFilteredWord() {
+		let store = makeStore()
+		seed(store)
+		let vm = LearnedWordsEditorViewModel(store: store, sort: .alphabetical)
+		vm.searchText = "an" // [banana]
+		vm.remove(at: IndexSet(integer: 0))
+		// Filter still active; banana is gone, nothing else matches "an".
+		XCTAssertTrue(vm.words.isEmpty)
+		XCTAssertEqual(store.count, 2)
 	}
 }
