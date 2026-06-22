@@ -1,6 +1,29 @@
 # 73 — Výkon: plynulá klávesnice i při 10 000 learned words
 
-**Status:** Spec — připraveno z analýzy + Q&A session 2026-06-22 (multi-agent perf audit + rozhodnutí níže). Implementace v další session.
+**Status:** Done — 2026-06-22 (všechny fáze 0 → A → B → C + editor v jedné větvi `feature/73-keyboard-perf-smooth-at-10k-learned-words`).
+
+## Výsledky implementace (2026-06-22)
+
+**Benchmarky (iPhone 17 sim, 100-call bloky, `PersonalRecentsStorePerformanceTests`):**
+
+| Op | Baseline (UserDefaults JSON, cap 1000) | Po fázi A (souborový store + bucket index, cap 10000) |
+|---|---|---|
+| `matches(prefix:)` @plný pool | ~2.5 ms / call | **~0.06 ms / call** (bucket + folded-prefix `hasPrefix` pre-filtr; neroste s velikostí poolu) |
+| `learn()` (re-learn) | ~2.5 ms / call | **~0.004 ms / call** (O(1) in-memory; zápis debounced mimo hot-path) |
+
+Splňuje budget `matches < ~0.2 ms`. `learn` na hot-path je čistě in-memory; atomický `NSFileCoordinator` zápis je debounced (750 ms) na utility queue, flush na `viewWillDisappear`.
+
+**Architektura:** `LearnedWordsIndex` (thread-safe, file-backed, bucket podle foldnutého 1. znaku, předpočítaný folded key, amortizovaný batch-trim). `PersonalRecentsStore` zachoval veřejné API + `PersonalRecentsReading`. `@Observable KeyboardViewModel` + hosting controller instalován jednou + `Equatable` `KeyRowView` (`.equatable()`) → key grid se nepřekresluje na stisk neměnící layout; `makeLayout` memoizovaný (1× na stisk). Suggestion compute debounced/cancellable/memoizovaný, mimo synchronní keystroke. Cross-process invalidace přes nový `AppGroupStoreKey.learnedWordsChanged` Darwin kanál + `reload()`. Editor: lazy `List` + `.searchable` filtr + "no results" stav.
+
+**Odchylka od spec (fáze C):** Spec předpokládal, že `UITextChecker` „není main-isolated" → compute na pozadí. V iOS 26 SDK je ale `UITextChecker` deklarovaný `NS_SWIFT_UI_ACTOR` (**je `@MainActor`**), takže dotaz nelze přesunout na pozadí. Compute proto běží **debounced + cancellable + memoizovaný na main actoru**, ale *mimo* synchronní keystroke path (vložení znaku zůstává okamžité) a s coalescingem — rychlé psaní zruší mezilehlé computy, takže drahá pipeline (vč. `UITextChecker`) běží jen v pauzách. To řeší jádro auditního nálezu (#3/#4: „celá pipeline synchronně na každý stisk uvnitř makeRoot"). `matches` (recents) je nově thread-safe a mohl by jít na pozadí, kdyby se přidal background spell-checker.
+
+**Codex review:** 2 nálezy (oba P2), oba aplikovány — (1) memoizace návrhů se invaliduje při změně provider dat (lexicon delivery / recents reload), (2) `reload()` serializován přes write queue, aby in-flight debounced zápis neklobboval host editaci.
+
+**Pozn. — pre-existing fail:** `LayoutBuilderTests.testCzechSet_eKey_orderedByFrequency` selhává (čeká `["é","ě"]`, kód dává `["ě","é"]`) — soubory bit-identické s base commitem, **není to regrese tohoto tasku** (jako paywall flake). Vhodné opravit samostatně.
+
+---
+
+**Status (původní):** Spec — připraveno z analýzy + Q&A session 2026-06-22 (multi-agent perf audit + rozhodnutí níže). Implementace v další session.
 
 **Priorita:** v1.x (kvalita psaní — core hodnota produktu; přímý beta-feedback „klávesnice není smooth") · **Úsilí:** L (velký, fázovaný — 3 vrstvy) · **Dopad:** High (latence na každý stisk; cítí se při každém psaní)
 
