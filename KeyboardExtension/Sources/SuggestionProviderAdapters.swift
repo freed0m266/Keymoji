@@ -29,11 +29,17 @@ final class UITextCheckerAdapter: TextChecking, @unchecked Sendable {
 	/// falling back to the base language, then English, then any available language. Without this
 	/// `completions` silently returns nothing for an unsupported tag.
 	///
-	/// `@MainActor` because `UITextChecker.availableLanguages` is main-actor-isolated; this is only
-	/// ever called from inside the `MainActor.assumeIsolated` block above, so the isolation holds.
+	/// Snapshot of `UITextChecker.availableLanguages`, computed once (task 73, Phase B). The list is
+	/// fixed for the process lifetime, so rebuilding the `Set` on every keystroke was pure waste. The
+	/// ordered list is kept too so the final fallback stays deterministic (Set ordering isn't).
+	@MainActor private static let availableLanguagesList: [String] = UITextChecker.availableLanguages
+	@MainActor private static let availableLanguages: Set<String> = Set(availableLanguagesList)
+
+	/// `@MainActor` because the cached `UITextChecker.availableLanguages` snapshot is main-actor state;
+	/// this is only ever called from inside the `MainActor.assumeIsolated` block above, so isolation holds.
 	@MainActor
 	private static func resolveLanguage(_ language: String) -> String {
-		let available = Set(UITextChecker.availableLanguages)
+		let available = availableLanguages
 		let normalized = language.replacingOccurrences(of: "-", with: "_")
 		if available.contains(normalized) { return normalized }
 		let base = String(normalized.prefix { $0 != "_" })
@@ -41,7 +47,7 @@ final class UITextCheckerAdapter: TextChecking, @unchecked Sendable {
 		if let englishVariant = available.first(where: { $0 == "en_US" || $0.hasPrefix("en") }) {
 			return englishVariant
 		}
-		return UITextChecker.availableLanguages.first ?? "en_US"
+		return availableLanguagesList.first ?? "en_US"
 	}
 }
 

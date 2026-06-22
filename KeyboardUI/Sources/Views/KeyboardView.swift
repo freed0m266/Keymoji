@@ -260,6 +260,9 @@ public struct KeyboardView: View {
 				canEscalateBackspace: canEscalateBackspace,
 				onTrackpadModeChanged: handleTrackpadModeChanged
 			)
+			// `.equatable()` (task 73, Phase B): short-circuit rows whose layout inputs are unchanged, so
+			// a keystroke that only updates the suggestion bar doesn't re-render the key grid.
+			.equatable()
 			// No per-row height clamp — each `KeyView` now carries its own fixed cap height, so the
 			// VStack is exactly the sum of the row slots and rows never stretch to fill leftover space.
 		}

@@ -2,7 +2,12 @@ import SwiftUI
 import KeyboardCore
 
 /// One horizontal row of keys. Distributes width proportionally to each key's `visualWeight`.
-struct KeyRowView: View {
+///
+/// `Equatable` (task 73, Phase B): rendering is a pure function of `row`, `page`, `returnKeyType`, and
+/// `totalWidth` — the callbacks don't affect what's drawn. With `.equatable()` applied at the call
+/// site, SwiftUI skips re-evaluating a row whose layout inputs are unchanged, so a keystroke that only
+/// updates the suggestion bar never re-renders the key grid.
+struct KeyRowView: View, Equatable {
 	let row: KeyboardRow
 	let page: KeyboardPage
 	let returnKeyType: ReturnKeyType
@@ -14,6 +19,17 @@ struct KeyRowView: View {
 	let onHighlightChanged: () -> Void
 	let canEscalateBackspace: (() -> Bool)?
 	let onTrackpadModeChanged: (Bool) -> Void
+
+	/// Compare only render-determining inputs; the closures are stable forwarders that don't change
+	/// output (see `KeyboardViewModel`), so ignoring them is what lets unchanged rows short-circuit.
+	/// `nonisolated` because `Equatable.==` is a nonisolated requirement while `View` is main-actor
+	/// isolated — and it only reads `Sendable` value-type fields, so there's no data-race risk.
+	nonisolated static func == (lhs: KeyRowView, rhs: KeyRowView) -> Bool {
+		lhs.row == rhs.row
+			&& lhs.page == rhs.page
+			&& lhs.returnKeyType == rhs.returnKeyType
+			&& lhs.totalWidth == rhs.totalWidth
+	}
 
 	var body: some View {
 		HStack(spacing: 0) {

@@ -19,6 +19,9 @@ final class KeyboardViewController: UIInputViewController {
 	/// under the user's finger. Cleared on disappear so each appearance starts from a fresh ordering.
 	private var favoritesDisplayOrder: [String] = []
 	private var hostingController: UIHostingController<KeyboardRoot>?
+	/// Observable render model bound once to the hosting controller (task 73, Phase B). State changes
+	/// mutate this in place instead of reassigning `hostingController.rootView`.
+	private var viewModel: KeyboardViewModel?
 	/// Constraint that drives the keyboard's vertical footprint. Most pages keep it at the
 	/// regular iOS keyboard height (~260 pt); `.emojiSearch` mode bumps it taller so the
 	/// search bar and horizontal results bar above the QWERTY rows aren't clipped by the
@@ -90,6 +93,9 @@ final class KeyboardViewController: UIInputViewController {
 		requestSupplementaryLexicon { @Sendable [weak self] lexicon in
 			Task { @MainActor in
 				self?.lexiconEntries = lexicon.entries.map { (trigger: $0.userInput, expansion: $0.documentText) }
+				// Lexicon is a suggestion provider input that changed without the document context moving —
+				// drop the memo so the next compute picks up the new completions (task 73, Phase C).
+				self?.invalidateSuggestionMemo()
 				self?.rebuild()
 			}
 		}
@@ -117,6 +123,11 @@ final class KeyboardViewController: UIInputViewController {
 		// Pre-warm the Taptic Engine before the user starts typing — it idles after a few seconds,
 		// so the first tap after each appearance would otherwise pay the wake-from-idle latency.
 		haptics.prepareForInput()
+		// Baseline reload of the learned-words pool: pick up any host-app edits made while we weren't
+		// running to receive the `learnedWordsChanged` Darwin ping (task 73). The pool feeds suggestions,
+		// so drop the memo too — the document context may be unchanged from last appearance.
+		recentsStore.reload()
+		invalidateSuggestionMemo()
 		refreshFromStore()
 		refreshAppearance()
 		// Seed the page for the first appearance into a field (numpad vs. text) before any keystroke.
@@ -130,6 +141,12 @@ final class KeyboardViewController: UIInputViewController {
 		super.viewWillDisappear(animated)
 		// Last chance to learn a freshly-typed email before the field goes away.
 		commitPendingEmail()
+		// Persist any debounced learns before the keyboard goes away, so words typed in the last
+		// fraction of a second aren't lost if the extension is torn down (task 73).
+		recentsStore.flush()
+		// Drop any pending suggestion compute — the bar is going away (task 73, Phase C).
+		suggestionTask?.cancel()
+		suggestionTask = nil
 		// Drop the frozen favorites order: the keyboard is going away, so the next appearance can
 		// safely re-apply the latest `.frequency` ordering (seeded lazily in `makeRoot`).
 		favoritesDisplayOrder = []
@@ -198,6 +215,15 @@ final class KeyboardViewController: UIInputViewController {
 			},
 			settingsNotifier.addObserver(for: .suggestionsEnabled) { [weak self] in
 				self?.refreshFromStore()
+			},
+			// The host app edited the learned-words pool (removed/cleared entries) — reload the
+			// in-memory index from disk so the running keyboard reflects the change live (task 73).
+			// Drop the suggestion memo (the pool changed under a possibly-identical context) and rebuild
+			// so a visible bar refreshes immediately rather than on the next keystroke.
+			settingsNotifier.addObserver(for: .learnedWordsChanged) { [weak self] in
+				self?.recentsStore.reload()
+				self?.invalidateSuggestionMemo()
+				self?.rebuild()
 			}
 		]
 	}
@@ -380,8 +406,9 @@ final class KeyboardViewController: UIInputViewController {
 	// MARK: - Hosting
 
 	private func installHostingController() {
-		let root = makeRoot()
-		let host = UIHostingController(rootView: root)
+		let model = makeViewModel()
+		self.viewModel = model
+		let host = UIHostingController(rootView: KeyboardRoot(model: model))
 		host.view.translatesAutoresizingMaskIntoConstraints = false
 		host.view.backgroundColor = .clear
 
@@ -447,9 +474,36 @@ final class KeyboardViewController: UIInputViewController {
 		object_setClass(view, subclass)
 	}
 
+	/// Push the current state into the observable model and refresh the host height. Despite the name
+	/// (kept so every call site reads the same), this no longer rebuilds the SwiftUI tree — it mutates
+	/// the bound `KeyboardViewModel` in place (task 73, Phase B), letting Observation invalidate only
+	/// the subviews whose inputs actually changed.
 	private func rebuild() {
-		hostingController?.rootView = makeRoot()
-		updateKeyboardHeightConstraint()
+		Perf.measure("rebuild") {
+			syncModel()
+			updateKeyboardHeightConstraint()
+		}
+	}
+
+	/// Reconcile the observable model with the current `KeyboardState`. Each property is guarded by an
+	/// equality check so untouched slices don't notify observers — e.g. a plain letter changes only
+	/// `suggestions`, leaving `layout` (and therefore the key grid) untouched.
+	///
+	/// The synchronous, layout-affecting slice (layout/width/recents/searchQuery/fieldAllowsBar) is
+	/// applied inline for instant press-feel. The expensive suggestion pipeline is *not* run here —
+	/// `scheduleSuggestions()` debounces it off the keystroke path (task 73, Phase C). `refreshFavorites`
+	/// reconciles the favorites baseline against whatever the model currently shows.
+	private func syncModel() {
+		guard let model = viewModel else { return }
+		let layout = currentLayout()
+		if model.layout != layout { model.layout = layout }
+		if model.width != state.keyboardWidth { model.width = state.keyboardWidth }
+		if model.recentEmojis != state.recentEmojis { model.recentEmojis = state.recentEmojis }
+		if model.searchQuery != state.searchQuery { model.searchQuery = state.searchQuery }
+		let allowsBar = state.currentEligibility.allowDisplay
+		if model.fieldAllowsBar != allowsBar { model.fieldAllowsBar = allowsBar }
+		scheduleSuggestions()
+		refreshFavorites()
 	}
 
 	// MARK: - Keyboard height
@@ -482,45 +536,72 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func desiredKeyboardHeight() -> CGFloat {
-		// Build the same layout `makeRoot` renders, then ask `KeyboardMetrics` for its height. The host
-		// UIInputView constraint and the SwiftUI frame therefore come from one formula and can't drift —
-		// drift used to clip the SwiftUI content (missing search bar at the top of `.emojiSearch`). The
-		// height no longer depends on `showsSuggestionBar` (task 61): the top region is reserved on every
-		// page regardless of the suggestions toggle / field eligibility, so the keyboard never changes
-		// height when the bar appears or disappears.
-		let layout = KeyboardCore.makeLayout(
+		// Share the one memoized layout `syncModel` renders, then ask `KeyboardMetrics` for its height.
+		// The host UIInputView constraint and the SwiftUI frame therefore come from one formula and one
+		// build per keystroke (task 73, Phase B — previously `makeLayout` ran twice, here and in the
+		// view body). The height no longer depends on `showsSuggestionBar` (task 61): the top region is
+		// reserved on every page regardless of the suggestions toggle / field eligibility, so the
+		// keyboard never changes height when the bar appears or disappears.
+		KeyboardMetrics.keyboardHeight(for: currentLayout())
+	}
+
+	// MARK: - Memoized layout
+
+	/// Inputs that fully determine `KeyboardCore.makeLayout`. When unchanged across rebuilds, the cached
+	/// layout is reused, so a keystroke that doesn't alter the layout pays no `makeLayout` cost at all
+	/// (and the view body + height share the same instance — one build, not two).
+	private struct LayoutInputs: Equatable {
+		let page: KeyboardPage
+		let showsNumberRow: Bool
+		let returnKeyType: ReturnKeyType
+		let letterLayout: LetterLayout
+		let alternateSet: LetterAlternateSet
+		let decimalSeparator: String
+	}
+	private var lastLayoutInputs: LayoutInputs?
+	private var memoizedLayout: KeyboardLayout?
+
+	private func currentLayout() -> KeyboardLayout {
+		let inputs = LayoutInputs(
 			page: state.page,
-			showNumberRow: state.effectiveShowsNumberRow,
+			showsNumberRow: state.effectiveShowsNumberRow,
 			returnKeyType: state.returnKeyType,
 			letterLayout: state.letterLayout,
 			alternateSet: state.letterAlternateSet,
 			decimalSeparator: Self.currentDecimalSeparator
 		)
-		return KeyboardMetrics.keyboardHeight(for: layout)
+		if let memoizedLayout, inputs == lastLayoutInputs { return memoizedLayout }
+		let layout = KeyboardCore.makeLayout(
+			page: inputs.page,
+			showNumberRow: inputs.showsNumberRow,
+			returnKeyType: inputs.returnKeyType,
+			letterLayout: inputs.letterLayout,
+			alternateSet: inputs.alternateSet,
+			decimalSeparator: inputs.decimalSeparator
+		)
+		lastLayoutInputs = inputs
+		memoizedLayout = layout
+		return layout
 	}
 
-	/// Build the SwiftUI root with the current state and the live suggestion list. Suggestions are
-	/// derived from `documentContextBeforeInput` here (not stored in `KeyboardState`) so the view
-	/// always reflects what the proxy sees right now — including transient cases where the
-	/// dispatcher and the proxy disagree by a frame.
-	private func makeRoot() -> KeyboardRoot {
-		let suggestions = suggestionsActive ? currentSuggestions() : []
-		// The favorites bar is on screen whenever the field allows the bar (not a secure field), we're on a
-		// letter/symbol page, and word/Slack suggestions aren't occupying it — or the emoji panel is open.
-		// Freeze the order while visible so it never reshuffles mid-use. This is decoupled from the
-		// suggestions master toggle: with suggestions off, `suggestions` is empty but the favorites baseline
-		// still shows, so it must still be frozen — otherwise `.frequency` would reshuffle live as usage
-		// counts change. (In a secure field the bar is hidden, so favorites aren't visible there.)
+	/// Build the observable render model once, seeded with the current state and the stable callbacks
+	/// (task 73, Phase B). The callbacks capture `self` weakly and forward to the controller, so they
+	/// never reference stale state and never need reallocating on a state change.
+	private func makeViewModel() -> KeyboardViewModel {
+		// Seed the bar empty: at install time no field is focused (eligibility starts `.denied`), so there
+		// are no suggestions yet. The favorites baseline is computed for the empty-suggestions state; the
+		// async pipeline fills suggestions on the first eligible keystroke (task 73, Phase C).
 		let onTextPage = state.page != .emojis && !state.page.isEmojiSearch
-		let favoritesVisible = (state.currentEligibility.allowDisplay && onTextPage && suggestions.isEmpty)
-			|| state.page == .emojis
+		let favoritesVisible = (state.currentEligibility.allowDisplay && onTextPage) || state.page == .emojis
 		refreshFavoritesDisplayOrder(favoritesVisible: favoritesVisible)
-		return KeyboardRoot(
-			state: state,
+		return KeyboardViewModel(
+			layout: currentLayout(),
+			width: state.keyboardWidth,
+			recentEmojis: state.recentEmojis,
 			favoriteEmojis: favoritesDisplayOrder,
-			suggestions: suggestions,
+			searchQuery: state.searchQuery,
+			suggestions: [],
 			fieldAllowsBar: state.currentEligibility.allowDisplay,
-			decimalSeparator: Self.currentDecimalSeparator,
 			dispatch: { [weak self] key in self?.handle(key) },
 			selectSuggestion: { [weak self] suggestion in self?.selectSuggestion(suggestion) },
 			onKeyTapHaptic: { [weak self] in self?.haptics.keyTap() },
@@ -535,6 +616,98 @@ final class KeyboardViewController: UIInputViewController {
 			},
 			onTrackpadModeEntered: { [weak self] in self?.haptics.trackpadModeEntered() }
 		)
+	}
+
+	/// Reconcile the favorites baseline shown in the bar against the model's *current* suggestions.
+	///
+	/// The favorites bar is on screen whenever the field allows the bar (not a secure field), we're on a
+	/// letter/symbol page, and word/Slack suggestions aren't occupying it — or the emoji panel is open.
+	/// Freeze the order while visible so it never reshuffles mid-use. This is decoupled from the
+	/// suggestions master toggle: with suggestions off, suggestions stay empty but the favorites baseline
+	/// still shows, so it must still be frozen — otherwise `.frequency` would reshuffle live as usage
+	/// counts change. (In a secure field the bar is hidden, so favorites aren't visible there.)
+	///
+	/// Called both synchronously from `syncModel` and when the async pipeline delivers suggestions, so the
+	/// visible/frozen decision always reflects what the bar is actually showing (task 73, Phase C).
+	private func refreshFavorites() {
+		guard let model = viewModel else { return }
+		let onTextPage = state.page != .emojis && !state.page.isEmojiSearch
+		let favoritesVisible = (state.currentEligibility.allowDisplay && onTextPage && model.suggestions.isEmpty)
+			|| state.page == .emojis
+		refreshFavoritesDisplayOrder(favoritesVisible: favoritesVisible)
+		if model.favoriteEmojis != favoritesDisplayOrder { model.favoriteEmojis = favoritesDisplayOrder }
+	}
+
+	// MARK: - Suggestion pipeline (debounced / cancellable / memoized)
+
+	/// In-flight suggestion computation. Cancelled and replaced on every state change, so rapid typing
+	/// only ever pays for one compute per pause (coalescing) and intermediate keystrokes skip it entirely.
+	private var suggestionTask: Task<Void, Never>?
+	/// Memoization: the inputs and output of the last computed suggestion list. Identical inputs (e.g. a
+	/// `rebuild` triggered by something that didn't move the caret) reuse the cached result.
+	private var lastSuggestionContext: SuggestionContext?
+	private var lastSuggestions: [Suggestion] = []
+	/// Debounce window. Coalesces a burst of keystrokes into a single compute; short enough that the bar
+	/// still feels responsive after a pause.
+	private static let suggestionDebounce: Duration = .milliseconds(12)
+
+	/// Schedule a suggestion refresh off the synchronous keystroke path.
+	///
+	/// `UITextChecker` is `@MainActor`-isolated in the SDK (`NS_SWIFT_UI_ACTOR`), so the compute can't run
+	/// on a true background thread; instead it runs in a debounced, cancellable main-actor `Task` *after*
+	/// the keystroke's text insertion and state update have already happened. The keystroke therefore
+	/// returns instantly, and a fast typist's intermediate keystrokes cancel the pending compute before
+	/// the expensive pipeline (including `UITextChecker`) ever runs (task 73, Phase C). The personal
+	/// recents lookup is now thread-safe (Phase A) and could move off-main if a background spell-checker
+	/// is ever adopted, but `UITextChecker` pins the merged pipeline to the main actor today.
+	private func scheduleSuggestions() {
+		guard let model = viewModel else { return }
+		guard suggestionsActive else {
+			// Not eligible / master toggle off → clear synchronously and drop any pending compute.
+			suggestionTask?.cancel()
+			suggestionTask = nil
+			if !model.suggestions.isEmpty {
+				model.suggestions = []
+				refreshFavorites()
+			}
+			return
+		}
+		suggestionTask?.cancel()
+		suggestionTask = Task { @MainActor [weak self] in
+			try? await Task.sleep(for: Self.suggestionDebounce)
+			guard let self, !Task.isCancelled else { return }
+			self.computeAndApplySuggestions()
+		}
+	}
+
+	/// Compute (or reuse memoized) suggestions for the current caret and push them into the model. Runs on
+	/// the main actor (after the debounce) so it reads live proxy/state and `UITextChecker` stays isolated.
+	private func computeAndApplySuggestions() {
+		guard let model = viewModel, suggestionsActive else { return }
+		let context = makeSuggestionContext()
+		let suggestions: [Suggestion]
+		if context == lastSuggestionContext {
+			suggestions = lastSuggestions   // identical inputs → identical output, skip the pipeline
+		} else {
+			suggestions = Perf.measure("currentSuggestions") { runSuggestionPipeline(context: context) }
+			lastSuggestionContext = context
+			lastSuggestions = suggestions
+		}
+		guard suggestionsActive else { return }   // re-check: state may have changed during compute
+		if model.suggestions != suggestions {
+			model.suggestions = suggestions
+			refreshFavorites()
+		}
+	}
+
+	/// Drop the memoized suggestions. The memo keys only on `SuggestionContext` (document text, page,
+	/// languages, eligibility), but the pipeline's *output* also depends on provider data that can change
+	/// without the context moving — the recents pool (host removed/cleared a word, picked up by
+	/// `reload()`) and the supplementary lexicon (delivered asynchronously). Call this whenever that
+	/// provider data changes so the next compute recomputes instead of returning a stale list (task 73).
+	private func invalidateSuggestionMemo() {
+		lastSuggestionContext = nil
+		lastSuggestions = []
 	}
 
 	/// Updates `favoritesDisplayOrder` — the order shown in the bar/panel — without ever reshuffling
@@ -590,10 +763,10 @@ final class KeyboardViewController: UIInputViewController {
 		return state.page != .emojis && !state.page.isEmojiSearch
 	}
 
-	/// Run the coordinator over the current document context. Slack shortcodes win wholesale when
-	/// present (pill chips); otherwise word completions are merged from recents + `UITextChecker` +
-	/// `UILexicon`. Providers are cheap value types, rebuilt per call so they always see fresh state.
-	private func currentSuggestions() -> [Suggestion] {
+	/// Snapshot the document + state into a `SuggestionContext`. Reads the live proxy/state, so it must
+	/// run on the main actor — the debounced suggestion task is main-isolated, so this stays accurate to
+	/// the current caret (task 73, Phase C).
+	private func makeSuggestionContext() -> SuggestionContext {
 		// Additive completion languages: the field/PrimaryLanguage base (kept as the future-proof
 		// signal, even though it's "mul" today → English via the adapter) plus the chosen accent
 		// set's language, deduped so a shared dictionary isn't queried twice. `.all` contributes
@@ -602,13 +775,19 @@ final class KeyboardViewController: UIInputViewController {
 		if let accent = state.letterAlternateSet.accentLanguageCode, !completionLanguages.contains(accent) {
 			completionLanguages.append(accent)
 		}
-		let context = SuggestionContext(
+		return SuggestionContext(
 			documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
 			documentContextAfterInput: textDocumentProxy.documentContextAfterInput,
 			page: state.page,
 			completionLanguages: completionLanguages,
 			eligibility: state.currentEligibility
 		)
+	}
+
+	/// Run the coordinator over `context`. Slack shortcodes win wholesale when present (pill chips);
+	/// otherwise word completions are merged from recents + `UITextChecker` + `UILexicon`. Providers are
+	/// cheap value types, rebuilt per call so they always see fresh state.
+	private func runSuggestionPipeline(context: SuggestionContext) -> [Suggestion] {
 		let coordinator = SuggestionCoordinator(providers: [
 			SlackSuggestionProvider(),
 			WordCompletionProvider(
@@ -681,46 +860,48 @@ final class KeyboardViewController: UIInputViewController {
 	// MARK: - Input
 
 	private func handle(_ key: Key) {
-		// Haptic + click for the key tap itself are fired by `KeyView` on touch-down (matches
-		// Apple/SwiftKey feel — feedback when the finger lands, not when it lifts). The dispatcher
-		// is concerned with state + text proxy only.
-		let pageBefore = state.page
-		let recentsBefore = state.recentEmojis
-		// Disabling word suggestions stops learning too (not just the bar) — the Settings footer and
-		// privacy policy both promise the opt-out halts on-device learning.
-		InputDispatcher.dispatch(
-			key: key,
-			state: &state,
-			proxy: proxyAdapter,
-			controller: self,
-			learning: state.suggestionsEnabled ? learningHook : nil
-		)
-		// The dispatcher updates `state.recentEmojis` directly when a typed `:shortcode:` auto-
-		// substitutes to an emoji (inserted via the proxy, not a synthesized `emoji.` key). That
-		// path bypasses `recordRecentEmojiIfNeeded` below, so detect it here by the recents change
-		// during dispatch and bump the usage count for the inserted emoji (head of recents).
-		if state.recentEmojis != recentsBefore, let inserted = state.recentEmojis.first {
-			incrementEmojiUsage(inserted)
+		Perf.measure("handle") {
+			// Haptic + click for the key tap itself are fired by `KeyView` on touch-down (matches
+			// Apple/SwiftKey feel — feedback when the finger lands, not when it lifts). The dispatcher
+			// is concerned with state + text proxy only.
+			let pageBefore = state.page
+			let recentsBefore = state.recentEmojis
+			// Disabling word suggestions stops learning too (not just the bar) — the Settings footer and
+			// privacy policy both promise the opt-out halts on-device learning.
+			InputDispatcher.dispatch(
+				key: key,
+				state: &state,
+				proxy: proxyAdapter,
+				controller: self,
+				learning: state.suggestionsEnabled ? learningHook : nil
+			)
+			// The dispatcher updates `state.recentEmojis` directly when a typed `:shortcode:` auto-
+			// substitutes to an emoji (inserted via the proxy, not a synthesized `emoji.` key). That
+			// path bypasses `recordRecentEmojiIfNeeded` below, so detect it here by the recents change
+			// during dispatch and bump the usage count for the inserted emoji (head of recents).
+			if state.recentEmojis != recentsBefore, let inserted = state.recentEmojis.first {
+				incrementEmojiUsage(inserted)
+			}
+			recordRecentEmojiIfNeeded(key: key)
+			// Mirror any recents change (synth `emoji.` key or Slack substitution) to the cross-process store.
+			if state.recentEmojis != recentsBefore, state.recentEmojis != store.recentEmojis {
+				store.recentEmojis = state.recentEmojis
+			}
+			// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
+			// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
+			// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the
+			// re-eval automatically. For `.shift` we must NOT re-evaluate: doing so would immediately
+			// override a manual lowercase override at sentence start (Instagram message field, etc.).
+			// `.space` on a symbol page implicitly switches to letters *after* `insertText`; any
+			// `textDidChange` that fired synchronously during the insert saw the old `.symbols` page
+			// and skipped auto-cap, so re-run here for that implicit transition (covers "Yes! How…").
+			if case .switchPage = key.action {
+				refreshAutoCapitalization()
+			} else if case .space = key.action, pageBefore != state.page {
+				refreshAutoCapitalization()
+			}
+			rebuild()
 		}
-		recordRecentEmojiIfNeeded(key: key)
-		// Mirror any recents change (synth `emoji.` key or Slack substitution) to the cross-process store.
-		if state.recentEmojis != recentsBefore, state.recentEmojis != store.recentEmojis {
-			store.recentEmojis = state.recentEmojis
-		}
-		// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
-		// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
-		// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the
-		// re-eval automatically. For `.shift` we must NOT re-evaluate: doing so would immediately
-		// override a manual lowercase override at sentence start (Instagram message field, etc.).
-		// `.space` on a symbol page implicitly switches to letters *after* `insertText`; any
-		// `textDidChange` that fired synchronously during the insert saw the old `.symbols` page
-		// and skipped auto-cap, so re-run here for that implicit transition (covers "Yes! How…").
-		if case .switchPage = key.action {
-			refreshAutoCapitalization()
-		} else if case .space = key.action, pageBefore != state.page {
-			refreshAutoCapitalization()
-		}
-		rebuild()
 	}
 
 	private func refreshReturnKeyType() {

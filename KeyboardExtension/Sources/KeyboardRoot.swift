@@ -2,54 +2,32 @@ import SwiftUI
 import KeyboardCore
 import KeyboardUI
 
-/// Root SwiftUI view hosted by `KeyboardViewController`. Re-builds the layout from current
-/// `KeyboardState` and routes key taps back to the controller via `dispatch`.
+/// Root SwiftUI view hosted by `KeyboardViewController`. Bound **once** to a `KeyboardViewModel`
+/// (task 73, Phase B): it reads the model's render-affecting properties, so SwiftUI's Observation
+/// re-evaluates `body` only when one of them changes — and the key grid (`KeyRowView`s inside
+/// `KeyboardView`) is `Equatable`, so an unchanged `layout` short-circuits the grid even when a
+/// keystroke updates `suggestions`. Key taps route back to the controller via the model's stable
+/// callbacks.
 struct KeyboardRoot: View {
-	let state: KeyboardState
-	/// Favorites in display order (bar + panel). The controller computes the order — manual or
-	/// frequency-sorted — and freezes it while the favorites are visible, so it never shuffles
-	/// under the user's finger.
-	let favoriteEmojis: [String]
-	let suggestions: [Suggestion]
-	/// Whether the current field permits the top bar (false in secure entry). Forwarded to `KeyboardView`.
-	let fieldAllowsBar: Bool
-	/// Locale decimal separator for the `.numeric(.decimal)` numpad (task 59). Threaded in from the
-	/// controller (which reads `Locale.current`) so `KeyboardCore` stays pure.
-	let decimalSeparator: String
-	let dispatch: (Key) -> Void
-	let selectSuggestion: (Suggestion) -> Void
-	let onKeyTapHaptic: () -> Void
-	let onKeyClick: (ClickSoundKind) -> Void
-	let onPopoverEntry: () -> Void
-	let onHighlightChanged: () -> Void
-	let canEscalateBackspace: () -> Bool
-	let onTrackpadModeEntered: () -> Void
+	let model: KeyboardViewModel
 
 	var body: some View {
-		let layout = KeyboardCore.makeLayout(
-			page: state.page,
-			showNumberRow: state.effectiveShowsNumberRow,
-			returnKeyType: state.returnKeyType,
-			letterLayout: state.letterLayout,
-			alternateSet: state.letterAlternateSet,
-			decimalSeparator: decimalSeparator
-		)
 		KeyboardView(
-			layout: layout,
-			width: state.keyboardWidth,
-			recentEmojis: state.recentEmojis,
-			favoriteEmojis: favoriteEmojis,
-			searchQuery: state.searchQuery,
-			suggestions: suggestions,
-			fieldAllowsBar: fieldAllowsBar,
-			onKey: dispatch,
-			onSelectSuggestion: selectSuggestion,
-			onKeyTapHaptic: onKeyTapHaptic,
-			onKeyClick: onKeyClick,
-			onPopoverEntry: onPopoverEntry,
-			onHighlightChanged: onHighlightChanged,
-			canEscalateBackspace: canEscalateBackspace,
-			onTrackpadModeEntered: onTrackpadModeEntered
+			layout: model.layout,
+			width: model.width,
+			recentEmojis: model.recentEmojis,
+			favoriteEmojis: model.favoriteEmojis,
+			searchQuery: model.searchQuery,
+			suggestions: model.suggestions,
+			fieldAllowsBar: model.fieldAllowsBar,
+			onKey: model.dispatch,
+			onSelectSuggestion: model.selectSuggestion,
+			onKeyTapHaptic: model.onKeyTapHaptic,
+			onKeyClick: model.onKeyClick,
+			onPopoverEntry: model.onPopoverEntry,
+			onHighlightChanged: model.onHighlightChanged,
+			canEscalateBackspace: model.canEscalateBackspace,
+			onTrackpadModeEntered: model.onTrackpadModeEntered
 		)
 	}
 }
