@@ -33,4 +33,9 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	/// read (never written) by the keyboard extension; its Darwin channel live-unlocks a running keyboard
 	/// the instant a grant lands. See `effectiveIsPlus`.
 	case promoPlusExpiresAt
+	/// **Darwin channel only — no stored value.** Posted by the host app after it edits the learned-words
+	/// pool (`PersonalRecentsStore.remove` / `clear`) so the running keyboard reloads its in-memory index
+	/// from disk (task 73). The pool lives in a file in the App Group container, not UserDefaults, so this
+	/// key never backs a `UserDefaults` entry — it only names a notification.
+	case learnedWordsChanged
 }

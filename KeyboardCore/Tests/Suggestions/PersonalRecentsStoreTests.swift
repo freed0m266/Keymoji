@@ -4,24 +4,37 @@ import KeymojiCore
 
 final class PersonalRecentsStoreTests: XCTestCase {
 
-	private var suiteName: String!
-	private var appStore: AppGroupStore!
+	private var tempDirs: [URL] = []
+	private var directory: URL!
 	private var store: PersonalRecentsStore!
 
-	override func setUp() {
-		super.setUp()
-		suiteName = "keymoji.tests.recents.\(UUID().uuidString)"
-		appStore = AppGroupStore(suiteName: suiteName)
-		store = PersonalRecentsStore(store: appStore)
+	override func setUpWithError() throws {
+		try super.setUpWithError()
+		directory = makeTempDir()
+		store = PersonalRecentsStore(directory: directory)
 	}
 
-	override func tearDown() {
-		appStore.reset()
-		UserDefaults().removePersistentDomain(forName: suiteName)
+	override func tearDownWithError() throws {
 		store = nil
-		appStore = nil
-		suiteName = nil
-		super.tearDown()
+		directory = nil
+		for dir in tempDirs { try? FileManager.default.removeItem(at: dir) }
+		tempDirs = []
+		try super.tearDownWithError()
+	}
+
+	// MARK: - Test helpers
+
+	private func makeTempDir() -> URL {
+		let dir = FileManager.default.temporaryDirectory
+			.appendingPathComponent("keymoji.recents.\(UUID().uuidString)", isDirectory: true)
+		try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+		tempDirs.append(dir)
+		return dir
+	}
+
+	/// A store with a small capacity in its own temp directory, for fast/clear eviction tests.
+	private func makeStore(capacity: Int) -> PersonalRecentsStore {
+		PersonalRecentsStore(directory: makeTempDir(), capacity: capacity, evictionSlack: 0)
 	}
 
 	// MARK: - Learn & match
@@ -149,34 +162,50 @@ final class PersonalRecentsStoreTests: XCTestCase {
 		XCTAssertEqual(store.count, 0)
 	}
 
-	// MARK: - Eviction
+	// MARK: - Eviction (amortized batch-trim, normalized by flush)
 
 	func testEviction_dropsLowestCountFirst() {
-		// Fill to capacity with count-2 words (via the filter-free email context for simple test
-		// strings), then add a count-1 newcomer over the cap; the low-count newcomer is evicted.
+		let small = makeStore(capacity: 5)
 		let now = Date(timeIntervalSince1970: 1_000)
-		for index in 0..<PersonalRecentsStore.capacity {
-			let word = "word\(index)@x.com"
-			store.learn(word, fromContextType: .emailAddress, now: now)
-			store.learn(word, fromContextType: .emailAddress, now: now)
+		// Fill capacity with count-2 words (via the filter-free email context for simple test strings).
+		for index in 0..<5 {
+			small.learn("word\(index)@x.com", fromContextType: .emailAddress, now: now)
+			small.learn("word\(index)@x.com", fromContextType: .emailAddress, now: now)
 		}
-		XCTAssertEqual(store.count, PersonalRecentsStore.capacity)
-		store.learn("newcomer@x.com", fromContextType: .emailAddress, now: now.addingTimeInterval(10))
-		// Still at capacity, and the freshly-added single-count word lost (lowest count).
-		XCTAssertEqual(store.count, PersonalRecentsStore.capacity)
-		XCTAssertTrue(store.matches(prefix: "newcomer").isEmpty)
+		// Add a count-1 newcomer over the cap; the batch-trim (forced by flush) evicts the low-count one.
+		small.learn("newcomer@x.com", fromContextType: .emailAddress, now: now.addingTimeInterval(10))
+		small.flush()
+		XCTAssertEqual(small.count, 5)
+		XCTAssertTrue(small.matches(prefix: "newcomer").isEmpty)
 	}
 
 	func testEviction_breaksCountTieByLeastRecentlyUsed() {
+		let small = makeStore(capacity: 5)
 		let base = Date(timeIntervalSince1970: 1_000)
-		for index in 0..<PersonalRecentsStore.capacity {
+		for index in 0..<5 {
 			// Each word count 1; earlier indices get earlier (older) timestamps.
-			store.learn("alpha\(index)@x.com", fromContextType: .emailAddress, now: base.addingTimeInterval(Double(index)))
+			small.learn("alpha\(index)@x.com", fromContextType: .emailAddress, now: base.addingTimeInterval(Double(index)))
 		}
-		store.learn("newcomer@x.com", fromContextType: .emailAddress, now: base.addingTimeInterval(10_000))
+		small.learn("newcomer@x.com", fromContextType: .emailAddress, now: base.addingTimeInterval(10_000))
+		small.flush()
 		// All counts equal (1), so the least-recently-used (oldest timestamp = alpha0) is evicted.
-		XCTAssertTrue(store.matches(prefix: "alpha0@").isEmpty, "oldest entry should be evicted on a count tie")
-		XCTAssertFalse(store.matches(prefix: "newcomer").isEmpty)
+		XCTAssertTrue(small.matches(prefix: "alpha0@").isEmpty, "oldest entry should be evicted on a count tie")
+		XCTAssertFalse(small.matches(prefix: "newcomer").isEmpty)
+	}
+
+	func testEviction_batchTrim_keepsHighestPriorityEntries() {
+		let small = makeStore(capacity: 3)
+		let now = Date(timeIntervalSince1970: 1_000)
+		// Distinct counts so survivor priority is unambiguous.
+		let plan: [(word: String, count: Int)] = [
+			("aaa", 5), ("bbb", 4), ("ccc", 3), ("ddd", 2), ("eee", 1)
+		]
+		for entry in plan {
+			for _ in 0..<entry.count { small.learn(entry.word, fromContextType: .prose, now: now) }
+		}
+		small.flush()
+		XCTAssertEqual(small.count, 3)
+		XCTAssertEqual(Set(small.allLearnedWords().map(\.word)), ["aaa", "bbb", "ccc"])
 	}
 
 	// MARK: - Clear
@@ -233,11 +262,39 @@ final class PersonalRecentsStoreTests: XCTestCase {
 		XCTAssertEqual(store.matches(prefix: "hel").first?.count, 1)
 	}
 
-	// MARK: - Persistence round-trips through a second instance
+	// MARK: - Persistence round-trips through a fresh on-disk read
 
 	func testPersistence_survivesNewStoreInstance() {
 		store.learn("hello", fromContextType: .prose)
-		let reopened = PersonalRecentsStore(store: appStore)
+		store.flush()
+		// A second store over the same directory loads the file fresh from disk (non-shared index).
+		let reopened = PersonalRecentsStore(directory: directory)
 		XCTAssertEqual(reopened.matches(prefix: "hel").first?.count, 1)
+	}
+
+	// MARK: - Cross-process invalidation (host edit → keyboard reload)
+
+	func testReload_picksUpExternalEdits() {
+		// Two independent stores over the same file model the host app + the running keyboard.
+		let shared = makeTempDir()
+		let host = PersonalRecentsStore(directory: shared)
+		let keyboard = PersonalRecentsStore(directory: shared)
+
+		host.learn("hello", fromContextType: .prose)
+		host.learn("world", fromContextType: .prose)
+		host.flush()
+
+		keyboard.reload()
+		XCTAssertEqual(Set(keyboard.allLearnedWords().map(\.word)), ["hello", "world"])
+
+		// Host removes one (writes disk synchronously); keyboard reloads and sees the change.
+		host.remove("hello")
+		keyboard.reload()
+		XCTAssertEqual(keyboard.allLearnedWords().map(\.word), ["world"])
+
+		// Host clears everything; keyboard reloads to empty.
+		host.clear()
+		keyboard.reload()
+		XCTAssertTrue(keyboard.allLearnedWords().isEmpty)
 	}
 }
