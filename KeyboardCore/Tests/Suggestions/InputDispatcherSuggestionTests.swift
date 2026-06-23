@@ -92,12 +92,100 @@ final class InputDispatcherSuggestionTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.capsLock))
 	}
 
+	func testSuggestionAccept_onSymbolsPage_hopsBackToLetters() {
+		// Completions run on `.symbols` (Fáze B): accepting a numeric/nick chip there must hop back to
+		// letters like a real space, so the user isn't stranded on `123`.
+		var state = KeyboardState(
+			page: .symbols(.primary),
+			currentEligibility: SuggestionEligibility(allowDisplay: true, learningContext: .prose)
+		)
+		proxy.documentContextBeforeInput = "604"
+		dispatch(acceptKey("604593010"), &state)
+		XCTAssertEqual(proxy.inserted, ["604593010 "])
+		XCTAssertEqual(state.page, .letters(.lower), "symbols → letters after accept")
+	}
+
+	func testSuggestionAccept_onLettersPage_staysOnLetters() {
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state)
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
 	func testSuggestionAccept_marksTrailingSpaceForDoubleTap() {
 		var state = proseState()
 		proxy.documentContextBeforeInput = "hel"
 		dispatch(acceptKey("hello"), &state)
 		XCTAssertTrue(state.lastInsertWasSpace)
 		XCTAssertNotNil(state.lastSpaceInsertedAt)
+	}
+
+	// MARK: - .suggestionAccept as a usage signal (Fáze D)
+
+	private func learningHook() -> LearningHook {
+		LearningHook { [recorder] word, context in recorder?.record(word, context) }
+	}
+
+	func testSuggestionAccept_inProse_learnsAcceptedWord() {
+		// Accepting a chip is using the word — it learns/increments the accepted replacement, not the
+		// (possibly shorter) typed prefix. Promotes a dictionary-only word into the personal pool.
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state, learning: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["hello"])
+		XCTAssertEqual(recorder.calls.first?.context, .prose)
+	}
+
+	func testSuggestionAccept_inEmail_doesNotLearn() {
+		// Email fields are harvested whole at field-end; the `.prose` gate keeps accept from double-counting.
+		var state = KeyboardState(
+			page: .letters(.lower),
+			currentEligibility: SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
+		)
+		proxy.documentContextBeforeInput = ""
+		dispatch(acceptKey("martin@x.com"), &state, learning: learningHook())
+		XCTAssertTrue(recorder.calls.isEmpty, "email accept routes through field-end harvest, not accept-learn")
+	}
+
+	func testSuggestionAccept_inEmail_omitsTrailingSpace() {
+		// An accepted address lands as a bare value — no trailing blank (email inputs commonly reject or
+		// retain it). State tracking reflects that no space was inserted.
+		var state = KeyboardState(
+			page: .letters(.lower),
+			currentEligibility: SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
+		)
+		proxy.documentContextBeforeInput = "mar"
+		dispatch(acceptKey("martin@x.com"), &state)
+		XCTAssertEqual(proxy.deleteCount, 3, "the typed prefix is still replaced")
+		XCTAssertEqual(proxy.inserted, ["martin@x.com"], "no trailing space in an email field")
+		XCTAssertEqual(proxy.documentContextBeforeInput, "martin@x.com")
+		XCTAssertFalse(state.lastInsertWasSpace)
+		XCTAssertNil(state.lastSpaceInsertedAt)
+	}
+
+	func testSuggestionAccept_inProse_keepsTrailingSpace() {
+		// Contrast with the email case: prose accepts keep the stock predictive-bar trailing space.
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state)
+		XCTAssertEqual(proxy.inserted, ["hello "])
+		XCTAssertTrue(state.lastInsertWasSpace)
+	}
+
+	func testSuggestionAccept_deniedContext_doesNotLearn() {
+		var state = KeyboardState(page: .letters(.lower), currentEligibility: .denied)
+		proxy.documentContextBeforeInput = "sec"
+		dispatch(acceptKey("secret"), &state, learning: learningHook())
+		XCTAssertTrue(recorder.calls.isEmpty)
+	}
+
+	func testSuggestionAccept_nilHook_doesNotLearn() {
+		// Suggestions off → the controller passes a nil hook → accept inserts but learns nothing.
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state)
+		XCTAssertEqual(proxy.inserted, ["hello "], "text still inserts")
+		XCTAssertTrue(recorder.calls.isEmpty)
 	}
 
 	// MARK: - Learning hook
@@ -158,6 +246,41 @@ final class InputDispatcherSuggestionTests: XCTestCase {
 		dispatch(spaceKey(), &state, learning: hook, now: { t0.addingTimeInterval(0.3) })
 		XCTAssertEqual(proxy.documentContextBeforeInput, "hello. ")
 		XCTAssertEqual(recorder.calls.map(\.word), ["hello"], "the sentence-final word is learned exactly once")
+	}
+
+	func testLearning_prose_capturesWholeEmail() {
+		// A prose-typed address is learned as one `.emailAddress` token (the tokenizer would otherwise
+		// split it on `@`/`.`), and its trailing fragment ("com") is not also learned.
+		var state = proseState()
+		let hook = LearningHook { [recorder] word, context in recorder?.record(word, context) }
+		for ch in "martin@gmail.com" { dispatch(letterKey(String(ch)), &state, learning: hook) }
+		dispatch(spaceKey(), &state, learning: hook)
+		XCTAssertTrue(
+			recorder.calls.contains { $0.word == "martin@gmail.com" && $0.context == .emailAddress },
+			"the whole address is learned as an email token"
+		)
+		XCTAssertFalse(recorder.calls.contains { $0.word == "com" }, "the trailing fragment is skipped")
+	}
+
+	func testLearning_prose_emailCapture_skippedInDenied() {
+		var state = KeyboardState(page: .letters(.lower), currentEligibility: .denied)
+		let hook = LearningHook { [recorder] word, context in recorder?.record(word, context) }
+		for ch in "martin@gmail.com" { dispatch(letterKey(String(ch)), &state, learning: hook) }
+		dispatch(spaceKey(), &state, learning: hook)
+		XCTAssertTrue(recorder.calls.isEmpty)
+	}
+
+	func testLearning_emailField_doesNotInlineCaptureEmail() {
+		// Email fields learn the whole field via the controller's harvest, never word-by-word inline —
+		// so the dispatcher's prose email capture must not fire here (would double-count).
+		var state = KeyboardState(
+			page: .letters(.lower),
+			currentEligibility: SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
+		)
+		let hook = LearningHook { [recorder] word, context in recorder?.record(word, context) }
+		for ch in "martin@gmail.com" { dispatch(letterKey(String(ch)), &state, learning: hook) }
+		dispatch(spaceKey(), &state, learning: hook)
+		XCTAssertTrue(recorder.calls.isEmpty)
 	}
 
 	func testLearning_nilHook_isNoOp() {

@@ -46,7 +46,8 @@ final class WordCompletionProviderTests: XCTestCase {
 	// MARK: - Self-match exclusion
 
 	func testSelfMatch_excluded() {
-		let provider = makeProvider(recents: [("hello", 3), ("hellofresh", 1)])
+		// Both counts ≥ minSuggestCount so the assertion isolates self-match exclusion from the threshold.
+		let provider = makeProvider(recents: [("hello", 3), ("hellofresh", 2)])
 		let result = provider.suggestions(for: .test(before: "hello"))
 		XCTAssertEqual(result.map(\.displayText), ["hellofresh"], "the fully-typed word is not offered back")
 	}
@@ -62,11 +63,59 @@ final class WordCompletionProviderTests: XCTestCase {
 		XCTAssertEqual(result.first?.score, 0.9, "the higher (checker) score wins")
 	}
 
+	// MARK: - Display threshold (minSuggestCount, Fáze A)
+
+	func testRecentsBelowThreshold_notOffered() {
+		// A count-1 personal word (a one-off typo, or a singleton OTP/code) is learned but never shown.
+		let provider = makeProvider(recents: [("freedom266", 1)])
+		XCTAssertTrue(provider.suggestions(for: .test(before: "free")).isEmpty)
+	}
+
+	func testRecentsAtThreshold_offered() {
+		// The same word at count 2 clears the bar and is offered.
+		let provider = makeProvider(recents: [("freedom266", 2)])
+		XCTAssertEqual(provider.suggestions(for: .test(before: "free")).map(\.displayText), ["freedom266"])
+	}
+
+	func testBelowThreshold_stillSurfacesWhenDictionaryVouches() {
+		// A sub-threshold personal singleton that's also a real dictionary word still shows — the cut
+		// only removes pool-exclusive one-offs, never words a dictionary source confirms.
+		let provider = makeProvider(recents: [("hello", 1)], checker: ["hello"])
+		XCTAssertEqual(provider.suggestions(for: .test(before: "hel")).map(\.displayText), ["hello"])
+	}
+
+	func testEmailContext_singleUseAddress_exemptFromThreshold() {
+		// Emails are deliberate whole tokens, not typo-prone prose — a once-typed address still
+		// completes from its prefix even though `count == 1` is below the prose threshold.
+		let email = SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
+		let provider = makeProvider(recents: [("martin@x.com", 1)])
+		let result = provider.suggestions(for: .test(before: "mar", eligibility: email))
+		XCTAssertEqual(result.map(\.displayText), ["martin@x.com"])
+		// Contrast: the same singleton in a prose field is held back by the threshold.
+		XCTAssertTrue(provider.suggestions(for: .test(before: "mar")).isEmpty)
+	}
+
+	func testEmailContext_exemptionIsAddressOnly_notProseSingletons() {
+		// The pool is shared across fields. In an email field only `@` addresses skip the threshold;
+		// a prose singleton (typo/OTP/nick) sharing the prefix must still be suppressed.
+		let email = SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
+		let provider = makeProvider(recents: [("martin@x.com", 1), ("marqueterie", 1)])
+		let result = provider.suggestions(for: .test(before: "mar", eligibility: email))
+		XCTAssertEqual(result.map(\.displayText), ["martin@x.com"], "the prose singleton stays held back")
+	}
+
 	// MARK: - Gating
 
-	func testSymbolsPage_returnsEmpty() {
+	func testSymbolsPage_returnsSuggestions() {
+		// Fáze B: completions now run on `.symbols` too (numbers/nicks for users without a number row).
+		let provider = makeProvider(recents: [("604593010", 3)])
+		let result = provider.suggestions(for: .test(before: "604", page: .symbols(.primary)))
+		XCTAssertEqual(result.map(\.displayText), ["604593010"])
+	}
+
+	func testEmojiPage_returnsEmpty() {
 		let provider = makeProvider(checker: ["help"])
-		XCTAssertTrue(provider.suggestions(for: .test(before: "he", page: .symbols(.primary))).isEmpty)
+		XCTAssertTrue(provider.suggestions(for: .test(before: "he", page: .emojis)).isEmpty)
 	}
 
 	func testNoActivePrefix_returnsEmpty() {
@@ -93,14 +142,14 @@ final class WordCompletionProviderTests: XCTestCase {
 	// MARK: - Smart capitalization (CAP3)
 
 	func testCapitalizedPrefix_capitalizesChip() {
-		let provider = makeProvider(recents: [("hello", 1)])
+		let provider = makeProvider(recents: [("hello", 2)])
 		let result = provider.suggestions(for: .test(before: "Hel", page: .letters(.upper)))
 		XCTAssertEqual(result.first?.displayText, "Hello")
 		XCTAssertEqual(result.first?.replacementText, "Hello", "tap inserts WYSIWYG")
 	}
 
 	func testCapsLock_uppercasesChip() {
-		let provider = makeProvider(recents: [("hello", 1)])
+		let provider = makeProvider(recents: [("hello", 2)])
 		let result = provider.suggestions(for: .test(before: "HE", page: .letters(.capsLock)))
 		XCTAssertEqual(result.first?.displayText, "HELLO")
 	}
@@ -123,20 +172,21 @@ final class WordCompletionProviderTests: XCTestCase {
 	}
 
 	func testDiacriticVariants_bothOffered_lowercaseMidSentence() {
-		let result = provider(recentsFixed: [("rada", 2), ("ráda", 1)])
+		// Both ≥ minSuggestCount so the threshold doesn't drop a variant out from under the assertion.
+		let result = provider(recentsFixed: [("rada", 2), ("ráda", 2)])
 			.suggestions(for: .test(before: "rad"))
 		XCTAssertEqual(Set(result.map(\.displayText)), ["rada", "ráda"], "both variants, lowercase display")
 	}
 
 	func testTypedIdenticalWord_dropsOnlyThatVariant_keepsAccentedOne() {
 		// Typing the exact "rada" self-match-drops "rada" but leaves the accented "ráda" to offer.
-		let result = provider(recentsFixed: [("rada", 2), ("ráda", 1)])
+		let result = provider(recentsFixed: [("rada", 2), ("ráda", 2)])
 			.suggestions(for: .test(before: "rada"))
 		XCTAssertEqual(result.map(\.displayText), ["ráda"])
 	}
 
 	func testStartOfSentence_capitalizesBothVariants() {
-		let result = provider(recentsFixed: [("rada", 2), ("ráda", 1)])
+		let result = provider(recentsFixed: [("rada", 2), ("ráda", 2)])
 			.suggestions(for: .test(before: "Rad", page: .letters(.upper)))
 		XCTAssertEqual(Set(result.map(\.displayText)), ["Rada", "Ráda"], "leading capital by sentence position")
 	}

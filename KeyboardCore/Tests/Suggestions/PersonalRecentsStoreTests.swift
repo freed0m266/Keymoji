@@ -132,15 +132,20 @@ final class PersonalRecentsStoreTests: XCTestCase {
 		XCTAssertEqual(store.count, 0)
 	}
 
-	func testFilter_allDigits_skipped() {
+	func testFilter_allDigits_nowLearned() {
+		// Task 74: numbers (years, phones) are learned from prose. The display-side `minSuggestCount`
+		// threshold — not a learn-time reject — is what keeps one-off codes from being offered.
 		store.learn("2026", fromContextType: .prose)
-		XCTAssertEqual(store.count, 0)
+		store.learn("604593010", fromContextType: .prose)
+		XCTAssertEqual(Set(store.allLearnedWords().map(\.word)), ["2026", "604593010"])
 	}
 
-	func testFilter_mixedAlphanumeric_skipped() {
+	func testFilter_mixedAlphanumeric_nowLearned() {
+		// Task 74: alphanumeric nicks (`freedom266`) and tokens (`ipv6`, `h2o`) are learned, not rejected.
+		store.learn("freedom266", fromContextType: .prose)
 		store.learn("ipv6", fromContextType: .prose)
 		store.learn("h2o", fromContextType: .prose)
-		XCTAssertEqual(store.count, 0)
+		XCTAssertEqual(Set(store.allLearnedWords().map(\.word)), ["freedom266", "ipv6", "h2o"])
 	}
 
 	func testFilter_denied_neverLearns() {

@@ -32,12 +32,17 @@ struct MockRecents: PersonalRecentsReading {
 	/// When set, returned verbatim for any non-empty prefix. Lets a test model the real store's
 	/// directional diacritic fold (e.g. "rad" → both "rada" and "ráda") without reimplementing it.
 	var fixedMatches: [(word: String, count: Int)]?
+	/// Backs `allLearnedWords()` for the email quick-pick (which scans the whole pool, not a prefix).
+	/// Independent of `entries` so a test can give addresses explicit counts *and* last-used times.
+	var allEntries: [LearnedWord] = []
 
 	func matches(prefix: String) -> [(word: String, count: Int)] {
 		guard !prefix.isEmpty else { return [] }
 		if let fixedMatches { return fixedMatches }
 		return entries.filter { $0.word.lowercased().hasPrefix(prefix.lowercased()) }
 	}
+
+	func allLearnedWords() -> [LearnedWord] { allEntries }
 }
 
 /// Returns a fixed suggestion list regardless of context — for coordinator tests.
@@ -55,14 +60,15 @@ extension SuggestionContext {
 		before: String?,
 		after: String? = nil,
 		page: KeyboardPage = .letters(.lower),
-		languages: [String] = ["en"]
+		languages: [String] = ["en"],
+		eligibility: SuggestionEligibility = SuggestionEligibility(allowDisplay: true, learningContext: .prose)
 	) -> SuggestionContext {
 		SuggestionContext(
 			documentContextBeforeInput: before,
 			documentContextAfterInput: after,
 			page: page,
 			completionLanguages: languages,
-			eligibility: SuggestionEligibility(allowDisplay: true, learningContext: .prose)
+			eligibility: eligibility
 		)
 	}
 }
