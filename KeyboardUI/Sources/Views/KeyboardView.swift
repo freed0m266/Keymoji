@@ -126,10 +126,9 @@ public struct KeyboardView: View {
 		}
 		.padding(.horizontal, isEmojiKeyboard ? 0 : horizontalPadding)
 		.frame(width: width, height: keyboardHeight)
-		// Fade the whole keyboard while the user is scrubbing the cursor — matches stock iOS,
-		// where the keys recede so the surface visually becomes a trackpad.
-		.opacity(isInTrackpadMode ? 0.45 : 1.0)
-		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
+		// Trackpad scrubbing no longer fades the whole keyboard (task 75 dropped the 0.45 dim). Instead
+		// each key blanks its glyph (`KeyView`, driven by the `isTrackpadActive` flag threaded down) and
+		// the top strip recedes (`topRegion`), so the surface reads as a trackpad like stock iOS.
 	}
 
 	/// The reserved region above the keys on letter/symbol pages (task 61). Fixed at
@@ -156,6 +155,11 @@ public struct KeyboardView: View {
 				Color.clear.frame(height: KeyboardMetrics.suggestionBarGap)
 			}
 		}
+		// Trackpad mode (task 75): the strip (favorites / suggestions) gently recedes while scrubbing —
+		// content dims but never disappears. Applied to the content, *not* the fixed-height container
+		// below, so the reserved height never moves (task 61) and the keyboard can't jump.
+		.opacity(isInTrackpadMode ? 0.4 : 1.0)
+		.animation(.easeOut(duration: 0.15), value: isInTrackpadMode)
 		.frame(height: KeyboardMetrics.topRegionHeight)
 	}
 
@@ -252,6 +256,7 @@ public struct KeyboardView: View {
 				page: layout.page,
 				returnKeyType: layout.returnKeyType,
 				totalWidth: max(0, width - horizontalPadding * 2),
+				isTrackpadActive: isInTrackpadMode,
 				onKey: onKey,
 				onKeyTapHaptic: onKeyTapHaptic,
 				onKeyClick: onKeyClick,

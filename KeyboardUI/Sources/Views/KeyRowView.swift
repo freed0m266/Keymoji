@@ -3,15 +3,18 @@ import KeyboardCore
 
 /// One horizontal row of keys. Distributes width proportionally to each key's `visualWeight`.
 ///
-/// `Equatable` (task 73, Phase B): rendering is a pure function of `row`, `page`, `returnKeyType`, and
-/// `totalWidth` — the callbacks don't affect what's drawn. With `.equatable()` applied at the call
-/// site, SwiftUI skips re-evaluating a row whose layout inputs are unchanged, so a keystroke that only
-/// updates the suggestion bar never re-renders the key grid.
+/// `Equatable` (task 73, Phase B): rendering is a pure function of `row`, `page`, `returnKeyType`,
+/// `totalWidth`, and `isTrackpadActive` — the callbacks don't affect what's drawn. With `.equatable()`
+/// applied at the call site, SwiftUI skips re-evaluating a row whose layout inputs are unchanged, so a
+/// keystroke that only updates the suggestion bar never re-renders the key grid.
 struct KeyRowView: View, Equatable {
 	let row: KeyboardRow
 	let page: KeyboardPage
 	let returnKeyType: ReturnKeyType
 	let totalWidth: CGFloat
+	/// Keyboard-wide trackpad-on-space flag (task 75), forwarded down to every `KeyView` so the glyphs
+	/// blank when the user scrubs the cursor. A render-determining input — see `==` below.
+	let isTrackpadActive: Bool
 	let onKey: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
 	let onKeyClick: (ClickSoundKind) -> Void
@@ -22,6 +25,8 @@ struct KeyRowView: View, Equatable {
 
 	/// Compare only render-determining inputs; the closures are stable forwarders that don't change
 	/// output (see `KeyboardViewModel`), so ignoring them is what lets unchanged rows short-circuit.
+	/// `isTrackpadActive` *must* be compared (task 75) — omitting it lets the short-circuit skip the
+	/// re-render that flips the keys to blank, so the trackpad would engage with no visual change.
 	/// `nonisolated` because `Equatable.==` is a nonisolated requirement while `View` is main-actor
 	/// isolated — and it only reads `Sendable` value-type fields, so there's no data-race risk.
 	nonisolated static func == (lhs: KeyRowView, rhs: KeyRowView) -> Bool {
@@ -29,6 +34,7 @@ struct KeyRowView: View, Equatable {
 			&& lhs.page == rhs.page
 			&& lhs.returnKeyType == rhs.returnKeyType
 			&& lhs.totalWidth == rhs.totalWidth
+			&& lhs.isTrackpadActive == rhs.isTrackpadActive
 	}
 
 	var body: some View {
@@ -47,6 +53,7 @@ struct KeyRowView: View, Equatable {
 					leadingGapWidth: leadingGap,
 					trailingGapWidth: trailingGap,
 					popoverAlignment: popoverAlignment(forKeyAt: index, keyWidth: keyWidth),
+					isTrackpadActive: isTrackpadActive,
 					onTap: onKey,
 					onKeyTapHaptic: onKeyTapHaptic,
 					onKeyClick: onKeyClick,
@@ -136,6 +143,7 @@ private struct KeyRowPreview: View {
 			page: page,
 			returnKeyType: returnKeyType,
 			totalWidth: totalWidth,
+			isTrackpadActive: false,
 			onKey: { _ in },
 			onKeyTapHaptic: {},
 			onKeyClick: { _ in },

@@ -29,6 +29,19 @@ enum KeyboardSurfaceColors {
 			: UIColor(white: 0.84, alpha: 1.0)
 	}
 
+	// MARK: - Trackpad tier (task 75) — subtle tint shift while scrubbing the cursor
+
+	/// Background applied to *every* key while trackpad-on-space mode is active (task 75). The glyphs
+	/// vanish, the bodies stay, and the surface shifts a touch so the keyboard reads as a trackpad —
+	/// matching stock iOS, which lightens the keys slightly rather than dimming the whole keyboard.
+	/// Dark: a hair lighter/greyer than `characterBackground`; light: a hair darker. Tuned by eye
+	/// against the native screenshot in both modes.
+	static let trackpadBackground = UIColor { traits in
+		traits.userInterfaceStyle == .dark
+			? UIColor(white: 0.5, alpha: 0.5)
+			: UIColor(white: 0.93, alpha: 1.0)
+	}
+
 	// MARK: - Function tier (space, return, page switch, dismiss) — darkest
 
 	static let functionBackground = UIColor { traits in

@@ -8,6 +8,10 @@ import KeyboardCore
 struct KeyStyle: Sendable {
 	let backgroundColor: Color
 	let pressedBackgroundColor: Color
+	/// Background while trackpad-on-space mode is active (task 75) — a subtle tint shift from
+	/// `backgroundColor`. Defaults to the shared `trackpadBackground` token, so every tier picks up
+	/// the same "keyboard is now a trackpad" cue regardless of its normal colour.
+	let trackpadBackgroundColor: Color
 	let foregroundColor: Color
 	let font: Font?
 	let cornerRadius: CGFloat
@@ -15,12 +19,14 @@ struct KeyStyle: Sendable {
 	init(
 		backgroundColor: Color = Color(uiColor: KeyboardSurfaceColors.characterBackground),
 		pressedBackgroundColor: Color = Color(uiColor: KeyboardSurfaceColors.characterPressed),
+		trackpadBackgroundColor: Color = Color(uiColor: KeyboardSurfaceColors.trackpadBackground),
 		foregroundColor: Color = Color(.label),
 		font: Font? = nil,
 		cornerRadius: CGFloat = 8
 	) {
 		self.backgroundColor = backgroundColor
 		self.pressedBackgroundColor = pressedBackgroundColor
+		self.trackpadBackgroundColor = trackpadBackgroundColor
 		self.foregroundColor = foregroundColor
 		self.font = font
 		self.cornerRadius = cornerRadius

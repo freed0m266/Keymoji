@@ -366,4 +366,73 @@ final class KeyboardViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .dark)
 		assertKeyboardSnapshot(view, size: keyboardSize(for: layout), colorScheme: .light)
 	}
+
+	// MARK: - Trackpad mode — blank keys (task 75)
+
+	/// Row-level snapshot of the blank-keys state. `KeyboardView` drives `isInTrackpadMode` from a
+	/// private `@State` flag flipped by the live space-hold gesture, so it can't be set from a static
+	/// snapshot — we render `KeyRowView` directly with `isTrackpadActive: true`, the exact value
+	/// `KeyboardView` forwards down. Verifies the glyphs blank and the key bodies pick up the trackpad
+	/// tint. Activation *timing* and release-without-a-space are gesture-driven (device-verified), so
+	/// they're out of snapshot scope.
+	private func trackpadRowView(
+		_ row: KeyboardRow,
+		page: KeyboardPage,
+		returnKeyType: ReturnKeyType,
+		isTrackpadActive: Bool
+	) -> some View {
+		KeyRowView(
+			row: row,
+			page: page,
+			returnKeyType: returnKeyType,
+			totalWidth: Self.iPhoneWidth - KeyboardMetrics.horizontalPadding * 2,
+			isTrackpadActive: isTrackpadActive,
+			onKey: { _ in },
+			onKeyTapHaptic: {},
+			onKeyClick: { _ in },
+			onPopoverEntry: {},
+			onHighlightChanged: {},
+			canEscalateBackspace: nil,
+			onTrackpadModeChanged: { _ in }
+		)
+		.padding(.horizontal, KeyboardMetrics.horizontalPadding)
+		.frame(width: Self.iPhoneWidth)
+		// The live keyboard sits on the system's grey input-view surface (the host view is `.clear`),
+		// not `systemBackground`. Light-mode character keys are white, so on a white backdrop the blank
+		// bodies would be invisible (white-on-white) and the snapshot couldn't catch a blanking
+		// regression. Render on a keyboard-surface grey instead so the blank keys are visible in both modes.
+		.background(Color(uiColor: Self.keyboardSurfaceGrey))
+	}
+
+	/// Approximation of iOS's default keyboard input-view surface, used only as the snapshot backdrop so
+	/// the blank trackpad keys (`trackpadBackground`) read against a realistic surface in both modes.
+	private static let keyboardSurfaceGrey = UIColor { traits in
+		traits.userInterfaceStyle == .dark
+			? UIColor(white: 0.12, alpha: 1.0)
+			: UIColor(white: 0.82, alpha: 1.0)
+	}
+
+	/// One letter row's slot height (cap + the row gap that lives inside each `KeyView`).
+	private static let rowCanvasSize = CGSize(
+		width: iPhoneWidth,
+		height: KeyboardMetrics.keyCapHeight + KeyboardMetrics.rowGap
+	)
+
+	func testTrackpadActive_lettersRow_blankKeys() {
+		// Pure-letter row: every glyph blanks, bodies stay + shift to the trackpad tint.
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
+		let view = trackpadRowView(layout.rows[0], page: layout.page, returnKeyType: layout.returnKeyType, isTrackpadActive: true)
+		assertKeyboardSnapshot(view, size: Self.rowCanvasSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: Self.rowCanvasSize, colorScheme: .light)
+	}
+
+	func testTrackpadActive_bottomRow_blankKeys() {
+		// Bottom row carries the space key (the trigger) plus the 123 / emoji / return system keys —
+		// verifies the space label and the symbol glyphs blank too, not just letters.
+		let layout = KeyboardCore.makeLayout(page: .letters(.lower), showNumberRow: false, returnKeyType: .default)
+		guard let bottomRow = layout.rows.last else { return XCTFail("letters layout has no rows") }
+		let view = trackpadRowView(bottomRow, page: layout.page, returnKeyType: layout.returnKeyType, isTrackpadActive: true)
+		assertKeyboardSnapshot(view, size: Self.rowCanvasSize, colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: Self.rowCanvasSize, colorScheme: .light)
+	}
 }

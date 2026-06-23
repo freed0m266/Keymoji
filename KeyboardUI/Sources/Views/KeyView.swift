@@ -17,6 +17,11 @@ struct KeyView: View {
 	let leadingGapWidth: CGFloat
 	let trailingGapWidth: CGFloat
 	let popoverAlignment: HorizontalAlignment
+	/// Whether the keyboard is currently in trackpad-on-space mode (task 75). Injected from the parent
+	/// (`KeyboardView.isInTrackpadMode`) and threaded through `KeyRowView` so *every* key blanks its
+	/// glyph and shifts its tint while the user scrubs the cursor. Distinct from the space key's local
+	/// `isTrackpadEngaged` gesture state: this is the keyboard-wide visual flag.
+	let isTrackpadActive: Bool
 	let onTap: (Key) -> Void
 	let onKeyTapHaptic: () -> Void
 	let onKeyClick: (ClickSoundKind) -> Void
@@ -38,13 +43,12 @@ struct KeyView: View {
 	@State private var isWordDeleting = false
 	@State private var longPressTask: Task<Void, Never>?
 	@State private var backspaceRepeatTask: Task<Void, Never>?
-	@State private var trackpadArmTask: Task<Void, Never>?
-	/// True once the press has been held long enough to arm trackpad mode. Drag motion past the
-	/// activation threshold from here on will enter trackpad mode. Reset on touch up.
-	@State private var isTrackpadArmed = false
-	/// True once trackpad mode has actually engaged (armed + crossed activation drag distance).
-	/// While true, drags emit `.cursorOffset` keys instead of triggering the normal `.space` tap.
-	@State private var isTrackpadActive = false
+	@State private var trackpadActivationTask: Task<Void, Never>?
+	/// True once the long-press hold on space has elapsed and trackpad mode has engaged (task 75:
+	/// activation is purely time-based now — no drag required). While true, drags emit `.cursorOffset`
+	/// keys instead of triggering the normal `.space` tap. Local to this key's gesture; the
+	/// keyboard-wide visual flag is the injected `isTrackpadActive` property above. Reset on touch up.
+	@State private var isTrackpadEngaged = false
 	/// Last drag location (in KeyView coords) at which we emitted a horizontal cursor offset. Each
 	/// character of horizontal motion past this anchor emits a one-character offset and advances it.
 	@State private var trackpadAnchorX: CGFloat = 0
@@ -72,12 +76,10 @@ struct KeyView: View {
 	/// Repeat interval once word-delete mode is active. Slower than char repeat — each pulse
 	/// chews through a whole word, so we want the user to be able to release in time.
 	private static let backspaceWordRepeatInterval: Duration = .milliseconds(220)
-	/// Hold duration on space before trackpad mode is *armed*. After this elapses the user only
-	/// needs to drag a few points to actually engage the trackpad.
-	private static let trackpadArmDelay: Duration = .milliseconds(300)
-	/// Minimum drag radius (in points, either axis) once armed before trackpad mode engages. Keeps a
-	/// stationary long-press from accidentally swallowing a regular `.space` tap.
-	private static let trackpadActivationDistance: CGFloat = 6
+	/// Hold duration on space before trackpad mode engages (task 75). Activation is purely time-based
+	/// now — once this elapses the trackpad turns on with no drag required, matching stock iOS. Equal
+	/// to `longPressDelay` (350 ms) so space-hold scrubbing engages in lock-step with Apple's long-press.
+	private static let trackpadActivationDelay: Duration = .milliseconds(350)
 	/// How many points of horizontal drag equal one character of cursor movement. Lowered from 10 to
 	/// 6 (task 69 beta feedback — 10 pt/char felt sluggish, needing big strokes for small moves).
 	private static let trackpadPointsPerCharacter: CGFloat = 6
@@ -104,6 +106,7 @@ struct KeyView: View {
 		leadingGapWidth: CGFloat = 0,
 		trailingGapWidth: CGFloat = 0,
 		popoverAlignment: HorizontalAlignment = .center,
+		isTrackpadActive: Bool = false,
 		onTap: @escaping (Key) -> Void,
 		onKeyTapHaptic: @escaping () -> Void = {},
 		onKeyClick: @escaping (ClickSoundKind) -> Void = { _ in },
@@ -120,6 +123,7 @@ struct KeyView: View {
 		self.leadingGapWidth = leadingGapWidth
 		self.trailingGapWidth = trailingGapWidth
 		self.popoverAlignment = popoverAlignment
+		self.isTrackpadActive = isTrackpadActive
 		self.onTap = onTap
 		self.onKeyTapHaptic = onKeyTapHaptic
 		self.onKeyClick = onKeyClick
@@ -140,6 +144,12 @@ struct KeyView: View {
 				.minimumScaleFactor(0.6)
 				.lineLimit(1)
 				.padding(.horizontal, 4)
+				// Trackpad mode (task 75): the glyph vanishes entirely — every key goes blank while the
+				// body (the `RoundedRectangle` above) stays — so the keyboard reads as a trackpad, matching
+				// stock iOS. The keyboard-wide `isTrackpadActive` flag (injected from the parent) drives
+				// this on *all* keys at once, replacing the old whole-keyboard 0.45 fade.
+				.opacity(isTrackpadActive ? 0 : 1)
+				.animation(.easeOut(duration: 0.15), value: isTrackpadActive)
 		}
 		// Fixed visible cap height — keys no longer float to fill leftover space, so letters and
 		// symbols stay the same height regardless of the suggestion bar (task 52).
@@ -185,6 +195,14 @@ struct KeyView: View {
 					handlePopoverDrag(at: value.location)
 				}
 				if isSpaceKey {
+					// Until trackpad mode engages (task 75: activation is purely time-based), keep the
+					// cursor anchor glued to the finger. At activation the anchor is therefore the finger's
+					// exact position, so the first post-activation drag frame doesn't jump the cursor by
+					// however far the finger drifted during the 350 ms hold.
+					if !isTrackpadEngaged {
+						trackpadAnchorX = value.location.x
+						trackpadAnchorY = value.location.y
+					}
 					handleSpaceDrag(at: value.location)
 				}
 			}
@@ -210,8 +228,7 @@ struct KeyView: View {
 		// clears `isShowingPopover`).
 		isShowingPopover = false
 		popoverDragAnchorY = nil
-		isTrackpadArmed = false
-		isTrackpadActive = false
+		isTrackpadEngaged = false
 		trackpadAnchorX = location.x
 		trackpadAnchorY = location.y
 
@@ -226,7 +243,7 @@ struct KeyView: View {
 		if case .backspace = key.action {
 			startBackspaceRepeat()
 		} else if isSpaceKey {
-			startTrackpadArmTimer()
+			startTrackpadActivationTimer()
 		} else if hasTextAlternates {
 			startLongPressTimer()
 		}
@@ -259,6 +276,11 @@ struct KeyView: View {
 	/// Background tint for the key. Word-delete mode replaces the normal pressed grey with a
 	/// muted orange — the visual cue that mode escalated, matching stock iOS.
 	private var keyBackgroundColor: Color {
+		// Trackpad mode (task 75): every key — including the held space key — shifts to the uniform
+		// trackpad tint while the glyphs are blanked, so the surface reads as one trackpad. Takes
+		// precedence over the pressed / word-delete tints: during scrubbing the space key is still
+		// physically pressed, but it must not keep its pressed highlight (it'd stand out from the rest).
+		if isTrackpadActive { return style.trackpadBackgroundColor }
 		if isWordDeleting { return Color.orange.opacity(0.6) }
 		return isPressed ? style.pressedBackgroundColor : style.backgroundColor
 	}
@@ -269,15 +291,14 @@ struct KeyView: View {
 		longPressTask = nil
 		backspaceRepeatTask?.cancel()
 		backspaceRepeatTask = nil
-		trackpadArmTask?.cancel()
-		trackpadArmTask = nil
+		trackpadActivationTask?.cancel()
+		trackpadActivationTask = nil
 
-		let wasTrackpadActive = isTrackpadActive
+		let wasTrackpadActive = isTrackpadEngaged
 		if wasTrackpadActive {
 			onTrackpadModeChanged(false)
 		}
-		isTrackpadArmed = false
-		isTrackpadActive = false
+		isTrackpadEngaged = false
 
 		if isCancelArmed {
 			// The user slid down out of the popover to bail out (task 69). Silently consume the
@@ -299,42 +320,26 @@ struct KeyView: View {
 
 	// MARK: - Trackpad mode (long-press space)
 
-	/// After `trackpadArmDelay` of pressing space, mark trackpad as armed. From there the next
-	/// horizontal drag past `trackpadActivationDistance` will engage it. Mirrors stock iOS: a
-	/// stationary hold doesn't yet swallow the space tap — the drag is what commits to trackpad.
-	private func startTrackpadArmTimer() {
-		trackpadArmTask?.cancel()
-		trackpadArmTask = Task { @MainActor in
-			try? await Task.sleep(for: Self.trackpadArmDelay)
+	/// After `trackpadActivationDelay` of holding space, engage trackpad mode (task 75) — purely on
+	/// time, no drag required, matching stock iOS. The anchor is already glued to the finger by
+	/// `onChanged` (see `combinedGesture`), so scrubbing picks up from the finger's exact position with
+	/// no cursor jump. Firing `onTrackpadModeChanged(true)` drives the entry haptic and the
+	/// keyboard-wide blank-keys visual upstream.
+	private func startTrackpadActivationTimer() {
+		trackpadActivationTask?.cancel()
+		trackpadActivationTask = Task { @MainActor in
+			try? await Task.sleep(for: Self.trackpadActivationDelay)
 			guard !Task.isCancelled, isPressed else { return }
-			isTrackpadArmed = true
+			isTrackpadEngaged = true
+			onTrackpadModeChanged(true)
 		}
 	}
 
 	private func handleSpaceDrag(at location: CGPoint) {
-		guard isTrackpadArmed else { return }
-
-		if !isTrackpadActive {
-			// Wait for the activation drag before engaging — keeps stationary long-press from
-			// silently swallowing the upcoming `.space` tap. Either axis counts now (task 69 made
-			// scrubbing 2D), so the dead zone is a radius, not an x-only threshold.
-			let dx = location.x - trackpadAnchorX
-			let dy = location.y - trackpadAnchorY
-			guard hypot(dx, dy) >= Self.trackpadActivationDistance else { return }
-			isTrackpadActive = true
-			// Treat the activation distance as a dead zone on the dominant axis: anchor at the
-			// crossing point, not at the current location, so any drag past the threshold
-			// immediately counts toward the first offset. Quick fling-and-release would otherwise
-			// move nothing because the first `onChanged` after arming often jumps several dozen
-			// points past the threshold in a single frame.
-			if abs(dx) >= abs(dy) {
-				trackpadAnchorX += (dx > 0 ? 1 : -1) * Self.trackpadActivationDistance
-			} else {
-				trackpadAnchorY += (dy > 0 ? 1 : -1) * Self.trackpadActivationDistance
-			}
-			onTrackpadModeChanged(true)
-			// Fall through to emit any remaining offset from this same frame.
-		}
+		// Activation is time-based now (task 75): the timer flips `isTrackpadEngaged`, so by the time we
+		// emit offsets the anchor is already at the finger (kept there by `onChanged`). Before activation
+		// this returns early.
+		guard isTrackpadEngaged else { return }
 
 		// Per-frame dominant axis (task 69): whichever of |dx| / |dy| is larger decides what this
 		// frame emits. Each axis anchors independently and carries its remainder across frames, so a
