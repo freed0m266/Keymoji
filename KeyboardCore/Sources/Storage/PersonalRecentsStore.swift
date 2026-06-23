@@ -10,6 +10,13 @@ public protocol PersonalRecentsReading: Sendable {
 	/// prefix character written **with** a diacritic matches only that exact accented letter
 	/// (`č` → `č`, never `c`). Words are stored lowercased, so there are no case duplicates.
 	func matches(prefix: String) -> [(word: String, count: Int)]
+
+	/// Every learned word with its count and last-used time, unsorted. The prefix path (`matches`)
+	/// can't serve the email quick-pick (task 74) — there's no prefix to match before the user types —
+	/// so the provider scans the pool itself, filtering for `@` tokens and ranking by count/recency.
+	/// Keeping this on the read protocol (not just the concrete store) lets the provider stay mockable
+	/// and keeps the `@`/email semantics in the caller, where the store's contract says they belong.
+	func allLearnedWords() -> [LearnedWord]
 }
 
 /// One learned word with its frequency and last-used time. Drives the management screen.
@@ -48,9 +55,12 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 	/// In-memory headroom above `capacity` before the background write trims back down. Keeps eviction
 	/// off the per-`learn` hot path.
 	public static let evictionSlack = 256
-	/// Shortest word learned from prose (LEN3). Below this, completion saves nothing meaningful.
+	/// Shortest word learned from prose (LEN3). Below this, completion saves nothing meaningful. A
+	/// four-digit year (`2026`) clears this; the threshold is what stops one-/two-char noise.
 	public static let minLength = 3
-	/// Longest word learned from prose. Guards against pasted blobs polluting the pool.
+	/// Longest word learned from prose. Guards against pasted blobs polluting the pool. (Emails are
+	/// learned via the `.emailAddress` context with its own 100-char cap, so this prose limit doesn't
+	/// gate them; a phone like `420604731026` fits comfortably.)
 	public static let maxLength = 25
 	/// Hard ceiling for a whole-field email token (sanity guard against pasted multi-line junk).
 	public static let maxEmailLength = 100
@@ -158,12 +168,11 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 			// check is the caller's responsibility (it owns the field semantics).
 			return !word.isEmpty && word.count <= Self.maxEmailLength
 		case .prose:
-			guard word.count >= Self.minLength, word.count <= Self.maxLength else { return false }
-			let hasDigit = word.contains { $0.isNumber }
-			let hasLetter = word.contains { $0.isLetter }
-			if hasDigit && !hasLetter { return false } // all-digit (123, 2026)
-			if hasDigit && hasLetter { return false }   // mixed alphanumeric (ipv6, h2o)
-			return true
+			// Length is the only prose gate (task 74): numbers (`2026`, `604593010`) and alphanumeric
+			// nicks (`freedom266`, `ipv6`) are now learned, not rejected. The display-side
+			// `minSuggestCount` threshold is what keeps one-off sensitive numbers (OTP, codes) — almost
+			// always singletons — from ever being *offered*, so we can afford to learn generously here.
+			return word.count >= Self.minLength && word.count <= Self.maxLength
 		}
 	}
 

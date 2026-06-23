@@ -23,6 +23,14 @@ public protocol SystemLexiconProviding: Sendable {
 /// prediction — empty prefix returns nothing. A future `NextWordPredictionProvider` slots in beside
 /// this without restructuring (the coordinator is source-agnostic).
 public struct WordCompletionProvider: SuggestionProviding {
+	/// Minimum learned `count` before a personal-recents word is *offered* (task 74, Fáze A). Learning
+	/// still stores from the first sighting (`count == 1`); this is a hard cut on *display* only, so a
+	/// one-off typo — or a one-shot sensitive number (OTP, code), almost always a singleton — is never
+	/// surfaced, while a word/number/nick typed repeatedly is. Tunable: raise to suggest more
+	/// conservatively. Applies only to the personal pool — `UITextChecker`/`UILexicon` are dictionary
+	/// sources, not typo-prone, so the threshold never touches them.
+	public static let minSuggestCount = 2
+
 	private let textChecker: any TextChecking
 	private let systemLexicon: any SystemLexiconProviding
 	private let recents: any PersonalRecentsReading
@@ -38,7 +46,16 @@ public struct WordCompletionProvider: SuggestionProviding {
 	}
 
 	public func suggestions(for context: SuggestionContext) -> [Suggestion] {
-		guard case .letters = context.page else { return [] }
+		// Word completion runs on the typing pages — letters *and* symbols (task 74, Fáze B): with a
+		// number row the digits sit on `.letters`, but users without one type numbers/nicks on
+		// `.symbols`, and the controller already treats both as suggestion-active. The emoji panels and
+		// the locked numpad never complete words.
+		switch context.page {
+		case .letters, .symbols:
+			break
+		case .emojis, .emojiSearch, .emojiSearchSymbols, .numeric:
+			return []
+		}
 		guard let prefix = WordPrefixExtractor.activeWordPrefix(
 			before: context.documentContextBeforeInput,
 			after: context.documentContextAfterInput
@@ -70,8 +87,20 @@ public struct WordCompletionProvider: SuggestionProviding {
 			}
 		}
 
-		// (a) Personal recents: 0.55 + 0.05 · min(count, 10), clamped into [0, 1].
+		// (a) Personal recents: 0.55 + 0.05 · min(count, 10), clamped into [0, 1]. The `minSuggestCount`
+		// gate (task 74, Fáze A) drops singletons here — they're learned but not yet trusted enough to
+		// offer. The merge below still surfaces a sub-threshold word if a dictionary source vouches for
+		// it (real words aren't typos), so the cut only ever removes pool-exclusive one-offs.
+		//
+		// One narrow exemption: a learned **address** (an `@` token) in an **email field** is offered
+		// after a single use — it's a deliberate whole token, not typo-prone prose, same exemption the
+		// empty-field `EmailQuickPickProvider` makes. The exemption is per-match and address-scoped: the
+		// pool is shared across all fields, so prose singletons (typos, OTP-like numbers, nicks) that
+		// happen to share a prefix must still be held back even when typed in an email field.
+		let inEmailField = context.eligibility.learningContext == .emailAddress
 		for match in recents.matches(prefix: prefix) {
+			let isAddress = inEmailField && match.word.contains("@")
+			guard isAddress || match.count >= Self.minSuggestCount else { continue }
 			let score = min(0.55 + 0.05 * Double(min(match.count, 10)), 1.0)
 			consider(match.word, score: score)
 		}

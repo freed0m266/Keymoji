@@ -794,7 +794,10 @@ final class KeyboardViewController: UIInputViewController {
 				textChecker: UITextCheckerAdapter(textChecker),
 				systemLexicon: UILexiconAdapter(entries: lexiconEntries),
 				recents: recentsStore
-			)
+			),
+			// After word completion: the quick-pick stays silent whenever a prefix is active, so the
+			// two never compete — order only fixes a deterministic tie that can't occur in practice.
+			EmailQuickPickProvider(recents: recentsStore)
 		])
 		return coordinator.suggestions(for: context)
 	}
@@ -895,9 +898,13 @@ final class KeyboardViewController: UIInputViewController {
 			// `.space` on a symbol page implicitly switches to letters *after* `insertText`; any
 			// `textDidChange` that fired synchronously during the insert saw the old `.symbols` page
 			// and skipped auto-cap, so re-run here for that implicit transition (covers "Yes! How…").
+			// `.suggestionAccept` does the same implicit symbols → letters hop (task 74, Fáze B), so it
+			// needs the identical re-run.
 			if case .switchPage = key.action {
 				refreshAutoCapitalization()
 			} else if case .space = key.action, pageBefore != state.page {
+				refreshAutoCapitalization()
+			} else if case .suggestionAccept = key.action, pageBefore != state.page {
 				refreshAutoCapitalization()
 			}
 			rebuild()

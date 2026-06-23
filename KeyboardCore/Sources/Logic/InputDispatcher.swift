@@ -143,12 +143,33 @@ public enum InputDispatcher {
 				}
 			}
 			// `replacementText` is already WYSIWYG-cased by the provider — insert verbatim, no
-			// shift-apply. The trailing space matches stock predictive-bar behavior.
-			proxy.insertText(replacementText + " ")
+			// shift-apply. A trailing space matches stock predictive-bar behavior — *except* in email
+			// fields (task 74): an address chip (the quick-pick, or a prefix-matched address) is a whole
+			// value, and a trailing blank is commonly rejected or kept by email inputs, so we omit it
+			// there. Gated on the field's eligibility, not the chip, so every accept in an email field
+			// is consistent.
+			let appendsSpace = state.currentEligibility.learningContext != .emailAddress
+			proxy.insertText(appendsSpace ? replacementText + " " : replacementText)
 			ShiftStateMachine.apply(.characterInserted, to: &state)
-			// Mirror a normal space insertion so double-tap-space → ". " still works afterward.
-			state.lastInsertWasSpace = true
-			state.lastSpaceInsertedAt = now()
+			// Mirror a normal space insertion so double-tap-space → ". " still works afterward — but only
+			// when we actually appended one (no space → no pending double-tap to track).
+			state.lastInsertWasSpace = appendsSpace
+			state.lastSpaceInsertedAt = appendsSpace ? now() : nil
+			// Accepting a chip *is* using the word — learn/increment it so the counter reflects real
+			// usage, not just how often the word was typed out in full (task 74, Fáze D). Same `.prose`
+			// gate as word-boundary learning: email fields are harvested whole at field-end (no double
+			// count), `.denied` never learns, and a nil hook (Suggestions off) is a no-op. Casing is
+			// normalized by the store's `learn`. This promotes dictionary-only words (`UITextChecker`/
+			// `UILexicon`) into the personal pool on first accept (`count == 1`); display still waits
+			// for the Fáze A threshold.
+			learnProse(replacementText, state: state, learning: learning)
+			// Accepting a completion finishes a token, just like the space the `.space` action commits —
+			// so mirror its page behavior and hop off either symbol page back to letters. Without this,
+			// accepting a numeric/nick chip on the symbols page (now that completions run there, Fáze B)
+			// would strand the user on `123` and force a manual `ABC` tap to continue prose.
+			if case .symbols = state.page {
+				state.page = .letters(.lower)
+			}
 		}
 	}
 
@@ -314,13 +335,32 @@ public enum InputDispatcher {
 		guard let learning, state.currentEligibility.learningContext == .prose else { return }
 		guard learningBoundaries.contains(insertedText) else { return }
 		let context = proxy.documentContextBeforeInput ?? ""
-		// Learn only when this boundary directly terminates a word — i.e. the character right before
+		// Learn only when this boundary directly terminates a token — i.e. the character right before
 		// the just-typed trailing boundary is itself a word character. Without this, a *second*
-		// boundary re-learns the same word: double-space → ". " (default action), "word  ", or
-		// "word. " would each count the word twice and skew ranking.
+		// boundary re-learns the same token: double-space → ". " (default action), "word  ", or
+		// "word. " would each count it twice and skew ranking. Guards both branches below.
 		let chars = Array(context)
 		guard chars.count >= 2, WordPrefixExtractor.isWordCharacter(chars[chars.count - 2]) else { return }
+		// Whole-email capture (task 74 follow-up): a prose-typed address (`martin@gmail.com`) would be
+		// split on `@`/`.` by the word tokenizer, so when this boundary completes one, learn it as a
+		// single `.emailAddress` token (skips the prose length filter, joins the shared pool) and skip
+		// the trailing fragment ("com"). Earlier internal-dot fragments ("gmail") are harmless
+		// singletons under the count≥2 display gate.
+		if let email = WordPrefixExtractor.trailingEmail(in: context) {
+			learning.learn(email, .emailAddress)
+			return
+		}
 		guard let word = WordPrefixExtractor.lastCompletedWord(in: context) else { return }
+		learnProse(word, state: state, learning: learning)
+	}
+
+	/// The single learning gate both paths funnel through: learn `word` into the personal pool only in
+	/// prose fields and only when a hook is present (Suggestions on). Email fields harvest the whole
+	/// field elsewhere (`KeyboardViewController`) and `.denied` fields never learn — so this `.prose`
+	/// check keeps the word-boundary hook and the accept-as-usage signal (task 74) from leaking into
+	/// either. Casing/length/shape filtering is the store's job.
+	private static func learnProse(_ word: String, state: KeyboardState, learning: LearningHook?) {
+		guard let learning, state.currentEligibility.learningContext == .prose else { return }
 		learning.learn(word, .prose)
 	}
 

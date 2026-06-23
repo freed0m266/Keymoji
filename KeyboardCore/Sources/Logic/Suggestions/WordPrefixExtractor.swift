@@ -57,6 +57,32 @@ public enum WordPrefixExtractor {
 		return String(chars[startOfWord..<end])
 	}
 
+	/// The whole email address at the very end of `text` (ignoring trailing whitespace/punctuation), or
+	/// nil when the text doesn't end in one. The word tokenizer treats `@` and `.` as boundaries, so a
+	/// prose-typed address would otherwise be learned only as fragments (`gmail`, `com`); the prose
+	/// learning path uses this to capture `local@domain.tld` as a single address token. Requires an `@`,
+	/// a dotted domain, and a ≥2-letter TLD, so prose like `e.g.` or `U.S.A.` is rejected.
+	static func trailingEmail(in text: String?) -> String? {
+		guard let text, let regex = emailRegex else { return nil }
+		// Emails never start or end with whitespace/closing punctuation, so trimming both ends is safe
+		// and lets the `$`-anchored match reach an address that a boundary char immediately follows.
+		let trimmed = text.trimmingCharacters(in: emailTrimSet)
+		guard trimmed.contains("@") else { return nil }
+		let ns = trimmed as NSString
+		guard let match = regex.firstMatch(in: trimmed, options: [], range: NSRange(location: 0, length: ns.length)),
+		      match.range.location != NSNotFound else { return nil }
+		return ns.substring(with: match.range)
+	}
+
+	/// `local@domain.tld` anchored at end of string. Compiled once and shared (`NSRegularExpression` is
+	/// immutable and thread-safe).
+	private static let emailRegex = try? NSRegularExpression(
+		pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+	)
+	/// Trailing/leading chars that can't be part of an email and are stripped before matching.
+	private static let emailTrimSet = CharacterSet.whitespacesAndNewlines
+		.union(CharacterSet(charactersIn: ".,;:!?\"'()[]{}<>"))
+
 	/// A word character: Unicode letter, decimal digit, apostrophe, or combining mark.
 	static func isWordCharacter(_ character: Character) -> Bool {
 		if character == "'" { return true }
