@@ -1,6 +1,6 @@
 # 75 — Trackpad-on-space: aktivace časem (350 ms hold) + prázdné klávesy (native parita)
 
-**Status:** Spec — připraveno z grill session 2026-06-23 (`/grill-with-docs`). Implementace v další session.
+**Status:** Done — 2026-06-23
 
 **Priorita:** v1.1 (UX/UI refinement, native parita) · **Úsilí:** M · **Dopad:** Medium-High (každodenní gesto — space-hold scrubbing; přiblížení loved native featury tak, aby působila nativně)
 
