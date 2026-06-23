@@ -89,6 +89,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 65. [65 — Accent-aware doplňování, caps lock z prázdného pole & limity](65-accent-aware-completions-capslock-limits.md)
 66. [66 — Číslice nejdou napsat při vypnutém number row → nativní rozložení symbolů](66-number-row-off-digits-native-symbol-layout.md)
 73. [73 — Výkon: plynulá klávesnice i při 10 000 learned words](73-keyboard-perf-smooth-at-10k-learned-words.md) — fázovaný (storage→file+index, `@Observable` scoped invalidace, async suggestion pipeline); řeší všechny critical/high/medium nálezy perf auditu, beze změny chování/UI.
+74. [74 — Kvalita učení a návrhů: anti-překlep, čísla & nicky, e-mail quick-pick](74-learning-quality-numbers-emails.md) — navazuje na 73; práh `count ≥ 2` proti zobrazování naučených překlepů, učení čísel/telefonů/nicků (sjednocení completion na letters+symbols), proaktivní e-mail quick-pick.
 
 ## Monetizace
 
