@@ -49,6 +49,17 @@ _Avoid_: symbols 1, page one.
 Second sub-page of the *symbols page* (`#+=` toggle). Carries the less-common symbols.
 _Avoid_: symbols 2, extra symbols.
 
+## Input gestures
+
+**Trackpad mode**:
+The cursor-scrubbing state entered by holding the *space* key: the keyboard stops acting as keys and
+the surface becomes a cursor pad. Entry is a **timed hold alone** (~350 ms, no drag required); on entry
+a distinct haptic fires, every key's glyph vanishes (the key bodies stay, slightly shaded) and the
+suggestion bar recedes. Finger movement then scrubs the text cursor — horizontal by character, vertical
+by line. Exits on release; releasing without having moved types **nothing** (no space). Backed by
+`isTrackpadActive` and the `onTrackpadModeChanged` callback.
+_Avoid_: cursor mode, scrub mode, swipe-to-move, space-drag.
+
 ## Monetization
 
 **Keymoji Plus**:
