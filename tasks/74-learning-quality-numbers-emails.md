@@ -1,5 +1,7 @@
 # 74 — Kvalita učení a návrhů: anti-překlep, čísla & nicky, e-mail quick-pick
 
+**Status:** Done — 2026-06-23
+
 **Status:** Spec — připraveno z design session 2026-06-23 (navazuje na [73 — výkon storage](73-keyboard-perf-smooth-at-10k-learned-words.md), který přepsal storage na rychlý in-memory index, takže učení/lookup je teď O(1) a je prostor řešit *kvalitu* místo výkonu).
 
 **Priorita:** v1.x (kvalita psaní — přímý dopad na to, jak dobré návrhy uživatel dostává) · **Úsilí:** M (filtr + scoring + nový provider + UI quick-pick, fázované) · **Dopad:** High (méně balastu v návrzích + nové užitečné návrhy: čísla, telefony, nicky, e-maily)
@@ -39,7 +41,7 @@ Jádro řešení je jeden princip, který sjednocuje všechny tři níže:
 | **Bezpečnost relaxace** | Pojistka = existující field deny-list **+** práh `count ≥ 2`. OTP/jednorázový kód v běžném poli se naučí, ale jako singleton se **nikdy nenabídne**. (Reziduum: opakovaně psané citlivé číslo v ne-secure poli — akceptujeme, secure pole patří do `denied`.) |
 | **Completion stránky** | Sjednotit: provider běží na **`.letters` i `.symbols`** (dnes jen `.letters`). `suggestionsActive` v controlleru už symbols považuje za aktivní, takže se provider jen srovná s controllerem. S number row jsou číslice na `.letters` → tam to běží i bez změny; symbols pokrývá uživatele bez number row. Ne `.emojis`/`.emojiSearch`/`.numeric`. |
 | **`+` u telefonu** | Vedoucí `+` zůstává hranicí slova (token se uloží bez `+`, např. `420604731026`). Funkčně OK: když uživatel napíše `+` ručně, `suggestionAccept` nahradí jen číselný prefix a `+` zůstane. Chip ukáže číslo bez `+`. (Revisitable — alternativa: udělat vedoucí `+` součástí číselného tokenu, ale to má vedlejší efekty na tokenizaci.) |
-| **Délka** | `maxLength` prose 25 → **30** (pokryje mezinárodní telefon s předvolbou; pořád brání nalepeným blobům). `minLength` 3 beze změny (rok `2026` projde). |
+| **Délka** | ~~`maxLength` prose 25 → **30**~~ → **revert na 25** (rozhodnuto při implementaci 2026-06-23): bump byl zbytečný — e-maily se učí přes `.emailAddress` kontext (vlastní cap 100, viz níže), takže prose limit se jich netýká, a telefon `420604731026` (12 znaků, vedoucí `+` se odřízne) se pohodlně vejde do 25. `minLength` 3 beze změny (rok `2026` projde). |
 | **E-mail quick-pick** | Nový `EmailQuickPickProvider`: když `eligibility.learningContext == .emailAddress` **a** není aktivní word prefix (prázdné/začátek pole), vrátí **jednu** adresu z poolu (token obsahuje `@`), nejvyšší `count`, tie-break `lastUsed`. Renderuje se jako běžný plain chip; tap = vloží celou adresu. Když prefix je, řeší to normální prefix-match (už dnes funguje). |
 | **„Učí se víc e-mailů?"** | Už dnes ano — každá adresa je samostatný záznam v poolu. Žádná změna učení e-mailů není potřeba (kromě quick-picku na zobrazení). |
 | **Accept = usage signál** | Potvrzení **word-completion** chipu naučí/inkrementuje slovo. Implementace: v `.suggestionAccept` (po vložení) **stejný `.prose`-only guard** jako `learnIfWordBoundary` → `learning.learn(replacementText, .prose)`, gateované `suggestionsEnabled` + eligibility. Casing normalizuje `learn()` (pool je lowercase). |
@@ -58,7 +60,7 @@ Jádro řešení je jeden princip, který sjednocuje všechny tři níže:
 
 ### Fáze B — Čísla & nicky *(řeší díru v užitečnosti + sjednocení stránek)*
 
-- `PersonalRecentsStore.passesFilters`: odstranit větve `all-digit` a `mixed-alphanumeric` reject; `maxLength` 25 → 30. `denied` a délkové meze zůstávají.
+- `PersonalRecentsStore.passesFilters`: odstranit větve `all-digit` a `mixed-alphanumeric` reject; ~~`maxLength` 25 → 30~~ (zůstává **25**, viz rozhodnutí výše). `denied` a délkové meze zůstávají.
 - `WordCompletionProvider`: `guard case .letters` → povolit `.letters` **i** `.symbols` (ostatní stránky dál `[]`).
 - Ověřit `WordPrefixExtractor` na číselných/alfanum prefixech (už je bere — `isWordCharacter` zahrnuje `isNumber`); přidat testy pro `604`, `freedom266`, vedoucí `+`.
 - `+`: nechat jako hranici (viz rozhodnutí); test, že `+420…` se uloží/nabídne jako `420…` a že výsledný vložený text po ručním `+` je správný.
@@ -79,7 +81,7 @@ Jádro řešení je jeden princip, který sjednocuje všechny tři níže:
 ## Regresní síť
 
 **Existující — záměrně mění chování (aktualizovat testy):**
-- [`PersonalRecentsStoreTests`](../KeyboardCore/Tests/Suggestions/PersonalRecentsStoreTests.swift): `testFilter_allDigits_skipped` a `testFilter_mixedAlphanumeric_skipped` → invertovat (nově se **učí**). `testFilter_tooLong_skipped` → posunout hranici na 30.
+- [`PersonalRecentsStoreTests`](../KeyboardCore/Tests/Suggestions/PersonalRecentsStoreTests.swift): `testFilter_allDigits_skipped` a `testFilter_mixedAlphanumeric_skipped` → invertovat (nově se **učí**). ~~`testFilter_tooLong_skipped` → posunout hranici na 30~~ (hranice zůstává 25, bump zamítnut — viz rozhodnutí Délka).
 - [`WordCompletionProviderTests`](../KeyboardCore/Tests/Suggestions/WordCompletionProviderTests.swift): pokud existuje test „na `.symbols` vrací `[]`", aktualizovat (nově vrací návrhy). Přidat test prahu `count ≥ 2`.
 
 **Existující — musí projít beze změny:**
