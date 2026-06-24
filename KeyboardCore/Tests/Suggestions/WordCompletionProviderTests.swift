@@ -84,24 +84,22 @@ final class WordCompletionProviderTests: XCTestCase {
 		XCTAssertEqual(provider.suggestions(for: .test(before: "hel")).map(\.displayText), ["hello"])
 	}
 
-	func testEmailContext_singleUseAddress_exemptFromThreshold() {
-		// Emails are deliberate whole tokens, not typo-prone prose — a once-typed address still
-		// completes from its prefix even though `count == 1` is below the prose threshold.
+	func testEmailContext_singleUseAddress_heldBackByUniformThreshold() {
+		// Task 77 removed the address exemption: a once-typed address is now gated by the same
+		// `minSuggestCount` as prose — held back in an email field exactly as in any other.
 		let email = SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
 		let provider = makeProvider(recents: [("martin@x.com", 1)])
-		let result = provider.suggestions(for: .test(before: "mar", eligibility: email))
-		XCTAssertEqual(result.map(\.displayText), ["martin@x.com"])
-		// Contrast: the same singleton in a prose field is held back by the threshold.
+		XCTAssertTrue(provider.suggestions(for: .test(before: "mar", eligibility: email)).isEmpty)
+		// Same in a prose field — no field-specific special-casing remains either way.
 		XCTAssertTrue(provider.suggestions(for: .test(before: "mar")).isEmpty)
 	}
 
-	func testEmailContext_exemptionIsAddressOnly_notProseSingletons() {
-		// The pool is shared across fields. In an email field only `@` addresses skip the threshold;
-		// a prose singleton (typo/OTP/nick) sharing the prefix must still be suppressed.
+	func testEmailContext_addressAtThreshold_offered() {
+		// Two uses clear the threshold; the address then completes from its prefix in an email field.
 		let email = SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
-		let provider = makeProvider(recents: [("martin@x.com", 1), ("marqueterie", 1)])
+		let provider = makeProvider(recents: [("martin@x.com", 2)])
 		let result = provider.suggestions(for: .test(before: "mar", eligibility: email))
-		XCTAssertEqual(result.map(\.displayText), ["martin@x.com"], "the prose singleton stays held back")
+		XCTAssertEqual(result.map(\.displayText), ["martin@x.com"])
 	}
 
 	// MARK: - Gating
