@@ -1,6 +1,8 @@
 # 76 — „What's New" content version: založení baseline
 
-**Status:** Todo — připraveno z grill session 2026-06-24. Pouze *infrastruktura* (uložená hodnota + seed); samotná What's New obrazovka je budoucí task.
+**Status:** Done — 2026-06-24
+
+**Status (původní):** Todo — připraveno z grill session 2026-06-24. Pouze *infrastruktura* (uložená hodnota + seed); samotná What's New obrazovka je budoucí task.
 
 **Priorita:** v1.x (musí jít ven **dřív** než první What's New obsah — viz „proč teď") · **Úsilí:** S (jeden klíč v `AppGroupStore` + konstanta + seed na startu) · **Dopad:** Medium (samo o sobě neviditelné; je to nutná podmínka, aby budoucí What's New mířil správně).
 
