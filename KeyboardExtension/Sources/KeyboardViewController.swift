@@ -767,14 +767,13 @@ final class KeyboardViewController: UIInputViewController {
 	/// run on the main actor — the debounced suggestion task is main-isolated, so this stays accurate to
 	/// the current caret (task 73, Phase C).
 	private func makeSuggestionContext() -> SuggestionContext {
-		// Additive completion languages: the field/PrimaryLanguage base (kept as the future-proof
-		// signal, even though it's "mul" today → English via the adapter) plus the chosen accent
-		// set's language, deduped so a shared dictionary isn't queried twice. `.all` contributes
-		// nothing (`accentLanguageCode == nil`), leaving just the base.
-		var completionLanguages = [state.currentLanguage ?? "en"]
-		if let accent = state.letterAlternateSet.accentLanguageCode, !completionLanguages.contains(accent) {
-			completionLanguages.append(accent)
-		}
+		// Single completion language, resolved by the accent set's chain: its own language → the
+		// device language → English (task 78, ADR 0002). iOS never reveals the field's or device's
+		// language to a custom keyboard, so the static "mul" `PrimaryLanguage` (`state.currentLanguage`)
+		// no longer feeds completions — it would only ever resolve to English and crowd out an accent
+		// user's bar. Kept as a single-element `[String]` because `WordCompletionProvider` still merges
+		// a multi-language list (retained for future flexibility).
+		let completionLanguages = [state.letterAlternateSet.completionLanguage()]
 		return SuggestionContext(
 			documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
 			documentContextAfterInput: textDocumentProxy.documentContextAfterInput,

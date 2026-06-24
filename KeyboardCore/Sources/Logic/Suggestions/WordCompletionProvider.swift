@@ -105,10 +105,11 @@ public struct WordCompletionProvider: SuggestionProviding {
 			consider(match.word, score: score)
 		}
 
-		// (b) UITextChecker completions — queried once per language (field/PrimaryLanguage base +
-		// accent set) and merged. Linear 0.9 (best) → 0.4 (worst) by ordinal position, scored within
-		// each language; the case-insensitive dedupe in `consider` keeps the max when a word surfaces
-		// in more than one dictionary, so neither language is privileged.
+		// (b) UITextChecker completions — queried once per language and merged. The controller supplies
+		// a single language today (the accent set's completion language; task 78), but the loop still
+		// merges a multi-language list. Linear 0.9 (best) → 0.4 (worst) by ordinal position, scored
+		// within each language; the case-insensitive dedupe in `consider` keeps the max when a word
+		// surfaces in more than one dictionary, so neither language is privileged.
 		for language in context.completionLanguages {
 			let checkerHits = textChecker.completions(forPartialWord: prefix, language: language)
 			for (index, word) in checkerHits.enumerated() {

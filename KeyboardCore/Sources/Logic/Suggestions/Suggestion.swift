@@ -60,11 +60,11 @@ public struct SuggestionContext: Sendable, Equatable {
 	/// collapses when the caret sits inside a word). Nil/empty when the host hides it.
 	public let documentContextAfterInput: String?
 	public let page: KeyboardPage
-	/// Languages to query for word completions, base-first: the focused field's language
-	/// (`currentLanguage` / `PrimaryLanguage`) plus the chosen accent set's language, deduped by the
-	/// controller. Each is queried independently and the hits are merged. The controller always
-	/// supplies at least one; an empty list simply yields no `UITextChecker` hits (recents and
-	/// lexicon still apply).
+	/// Languages to query for word completions. The controller supplies exactly one today — the accent
+	/// set's completion language, resolved by `LetterAlternateSet.completionLanguage` (accent → device
+	/// → English; task 78, ADR 0002). The type stays a list because the provider still queries each
+	/// entry independently and merges the hits, leaving the door open to a future multi-language model.
+	/// An empty list simply yields no `UITextChecker` hits (recents and lexicon still apply).
 	public let completionLanguages: [String]
 	public let eligibility: SuggestionEligibility
 

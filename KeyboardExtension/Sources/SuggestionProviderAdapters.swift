@@ -25,9 +25,12 @@ final class UITextCheckerAdapter: TextChecking, @unchecked Sendable {
 		}
 	}
 
-	/// Maps a BCP-47-ish tag (e.g. "en-US") onto a language `UITextChecker` actually supports,
-	/// falling back to the base language, then English, then any available language. Without this
-	/// `completions` silently returns nothing for an unsupported tag.
+	/// Maps a BCP-47-ish tag (e.g. "en-US", "cs") onto a language `UITextChecker` actually supports:
+	/// exact tag → base language → a regional variant of that base → English → any available language.
+	/// The base→regional step matters because iOS ships most dictionaries *only* regionally (`cs_CZ`,
+	/// `de_DE`, `pt_BR` — there is no bare `cs`/`de`/`pt`), so the accent/device completion language
+	/// (task 78) arrives as a bare code that would otherwise collapse straight to English. Without this
+	/// whole chain `completions` silently returns nothing for an unsupported tag.
 	///
 	/// Snapshot of `UITextChecker.availableLanguages`, computed once (task 73, Phase B). The list is
 	/// fixed for the process lifetime, so rebuilding the `Set` on every keystroke was pure waste. The
@@ -41,9 +44,26 @@ final class UITextCheckerAdapter: TextChecking, @unchecked Sendable {
 	private static func resolveLanguage(_ language: String) -> String {
 		let available = availableLanguages
 		let normalized = language.replacingOccurrences(of: "-", with: "_")
-		if available.contains(normalized) { return normalized }
+
+		if available.contains(normalized) {
+			return normalized
+		}
 		let base = String(normalized.prefix { $0 != "_" })
-		if available.contains(base) { return base }
+
+		if available.contains(base) {
+			return base
+		}
+		// A bare/unmatched code whose dictionary ships only regionally (`cs` → `cs_CZ`, `pt` → `pt_BR`)
+		// resolves to a regional variant of the *same* language before falling back to English — else a
+		// perfectly good accent/device dictionary would be lost. English keeps its `en_US`-preferred
+		// pick; other bases take the first available variant (ordered list → deterministic).
+		if base == "en", available.contains("en_US") {
+			return "en_US"
+		}
+		if let regionalVariant = availableLanguagesList.first(where: { $0.hasPrefix(base + "_") }) {
+			return regionalVariant
+		}
+		// No dictionary at all for this language (e.g. `sk`, `ja`) → English, then any available language.
 		if let englishVariant = available.first(where: { $0 == "en_US" || $0.hasPrefix("en") }) {
 			return englishVariant
 		}
