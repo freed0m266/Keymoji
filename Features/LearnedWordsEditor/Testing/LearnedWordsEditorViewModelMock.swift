@@ -15,7 +15,10 @@ import KeyboardCore
 @MainActor
 public final class LearnedWordsEditorViewModelMock: LearnedWordsEditorViewModeling {
 	public private(set) var words: [LearnedWord] = []
-	private var allWords: [LearnedWord] = []
+	public private(set) var hasLearnedWords: Bool = false
+	private var allWords: [LearnedWord] = [] {
+		didSet { hasLearnedWords = !allWords.isEmpty }
+	}
 
 	public var sort: LearnedWordsSort {
 		didSet { applySortAndFilter() }
@@ -29,6 +32,8 @@ public final class LearnedWordsEditorViewModelMock: LearnedWordsEditorViewModeli
 		self.sort = sort
 		self.allWords = Self.sorted(words, by: sort)
 		self.words = allWords
+		// `didSet` doesn't fire for assignments during init, so seed `hasLearnedWords` explicitly.
+		self.hasLearnedWords = !allWords.isEmpty
 	}
 
 	public func remove(at offsets: IndexSet) {

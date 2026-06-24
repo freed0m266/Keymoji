@@ -56,10 +56,14 @@ public struct LearnedWordsEditorView<ViewModel: LearnedWordsEditorViewModeling>:
 		.navigationBarTitleDisplayMode(.inline)
 		.searchable(text: $viewModel.searchText)
 		.toolbar {
+			// Edit needs visible rows to act on; Clear All only needs the pool to be non-empty — so it
+			// stays reachable when only sub-threshold singletons remain and the list reads empty (task 77).
 			if !viewModel.words.isEmpty {
 				ToolbarItem(placement: .topBarLeading) {
 					EditButton()
 				}
+			}
+			if viewModel.hasLearnedWords {
 				ToolbarItem(placement: .topBarTrailing) {
 					Button(role: .destructive) {
 						showClearAllAlert = true

@@ -34,10 +34,22 @@ final class EmailQuickPickProviderTests: XCTestCase {
 		XCTAssertEqual(result.map(\.displayText), ["new@x.com"], "equal counts → the more recent address")
 	}
 
-	func testSingleUseAddress_stillOffered() {
-		// Exempt from minSuggestCount: one prior use is enough for an email to be worth re-offering.
+	func testSingleUseAddress_notOffered() {
+		// Task 77 removed the email exemption: one prior use no longer clears the uniform threshold.
 		let provider = makeProvider([word("once@x.com", count: 1)])
-		XCTAssertEqual(provider.suggestions(for: .test(before: nil, eligibility: emailEligibility)).map(\.displayText), ["once@x.com"])
+		XCTAssertTrue(provider.suggestions(for: .test(before: nil, eligibility: emailEligibility)).isEmpty)
+	}
+
+	func testAddressAtThreshold_offered() {
+		// Two prior uses clear `minSuggestCount`, so the quick-pick offers the address.
+		let provider = makeProvider([word("twice@x.com", count: 2)])
+		XCTAssertEqual(provider.suggestions(for: .test(before: nil, eligibility: emailEligibility)).map(\.displayText), ["twice@x.com"])
+	}
+
+	func testBelowThresholdAddressesOnly_returnsEmpty() {
+		// A pool of only single-use addresses now offers nothing — all are below `minSuggestCount`.
+		let provider = makeProvider([word("a@x.com", count: 1), word("b@x.com", count: 1)])
+		XCTAssertTrue(provider.suggestions(for: .test(before: nil, eligibility: emailEligibility)).isEmpty)
 	}
 
 	// MARK: - Chip shape

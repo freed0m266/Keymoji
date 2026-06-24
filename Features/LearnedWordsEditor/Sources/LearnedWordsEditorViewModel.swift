@@ -26,6 +26,10 @@ public protocol LearnedWordsEditorViewModeling: Observable, AnyObject {
 	/// The displayed rows: sorted per `sort`, then filtered by `searchText`. With a large pool (task 73
 	/// targets 10k) this is what the lazy `List` renders, so it stays navigable.
 	var words: [LearnedWord] { get }
+	/// Whether the underlying pool holds any learned word — including sub-threshold singletons hidden
+	/// from `words` (task 77). Drives Clear All's availability so the purge escape hatch stays reachable
+	/// even when every entry is below the display threshold and the list reads empty.
+	var hasLearnedWords: Bool { get }
 	var sort: LearnedWordsSort { get set }
 	/// Case-insensitive substring filter over the learned words. Empty shows everything.
 	var searchText: String { get set }
@@ -44,6 +48,9 @@ final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewMo
 
 	/// Displayed rows: `allWords` sorted, then filtered by `searchText`.
 	private(set) var words: [LearnedWord] = []
+	/// Mirrors whether the store holds *any* learned word, threshold notwithstanding — so Clear All
+	/// stays reachable when the visible list is empty but hidden singletons remain.
+	private(set) var hasLearnedWords: Bool = false
 	/// The full sorted pool, kept in memory so re-sorting and filtering don't re-read the store. Loaded
 	/// once on init; at the task-73 target (10k) the read is from the in-memory index and the sort is a
 	/// one-time cost on screen open (not the typing hot path).
@@ -85,12 +92,21 @@ final class LearnedWordsEditorViewModel: BaseViewModel, LearnedWordsEditorViewMo
 		store.clear()
 		allWords = []
 		words = []
+		hasLearnedWords = false
 	}
 
 	// MARK: - Private API
 
 	private func reload() {
-		allWords = sorted(store.allLearnedWords())
+		// Show only what the pool can actually offer (task 77): hide sub-threshold singletons so the
+		// editor lists exactly the words `WordCompletionProvider` would surface. The same constant gates
+		// the providers, so this stays one source of truth — tune `minSuggestCount` and the list follows.
+		// The cut belongs here on `allWords` (not in `applyFilter()`, which is the search box) so search
+		// and sort both run over the already-thresholded pool.
+		let all = store.allLearnedWords()
+		hasLearnedWords = !all.isEmpty
+		let offerable = all.filter { $0.count >= WordCompletionProvider.minSuggestCount }
+		allWords = sorted(offerable)
 		applyFilter()
 	}
 

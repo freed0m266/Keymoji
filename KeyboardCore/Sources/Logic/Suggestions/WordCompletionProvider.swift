@@ -89,18 +89,12 @@ public struct WordCompletionProvider: SuggestionProviding {
 
 		// (a) Personal recents: 0.55 + 0.05 · min(count, 10), clamped into [0, 1]. The `minSuggestCount`
 		// gate (task 74, Fáze A) drops singletons here — they're learned but not yet trusted enough to
-		// offer. The merge below still surfaces a sub-threshold word if a dictionary source vouches for
-		// it (real words aren't typos), so the cut only ever removes pool-exclusive one-offs.
-		//
-		// One narrow exemption: a learned **address** (an `@` token) in an **email field** is offered
-		// after a single use — it's a deliberate whole token, not typo-prone prose, same exemption the
-		// empty-field `EmailQuickPickProvider` makes. The exemption is per-match and address-scoped: the
-		// pool is shared across all fields, so prose singletons (typos, OTP-like numbers, nicks) that
-		// happen to share a prefix must still be held back even when typed in an email field.
-		let inEmailField = context.eligibility.learningContext == .emailAddress
+		// offer. The threshold is uniform across every field and token kind (task 77 removed the prior
+		// email-address exemption), so addresses clear the same bar as prose. The merge below still
+		// surfaces a sub-threshold word if a dictionary source vouches for it (real words aren't typos),
+		// so the cut only ever removes pool-exclusive one-offs.
 		for match in recents.matches(prefix: prefix) {
-			let isAddress = inEmailField && match.word.contains("@")
-			guard isAddress || match.count >= Self.minSuggestCount else { continue }
+			guard match.count >= Self.minSuggestCount else { continue }
 			let score = min(0.55 + 0.05 * Double(min(match.count, 10)), 1.0)
 			consider(match.word, score: score)
 		}

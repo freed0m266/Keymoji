@@ -1,6 +1,6 @@
 # 77 — Learned words: uniformní suggest práh (skrýt 1×, zrušit e-mail výjimku)
 
-**Status:** Todo — připraveno z grill session 2026-06-24. Navazuje na [74](74-learning-quality-numbers-emails.md) a **mění jedno jeho rozhodnutí** (viz „Supersedes").
+**Status:** Done — 2026-06-24 (obě fáze A+B v `feature/77-learned-words-uniform-suggest-threshold`; Codex review: navíc zviditelněn Clear All i při poolu jen ze skrytých singletonů přes `hasLearnedWords`). Navazuje na [74](74-learning-quality-numbers-emails.md) a **mění jedno jeho rozhodnutí** (viz „Supersedes").
 
 **Priorita:** v1.x (kvalita UX learned-words editoru + konzistence návrhů) · **Úsilí:** S (jeden filtr v editoru + odebrání jedné větve + jeden gate; fázované) · **Dopad:** Medium (čistší seznam naučených slov + jeden jediný práh napříč celým systémem).
 
