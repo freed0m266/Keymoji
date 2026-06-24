@@ -82,6 +82,50 @@ final class LetterAlternateSetTests: XCTestCase {
 		}
 	}
 
+	// MARK: - completionLanguage: accent → device → English (task 78)
+
+	func testCompletionLanguage_accentWins_deviceIgnored() {
+		// A concrete accent set names the language outright; the device language is never consulted.
+		XCTAssertEqual(LetterAlternateSet.czech.completionLanguage(deviceLanguageCode: "ja"), "cs")
+		XCTAssertEqual(LetterAlternateSet.german.completionLanguage(deviceLanguageCode: "en"), "de")
+	}
+
+	func testCompletionLanguage_allUsesDeviceLanguage() {
+		// `.all` carries no language of its own, so it follows the device — any language, not just the
+		// six accent ones.
+		XCTAssertEqual(LetterAlternateSet.all.completionLanguage(deviceLanguageCode: "cs"), "cs")
+		XCTAssertEqual(LetterAlternateSet.all.completionLanguage(deviceLanguageCode: "en"), "en")
+		XCTAssertEqual(LetterAlternateSet.all.completionLanguage(deviceLanguageCode: "ja"), "ja")
+	}
+
+	func testCompletionLanguage_allWithNoDeviceLanguage_fallsBackToEnglish() {
+		// `.all` and no resolvable device language → English is the final fallback.
+		XCTAssertEqual(LetterAlternateSet.all.completionLanguage(deviceLanguageCode: nil), "en")
+	}
+
+	func testCompletionLanguage_accentWinsEvenWithNilDevice() {
+		// The accent link short-circuits the chain before the device/English fallbacks are reached.
+		XCTAssertEqual(LetterAlternateSet.spanish.completionLanguage(deviceLanguageCode: nil), "es")
+	}
+
+	// MARK: - deviceLanguageCode parsing
+
+	func testDeviceLanguageCode_regionalTag_parsesBareLanguage() {
+		// `Locale.preferredLanguages` entries can be regional ("en-CZ") — only the language code is kept.
+		XCTAssertEqual(LetterAlternateSet.deviceLanguageCode(preferredLanguage: "en-CZ"), "en")
+		XCTAssertEqual(LetterAlternateSet.deviceLanguageCode(preferredLanguage: "zh-Hans-CN"), "zh")
+	}
+
+	func testDeviceLanguageCode_plainLanguage_passesThrough() {
+		XCTAssertEqual(LetterAlternateSet.deviceLanguageCode(preferredLanguage: "cs"), "cs")
+	}
+
+	func testDeviceLanguageCode_nilOrEmpty_returnsNil() {
+		// No preferred language, or one that parses to no code, yields nil so the chain falls to English.
+		XCTAssertNil(LetterAlternateSet.deviceLanguageCode(preferredLanguage: nil))
+		XCTAssertNil(LetterAlternateSet.deviceLanguageCode(preferredLanguage: ""))
+	}
+
 	// MARK: - Round-trip / coverage
 
 	func testRawValueRoundTrip() {

@@ -191,7 +191,11 @@ final class WordCompletionProviderTests: XCTestCase {
 		XCTAssertEqual(Set(result.map(\.displayText)), ["Rada", "Ráda"], "leading capital by sentence position")
 	}
 
-	// MARK: - Additive multi-language completion (accent adds a language, task 65)
+	// MARK: - Multi-language completion merge (provider still merges if given several; task 78)
+	//
+	// The controller supplies a single completion language today (task 78 / ADR 0002), but the
+	// provider keeps its multi-language merge so the `[String]` API stays future-proof. These tests
+	// exercise that retained contract directly by handing it more than one language.
 
 	private func multiLanguageProvider(_ byLanguage: [String: [String]]) -> WordCompletionProvider {
 		WordCompletionProvider(
@@ -218,10 +222,20 @@ final class WordCompletionProviderTests: XCTestCase {
 	}
 
 	func testSingleLanguage_onlyQueriesThatDictionary() {
-		// Accent `.all` resolves to just `["en"]` — the cs dictionary is never consulted.
+		// One language in, one dictionary queried — the others are never consulted. This is the
+		// everyday path now that the controller resolves a single completion language (task 78).
 		let provider = multiLanguageProvider(["en": ["help"], "cs": ["hejno"]])
 		let result = provider.suggestions(for: .test(before: "he", languages: ["en"]))
 		XCTAssertEqual(result.map(\.displayText), ["help"])
+	}
+
+	func testRecents_areLanguageAgnostic() {
+		// Learned words aren't filtered by the completion language: an English word the user actually
+		// typed still surfaces under a Czech completion language. This is the softening that makes the
+		// single-language model acceptable (task 78 / ADR 0002) — accent users keep their real recents.
+		let provider = makeProvider(recents: [("hello", 3)], checker: [])
+		let result = provider.suggestions(for: .test(before: "he", languages: ["cs"]))
+		XCTAssertEqual(result.map(\.displayText), ["hello"])
 	}
 
 	func testEmptyLanguages_skipsCheckerButKeepsOtherSources() {
