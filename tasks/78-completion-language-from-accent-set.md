@@ -1,5 +1,7 @@
 # 78 — Jazyk doplnění dle Accent setu (accent → systém → EN)
 
+**Status:** Done — 2026-06-24 (větev `feature/78-completion-language-from-accent-set`). Jednojazyčný řetězec `accent → device → en` v `LetterAlternateSet.completionLanguage` + `deviceLanguageCode`; `makeSuggestionContext` dotazuje právě jeden jazyk. Codex review odhalil, že `UITextChecker.availableLanguages` na iOS 26.2 nemá **žádné** holé kódy (jen regionální `cs_CZ`, `de_DE`, `pt_BR`…), takže `resolveLanguage` rozšířen o krok base→regionální varianta — jinak by i Czech accent padal na angličtinu. Tím se mimochodem opravilo i doplňování z tasku 65, které na tomto iOS reálně nefungovalo.
+
 **Status:** Todo — připraveno z grill session 2026-06-24. **Mění** jazykový model z [tasku 65](65-accent-aware-completions-capslock-limits.md) (viz „Supersedes"). Rozhodnutí zafixované i v [ADR 0002](../docs/adr/0002-single-completion-language-from-accent-set.md).
 
 **Priorita:** v1.x (přímý dopad na relevanci systémových návrhů pro ne-anglické uživatele) · **Úsilí:** S (přepis výběru jazyka v jedné metodě + helper pro systémový jazyk + testy) · **Dopad:** High pro lokalizované uživatele (přestane lézt angličtina, když mají konkrétní accent).
