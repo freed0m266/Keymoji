@@ -193,4 +193,43 @@ final class AppGroupStoreTests: XCTestCase {
 		store.reset()
 		XCTAssertEqual(store.emojiUsageCounts, [:])
 	}
+
+	// MARK: - Presence (unset vs stored-zero)
+
+	func testHasValue_falseWhenUnset() {
+		XCTAssertFalse(store.hasValue(forKey: .whatsNewVersion))
+	}
+
+	func testHasValue_trueAfterStoringZero() {
+		// A stored `0` is still "present" — the whole point of `hasValue` is to not treat 0 as absent.
+		store.setInteger(0, forKey: .whatsNewVersion)
+		XCTAssertTrue(store.hasValue(forKey: .whatsNewVersion))
+	}
+
+	func testHasValue_falseAfterReset() {
+		store.setInteger(3, forKey: .whatsNewVersion)
+		store.reset()
+		XCTAssertFalse(store.hasValue(forKey: .whatsNewVersion))
+	}
+
+	// MARK: - What's New version
+
+	func testWhatsNewVersion_defaultsToZeroWhenUnset() {
+		XCTAssertEqual(store.whatsNewVersion, 0)
+	}
+
+	func testWhatsNewVersion_roundTrips() {
+		store.whatsNewVersion = 2
+		XCTAssertEqual(store.whatsNewVersion, 2)
+		// A second instance reads the same persisted integer.
+		let other = AppGroupStore(suiteName: Self.testSuite)
+		XCTAssertEqual(other.whatsNewVersion, 2)
+	}
+
+	func testWhatsNewVersion_resetClears() {
+		store.whatsNewVersion = 5
+		store.reset()
+		XCTAssertEqual(store.whatsNewVersion, 0)
+		XCTAssertFalse(store.hasValue(forKey: .whatsNewVersion))
+	}
 }

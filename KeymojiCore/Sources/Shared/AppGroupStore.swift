@@ -41,6 +41,26 @@ public final class AppGroupStore: @unchecked Sendable {
 		suite.set(value, forKey: key.rawValue)
 	}
 
+	// MARK: - Int
+
+	public func integer(forKey key: AppGroupStoreKey) -> Int {
+		// `UserDefaults.integer(forKey:)` returns `0` for missing keys — indistinguishable from a stored `0`.
+		// Callers that must tell "unset" from "set to 0" should probe `hasValue(forKey:)` first.
+		suite.integer(forKey: key.rawValue)
+	}
+
+	public func setInteger(_ value: Int, forKey key: AppGroupStoreKey) {
+		suite.set(value, forKey: key.rawValue)
+	}
+
+	// MARK: - Presence
+
+	/// Whether *any* value is stored for `key`. Lets seed-on-absence flows tell "unset" from a stored
+	/// sentinel like `0` without overloading `0` to mean "missing" (see `WhatsNewBaseline`).
+	public func hasValue(forKey key: AppGroupStoreKey) -> Bool {
+		suite.object(forKey: key.rawValue) != nil
+	}
+
 	// MARK: - String
 
 	public func string(forKey key: AppGroupStoreKey) -> String? {
@@ -226,5 +246,15 @@ public extension AppGroupStore {
 	var wordCompletionRecentsLastUsedJSON: String? {
 		get { string(forKey: .wordCompletionRecentsLastUsed) }
 		set { setString(newValue, forKey: .wordCompletionRecentsLastUsed) }
+	}
+
+	/// Last What's New content version this device has seen. A dedicated monotonic counter, decoupled from
+	/// the marketing/build version and bumped by hand when new content ships (see `WhatsNew.currentVersion`).
+	/// Seeded once at host-app launch by `WhatsNewBaseline`. Reads `0` when unset — callers detecting absence
+	/// must use `hasValue(forKey: .whatsNewVersion)`, never `== 0`, since `0` is a legitimate future value.
+	/// The keyboard extension never reads this.
+	var whatsNewVersion: Int {
+		get { integer(forKey: .whatsNewVersion) }
+		set { setInteger(newValue, forKey: .whatsNewVersion) }
 	}
 }

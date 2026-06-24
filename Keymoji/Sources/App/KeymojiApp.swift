@@ -38,6 +38,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		// Restore the promo-trial expiry mirror from the Keychain master after a reinstall (the App Group
 		// container is wiped on uninstall; the Keychain survives). Cheap, runs once, before any UI gates read.
 		PromoTrialReconciliation.reconcileShared()
+		// Plant the What's New content-version baseline on first run, before any What's New content ships, so a
+		// fresh install never sees a What's New for the version it was born on (task 76). Seed-on-absence; no UI.
+		WhatsNewBaseline.seedIfNeeded()
 		return true
 	}
 

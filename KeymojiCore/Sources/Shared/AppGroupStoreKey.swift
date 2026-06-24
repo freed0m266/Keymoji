@@ -38,4 +38,8 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	/// from disk (task 73). The pool lives in a file in the App Group container, not UserDefaults, so this
 	/// key never backs a `UserDefaults` entry — it only names a notification.
 	case learnedWordsChanged
+	/// Last What's New content version this device has seen (`Int`). A dedicated monotonic counter, decoupled
+	/// from the marketing/build version and bumped by hand when new content ships. Seeded once at host-app
+	/// launch (`WhatsNewBaseline`); absence is detected via presence, not a `0` sentinel. Keyboard never reads it.
+	case whatsNewVersion
 }
