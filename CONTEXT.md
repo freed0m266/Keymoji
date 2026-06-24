@@ -8,8 +8,8 @@ input behaviour and settings so code, UI copy, and discussion stay aligned.
 **Accent set**:
 The per-language collection of diacritic letters offered when a base letter key is long-pressed
 (e.g. the Czech set surfaces `č š ž …` under `c s z`). Primarily a long-press alternates picker; it
-*additionally* contributes its language to the word-completion dictionary (English base + the
-accent's language, merged). It does **not** affect the keyboard layout or the system
+also *selects* the language Keymoji's word-completion dictionary is queried in whenever it names one
+(see *Completion language*). It does **not** affect the keyboard layout or the system
 keyboard-switcher label. Modelled by `LetterAlternateSet`.
 _Avoid_: keyboard language, locale, input language.
 
@@ -17,15 +17,29 @@ _Avoid_: keyboard language, locale, input language.
 The physical key arrangement, `qwerty` or `qwertz`. Independent of the accent set.
 
 **Primary language**:
-The static `PrimaryLanguage` declared in the keyboard extension's Info.plist. Drives the label iOS
-shows in the system keyboard switcher (the globe menu) and is fixed at build time — it cannot react
-to in-app settings. At runtime it is echoed by `state.currentLanguage` (`textInputMode?.primaryLanguage`);
-for a custom keyboard iOS does **not** expose the focused field's own language, so the two are the same
-value, and `currentLanguage` is the base of the completion-dictionary language list (see *Accent set*).
+The static `PrimaryLanguage` declared in the keyboard extension's Info.plist (`mul` today). Drives
+**only** the label iOS shows in the system keyboard switcher (the globe menu); fixed at build time, it
+cannot react to in-app settings. Echoed at runtime by `state.currentLanguage`
+(`textInputMode?.primaryLanguage`), but for a custom keyboard iOS exposes through it neither the
+focused field's language nor the device language — so it carries no useful locale signal and does
+**not** drive completions (see *Completion language*).
+
+**Completion language**:
+The single language Keymoji queries the system dictionary (`UITextChecker`) in for word completions.
+Resolved by a fallback chain: the *Accent set*'s language when it names one (i.e. not *All*) → else the
+device's preferred language (`Locale.preferredLanguages`) → else English. Exactly one language is
+queried — there is no permanent English co-base — and an unsupported code resolves to English
+downstream. Orthogonal to *learned words*, which are language-agnostic and surface regardless of this
+choice.
+_Avoid_: keyboard language, input language, system language (the chain only *falls back* to it when the accent set is *All*).
 
 **Learned word**:
 A word Keymoji has observed the user type and persists (capped pool) to offer as a future
-completion. Stored lowercased in the app-group container; PII-adjacent.
+completion. Stored lowercased in the app-group container; PII-adjacent. *Learned* is not *offered*: a
+word is stored from its first sighting but only surfaced as a suggestion — and only listed in the
+learned-words editor — once it has been seen at least a fixed minimum number of times, applied
+uniformly to prose words and email addresses alike (no per-kind exemption). Sub-threshold singletons
+stay stored but invisible; *Clear all* is the only way to purge them.
 
 **Number row**:
 The optional digit row `1234567890` shown above the letters, gated by the user's "Always show
@@ -59,6 +73,18 @@ suggestion bar recedes. Finger movement then scrubs the text cursor — horizont
 by line. Exits on release; releasing without having moved types **nothing** (no space). Backed by
 `isTrackpadActive` and the `onTrackpadModeChanged` callback.
 _Avoid_: cursor mode, scrub mode, swipe-to-move, space-drag.
+
+## Lifecycle
+
+**What's New version**:
+A monotonic integer marking the app's current *announcement content* — bumped by hand whenever new
+What's-New copy is written, deliberately decoupled from the marketing/app version (a bugfix release
+can ship without a bump; two announcements can land in one release). The last value a device has seen
+is persisted (app-group). The What's-New screen shows once when the stored value trails the current
+one, then the stored value catches up. A fresh install **seeds** the stored value to the current one
+(seed-on-absence), so What's New surfaces only on a later *update*, never on first install. Distinct
+from the marketing version shown in About.
+_Avoid_: app version (it isn't), build number, schema/data version (that's migrations — a separate concern).
 
 ## Monetization
 

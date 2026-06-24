@@ -26,6 +26,7 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 11. [11 — Host app onboarding (3-step flow)](11-host-app-onboarding.md)
 12. [12 — Host app Settings screen](12-host-app-settings.md)
 13. [13 — About screen + privacy policy HTML](13-about-and-privacy.md)
+76. [76 — „What's New" content version: založení baseline](76-whats-new-content-version-baseline.md) — pouze infrastruktura (Int verze v `AppGroupStore` + seed-on-absence na startu); What's New UI je budoucí task. Seed **teď, před prvním obsahem**, ať budoucí oznámení míří správně.
 
 ## v1.0 — Visual polish
 
@@ -90,6 +91,8 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 66. [66 — Číslice nejdou napsat při vypnutém number row → nativní rozložení symbolů](66-number-row-off-digits-native-symbol-layout.md)
 73. [73 — Výkon: plynulá klávesnice i při 10 000 learned words](73-keyboard-perf-smooth-at-10k-learned-words.md) — fázovaný (storage→file+index, `@Observable` scoped invalidace, async suggestion pipeline); řeší všechny critical/high/medium nálezy perf auditu, beze změny chování/UI.
 74. [74 — Kvalita učení a návrhů: anti-překlep, čísla & nicky, e-mail quick-pick](74-learning-quality-numbers-emails.md) — navazuje na 73; práh `count ≥ 2` proti zobrazování naučených překlepů, učení čísel/telefonů/nicků (sjednocení completion na letters+symbols), proaktivní e-mail quick-pick.
+77. [77 — Learned words: uniformní suggest práh (skrýt 1×, zrušit e-mail výjimku)](77-learned-words-uniform-suggest-threshold.md) — editor skryje podprahová slova, `minSuggestCount` se stává jediným zdrojem pravdy pro prose i adresy i viditelnost; **supersedes e-mail výjimku z tasku 74 (Fáze C)**.
+78. [78 — Jazyk doplnění dle Accent setu (accent → systém → EN)](78-completion-language-from-accent-set.md) — jednojazyčný fallback řetězec místo natvrdo anglické base; **supersedes aditivní model z tasku 65** ([ADR 0002](../docs/adr/0002-single-completion-language-from-accent-set.md)).
 
 ## Monetizace
 
