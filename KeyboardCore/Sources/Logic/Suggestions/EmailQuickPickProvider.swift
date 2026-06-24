@@ -12,8 +12,9 @@ import Foundation
 /// moment the user types anything, this goes silent and the prefix-match path takes over. (We can't
 /// gate on "no active word prefix": `@` and `.` are word boundaries, so `user@`/`user@x.` would read
 /// as prefix-less and wrongly re-trigger the quick-pick *mid-address*, appending a whole saved address
-/// at the cursor.) Exempt from `WordCompletionProvider.minSuggestCount`: a known address is worth
-/// offering even after a single use.
+/// at the cursor.) Gated by the same `WordCompletionProvider.minSuggestCount` as every other suggestion
+/// (task 77 dropped the prior single-use exemption): an address is offered only once it's been typed at
+/// least `minSuggestCount` times, so the quick-pick stays consistent with the uniform threshold.
 public struct EmailQuickPickProvider: SuggestionProviding {
 	private let recents: any PersonalRecentsReading
 
@@ -30,13 +31,17 @@ public struct EmailQuickPickProvider: SuggestionProviding {
 		guard before.isEmpty, after.isEmpty else { return [] }
 
 		// One filtered pass over the pool (only reachable in a focused, prefix-less email field — not
-		// per-keystroke): the highest-count `@` token, ties broken by most-recent, then word for
-		// determinism.
+		// per-keystroke): the highest-count `@` token at or above the uniform threshold (task 77), ties
+		// broken by most-recent, then word for determinism.
 		let best = recents.allLearnedWords()
-			.filter { $0.word.contains("@") }
+			.filter { $0.word.contains("@") && $0.count >= WordCompletionProvider.minSuggestCount }
 			.max { lhs, rhs in
-				if lhs.count != rhs.count { return lhs.count < rhs.count }
-				if lhs.lastUsed != rhs.lastUsed { return lhs.lastUsed < rhs.lastUsed }
+				if lhs.count != rhs.count {
+					return lhs.count < rhs.count
+				}
+				if lhs.lastUsed != rhs.lastUsed {
+					return lhs.lastUsed < rhs.lastUsed
+				}
 				return lhs.word > rhs.word
 			}
 		guard let best else { return [] }
