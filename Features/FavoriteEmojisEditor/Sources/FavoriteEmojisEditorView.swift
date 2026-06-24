@@ -90,11 +90,11 @@ public struct FavoriteEmojisEditorView<ViewModel: FavoriteEmojisEditorViewModeli
 
 	private var favoritesList: some View {
 		List {
-			if !viewModel.showLossAversionBanner {
+			if viewModel.showLossAversionBanner {
 				lossAversionBanner
 			}
 
-			if !showsUpsellRow {
+			if showsUpsellRow {
 				upsellRow
 			}
 
