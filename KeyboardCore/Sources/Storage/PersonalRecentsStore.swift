@@ -103,9 +103,17 @@ public struct PersonalRecentsStore: PersonalRecentsReading {
 		return Perf.measure("matches") { index.matches(prefix: prefix) }
 	}
 
-	/// Total distinct learned words. Drives the Settings counter.
+	/// Total distinct learned words, including sub-threshold singletons.
 	public var count: Int {
 		index.count
+	}
+
+	/// Number of learned words with at least `minCount` uses — i.e. the *offerable* pool. Drives the
+	/// Settings counter (task 81), passed `WordCompletionProvider.minSuggestCount` so the displayed number
+	/// matches what the providers surface and the editor lists. Pass-through to the index, where the count
+	/// runs allocation-free under its lock.
+	public func count(atLeast minCount: Int) -> Int {
+		index.count(atLeast: minCount)
 	}
 
 	/// All learned words, unsorted. The management screen owns the sort order.
