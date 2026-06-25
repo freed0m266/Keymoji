@@ -1,5 +1,7 @@
 # 84 — Auto-inserted space pohlcená následující interpunkcí
 
+**Status:** Done — 2026-06-25 (větev `feature/84-auto-inserted-space-absorb-punctuation`). Přidán příznak `KeyboardState.lastSpaceWasAuto` (init default `false`), nastavený na `appendsSpace` jen v `.suggestionAccept`. Vkládání znaků jde teď přes sdílený `InputDispatcher.insertCharacter` (společný pro `.insertText` i `.insertRawText`), který přes `absorbAutoSpaceIfNeeded` smaže auto-mezeru, když je `lastSpaceWasAuto` && vkládaný znak ∈ `absorbingPunctuation` (`. , ? !`) && kontext končí `" "`; v pohlcovacím případě se **přeskočí** `learnIfWordBoundary` (slovo už započítané při accept → žádný double-count). Příznak je one-shot: reset na `false` v `handleSpace`, `updateSpaceTracking` a v šesti reset větvích (backspace, deleteWord, return, switchPage, cursorOffset, cursorLineOffset). Ruční mezera i `". "` z double-tapu zůstávají netknuté. 9 nových testů (všechny 4 znaky, no-double-count, ruční mezera, double-tap `". "`, e-mail inert, one-shot reset přes všech 6 akcí); celá sada `KeyboardCore_Tests` zelená (458+). Closing review: multi-agent (ultracode) místo Codexu — 5 nálezů, 1 přijat (chyběl test resetu pro 5 z 6 akcí → doplněn), 4 zamítnuty (pinned-decision scope-creep / redundantní coverage).
+
 **Status:** Todo — připraveno z grill session 2026-06-25.
 
 **Priorita:** v1.x (typing polish, Apple-like) · **Úsilí:** S (jeden stavový příznak + větev v insertu + testy) · **Dopad:** Medium (plynulejší psaní s návrhy, žádné `„slovo ."`).
