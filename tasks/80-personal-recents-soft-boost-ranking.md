@@ -1,5 +1,7 @@
 # 80 — Soft-boost naučených slov nad iOS slovník
 
+**Status:** Done — 2026-06-25 (větev `feature/80-personal-recents-soft-boost-ranking`). Přidán laditelný `WordCompletionProvider.personalBoost = 0.2`, přičtený ke skóre personal recents; `[0,1]` clamp zrušen (skóre je jen řadicí), takže count 8/9/10 dál řadí podle count. Přechod: count 2 = 0.85 (ustoupí iOS topu), count 3 = 0.90 (remíza), count 4 = 0.95 (vyhraje). Lživý doc-comment přepsán na reálné chování. Codex review (1 nález, aplikován): `0.55 + 0.05·3 + 0.2` nese binární FP prach (0.90000…13), takže count-3 „remíza" by těsně přebila 0.9 a posunula přechod na count 3 — skóre se proto zaokrouhluje na setiny, count 3 padne přesně na 0.9. Testy přepočítány + přidány (count 2/3/4 přechod, řazení nad count 8).
+
 **Status:** Todo — připraveno z grill session 2026-06-25. Ladí scoring z [tasku 40](40-word-completion-suggestions.md); nemění jeho strukturu.
 
 **Priorita:** v1.x (učení dnes „nesedí" — tvé naučené slovo dlouho prohrává s obecným iOS tipem) · **Úsilí:** S (jedna konstanta + úprava jednoho výpočtu skóre + přepis lživého komentáře + testy) · **Dopad:** Medium (naučená slova se chovají podle slibu „přizpůsobí se mně").
