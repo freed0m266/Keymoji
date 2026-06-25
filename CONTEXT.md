@@ -74,6 +74,23 @@ by line. Exits on release; releasing without having moved types **nothing** (no 
 `isTrackpadActive` and the `onTrackpadModeChanged` callback.
 _Avoid_: cursor mode, scrub mode, swipe-to-move, space-drag.
 
+## Typing behaviour
+
+**Auto-capitalization**:
+Keymoji promoting the next letter to a one-shot upper. Fires at the start of a field, after a sentence
+terminator + single space (`. `, `? `, `! `), and after a paragraph break. Honors the focused field's
+capitalization trait — a field requesting *none* (username, password) is never promoted. Explicitly
+**not** after a comma (that's mid-sentence). User-toggleable as a master on/off (default on); the toggle
+only ever *suppresses* — it never forces a capital where the field declined one.
+_Avoid_: auto-shift, auto-caps, sentence case.
+
+**Auto-inserted space**:
+A trailing space Keymoji appends itself, as opposed to one the user typed. Only the space appended when
+a *word completion* is accepted is **absorption-eligible**: sentence punctuation (`.` `,` `?` `!`) typed
+immediately after it deletes it (`word ` + `.` → `word.`). A user-typed space, and the `". "` produced
+by double-tap space, are left intact.
+_Avoid_: trailing space, magic space, smart space.
+
 ## Lifecycle
 
 **What's New version**:

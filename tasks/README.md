@@ -113,6 +113,15 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 71. [71 — Refactor: extrahovat sdílené UI komponenty z host-app views do KeymojiUI](71-extract-shared-ui-components-host-app.md) — pixel-perfect, žádná změna UI; host-app půlka.
 72. [72 — Refactor: pročistit a rozdělit UI klávesnicové extension (KeyboardUI)](72-extract-shared-ui-components-keyboard.md) — sesterský refactor, extension-only (nemůže importovat KeymojiUI).
 
+## v1.x — Grill 2026-06-25 (About, typing, analytics)
+
+Připraveno v grill-with-docs session; čtyři nezávislé tasky.
+
+83. [83 — About: „Review on App Store" řádek + monochrom icon restyle](83-about-review-on-app-store.md) — XS; přímý write-review odkaz, dvě sekce (Support/Feedback + Legal).
+84. [84 — Auto-inserted space pohlcená následující interpunkcí](84-auto-inserted-space-absorb-punctuation.md) — S; jen mezera z přijetí návrhu, znaky `. , ? !`, bez double-countu učení.
+85. [85 — Auto-capitalization: oprava bugu s tečkou + master toggle](85-auto-capitalization-period-fix-toggle.md) — M; bug je v pipeline (re-run jen při změně stránky), ne v `AutoCapitalizer`; toggle default ON.
+86. [86 — Anonymní host-app analytics (TelemetryDeck) + privacy reconciliation](86-anonymous-host-app-analytics-telemetrydeck.md) — L; host-only, nikdy obsah, opt-out default ON; přepis privacy slibu ([ADR 0004](../docs/adr/0004-anonymous-host-app-analytics.md)).
+
 ## Mimo scope úplně
 
 - **iPad support.** iPad keyboard má vlastní layout (split, floating, mini), to je celý vlastní projekt. Keymoji zůstává iPhone only minimálně do v1.5.
@@ -124,7 +133,8 @@ Diskutovaná architektura, design rozhodnutí a non-goals jsou zafixované v jed
 - **Autocorrect.** Bar nikdy nenabízí překlepy a nikdy ticho nepřepisuje text
   po space. Selection je vždy explicitní (tap na chip). Out of scope permanentně.
 - **Voice typing, swipe typing, GIF picker, sticker picker.** Vše out.
-- **Reklamy, analytics, telemetry, crash reporting.** Záměrná absence — privacy claim je „nesbíráme nic" a držíme to.
+- **Reklamy, crash reporting, tracking obsahu (keystroky / naučená slova / dotazy).** Záměrná absence — drží se.
+  - **Pozn.: anonymní host-app analytics už NENÍ non-goal** — viz [task 86](86-anonymous-host-app-analytics-telemetrydeck.md) + [ADR 0004](../docs/adr/0004-anonymous-host-app-analytics.md). Slib se zpřesnil z absolutního „nesbíráme nic" na „nikdy nic, co píšeš; anonymní statistika nastavení, opt-out". Klávesnice (extension) dál neposílá nic.
 
 ## Workflow
 
