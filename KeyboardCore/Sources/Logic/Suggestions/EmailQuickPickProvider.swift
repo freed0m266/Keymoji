@@ -9,10 +9,11 @@ import Foundation
 /// (`martin.svo…` ×3) are indistinguishable, so one readable best pick wins.
 ///
 /// Active only when the field's learning context is `.emailAddress` **and** the field is empty — the
-/// moment the user types anything, this goes silent and the prefix-match path takes over. (We can't
-/// gate on "no active word prefix": `@` and `.` are word boundaries, so `user@`/`user@x.` would read
-/// as prefix-less and wrongly re-trigger the quick-pick *mid-address*, appending a whole saved address
-/// at the cursor.) Gated by the same `WordCompletionProvider.minSuggestCount` as every other suggestion
+/// moment the user types anything, this goes silent and the prefix-match path takes over. Gating on an
+/// *empty field* (rather than "no active word prefix") is what keeps the quick-pick from re-triggering
+/// *mid-address*: with the whitespace-only tokenizer (task 79) a partial like `user@` or `user@x.` is
+/// itself the active prefix, so the prefix-match path already completes it — prepending a whole saved
+/// address there would be wrong. Gated by the same `WordCompletionProvider.minSuggestCount` as every other suggestion
 /// (task 77 dropped the prior single-use exemption): an address is offered only once it's been typed at
 /// least `minSuggestCount` times, so the quick-pick stays consistent with the uniform threshold.
 public struct EmailQuickPickProvider: SuggestionProviding {

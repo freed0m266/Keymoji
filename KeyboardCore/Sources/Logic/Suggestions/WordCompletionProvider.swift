@@ -141,7 +141,14 @@ public struct WordCompletionProvider: SuggestionProviding {
 	/// Smart capitalization (CAP3): the chip mirrors the casing the user is typing so a tap inserts
 	/// WYSIWYG. All-caps prefix (or caps lock) → uppercase; capitalized prefix (or one-shot
 	/// shift) → leading capital; otherwise the candidate's own base casing.
+	///
+	/// An `@` token (a learned email address) is exempt (task 79): addresses are stored lowercase and
+	/// are case-sensitive values, so an auto-capitalized prefix at the start of a field (`Sv…`) must not
+	/// yield `Sv.mar@email.cz` — the stored lowercase form is inserted verbatim.
 	static func displayCapitalization(for candidate: String, prefix: String, context: SuggestionContext) -> String {
+		if candidate.contains("@") {
+			return candidate
+		}
 		let shift: ShiftState? = {
 			if case .letters(let state) = context.page { return state }
 			return nil

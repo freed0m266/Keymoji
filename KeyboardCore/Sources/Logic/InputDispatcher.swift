@@ -323,7 +323,7 @@ public enum InputDispatcher {
 	/// for learning purposes any more than they do for completion).
 	private static let learningBoundaries: Set<String> = [" ", ".", ",", "!", "?"]
 
-	/// After a word-boundary keystroke, learn the just-completed word — but only in prose fields.
+	/// After a word-boundary keystroke, learn the just-completed token — but only in prose fields.
 	/// Email fields learn the whole field elsewhere (`KeyboardViewController`), and `.denied`
 	/// fields never learn. No-op when `learning` is absent (tests, previews).
 	private static func learnIfWordBoundary(
@@ -335,23 +335,53 @@ public enum InputDispatcher {
 		guard let learning, state.currentEligibility.learningContext == .prose else { return }
 		guard learningBoundaries.contains(insertedText) else { return }
 		let context = proxy.documentContextBeforeInput ?? ""
-		// Learn only when this boundary directly terminates a token — i.e. the character right before
-		// the just-typed trailing boundary is itself a word character. Without this, a *second*
-		// boundary re-learns the same token: double-space → ". " (default action), "word  ", or
-		// "word. " would each count it twice and skew ranking. Guards both branches below.
+		// Harvest a token at most once — on the *first* learning boundary that follows its content. Walk
+		// back from the char before the just-typed boundary to the token's last alphanumeric: if a *learning
+		// boundary* sits in that gap, an earlier boundary already harvested this token, so skip (a second
+		// boundary — `word. `, `word  `, double-space → ". " — must not re-count it). Non-learning-trigger
+		// edge punctuation in the gap (`)`, `;`, `:`, quotes) is fine: it isn't a harvest trigger, so the
+		// token still reaches `wordCore` and is trimmed/classified here. This replaces a plain
+		// "char-before-boundary is a word character" test, which (with the whitespace-only tokenizer, where
+		// every punctuation mark is now a word character) neither blocked the double-count nor let edge
+		// punctuation through.
 		let chars = Array(context)
-		guard chars.count >= 2, WordPrefixExtractor.isWordCharacter(chars[chars.count - 2]) else { return }
-		// Whole-email capture (task 74 follow-up): a prose-typed address (`martin@gmail.com`) would be
-		// split on `@`/`.` by the word tokenizer, so when this boundary completes one, learn it as a
-		// single `.emailAddress` token (skips the prose length filter, joins the shared pool) and skip
-		// the trailing fragment ("com"). Earlier internal-dot fragments ("gmail") are harmless
-		// singletons under the count≥2 display gate.
-		if let email = WordPrefixExtractor.trailingEmail(in: context) {
-			learning.learn(email, .emailAddress)
+		guard chars.count >= 2 else { return }
+		var contentIndex = chars.count - 2
+		while contentIndex >= 0, !isAlphanumeric(chars[contentIndex]) {
+			if learningBoundaries.contains(String(chars[contentIndex])) { return }
+			contentIndex -= 1
+		}
+		guard contentIndex >= 0 else { return }
+		// Normalize the harvested token (trim edge punctuation) and classify (task 79 / ADR 0003),
+		// replacing the old `trailingEmail` reassembly — the whitespace-only tokenizer already delivers a
+		// prose-typed address (`sv.mar@email.cz`) as one whole token, nothing to re-assemble:
+		//   • an `@` token is learned as a single `.emailAddress` only when it's a *full* address
+		//     (`local@domain.tld`); a half-typed (`sv.mar@email`) or TLD-less (`foo@bar`) `@` token is
+		//     dropped, never stored as a fragment;
+		//   • otherwise it's a prose token (length window is the store's job).
+		guard
+			let token = WordPrefixExtractor.lastCompletedWord(in: context),
+			let core = WordPrefixExtractor.wordCore(of: token)
+		else { return }
+
+		if core.contains("@") {
+			if WordPrefixExtractor.isEmailShaped(core) {
+				learning.learn(core, .emailAddress)
+			}
 			return
 		}
-		guard let word = WordPrefixExtractor.lastCompletedWord(in: context) else { return }
-		learnProse(word, state: state, learning: learning)
+		// A prose token must carry real content: ≥ `minLength` letters/digits after trimming. This is what
+		// makes a `.`/`,` learning boundary safe on an abbreviation — `e.g.`/`i.e.` trim to a
+		// 2-alphanumeric core and are dropped ("after trim, short → rejected"), while `3.14`,
+		// `well-known` and ordinary words clear it. The store still enforces the [3, 25] length window.
+		let alphanumericCount = core.reduce(into: 0) { $0 += isAlphanumeric($1) ? 1 : 0 }
+		guard alphanumericCount >= PersonalRecentsStore.minLength else { return }
+		learnProse(core, state: state, learning: learning)
+	}
+
+	/// A letter or decimal digit — the "content" characters that bound a real token.
+	private static func isAlphanumeric(_ character: Character) -> Bool {
+		character.isLetter || character.isNumber
 	}
 
 	/// The single learning gate both paths funnel through: learn `word` into the personal pool only in
