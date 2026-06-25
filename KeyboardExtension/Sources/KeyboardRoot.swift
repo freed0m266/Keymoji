@@ -17,6 +17,7 @@ struct KeyboardRoot: View {
 			width: model.width,
 			recentEmojis: model.recentEmojis,
 			favoriteEmojis: model.favoriteEmojis,
+			centersFavorites: model.centersFavorites,
 			searchQuery: model.searchQuery,
 			suggestions: model.suggestions,
 			fieldAllowsBar: model.fieldAllowsBar,

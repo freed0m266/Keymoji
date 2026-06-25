@@ -25,6 +25,9 @@ final class KeyboardViewModel {
 	var recentEmojis: [String]
 	/// Favorites in frozen display order (bar + panel), as resolved by the controller.
 	var favoriteEmojis: [String]
+	/// Whether the suggestion bar should center its favorites cluster. Controller sets it to
+	/// `!state.effectiveIsPlus` — the view stays monetization-agnostic (it only knows "center or not").
+	var centersFavorites: Bool
 	var searchQuery: String
 	var suggestions: [Suggestion]
 	/// Whether the field permits the top bar (false in secure entry).
@@ -46,6 +49,7 @@ final class KeyboardViewModel {
 		width: CGFloat,
 		recentEmojis: [String],
 		favoriteEmojis: [String],
+		centersFavorites: Bool,
 		searchQuery: String,
 		suggestions: [Suggestion],
 		fieldAllowsBar: Bool,
@@ -62,6 +66,7 @@ final class KeyboardViewModel {
 		self.width = width
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
+		self.centersFavorites = centersFavorites
 		self.searchQuery = searchQuery
 		self.suggestions = suggestions
 		self.fieldAllowsBar = fieldAllowsBar
