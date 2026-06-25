@@ -1,5 +1,7 @@
 # 83 — About: „Review on App Store" řádek + icon restyle
 
+**Status:** Done — 2026-06-25 (větev `feature/83-about-review-on-app-store`). Přidán `KeymojiURLs.appStoreReview` (write-review deep link) + `AboutViewModel.openAppStoreReview()` (do protokolu i mocku). `AboutView` rozdělen na `supportSection` (`⭐ star.fill` Review on App Store · `✉️ envelope.fill` Contact support) + `legalSection` (`🛡 lock.shield` Full privacy policy + copyright footer), všechny řádky s monochrom tint ikonou. Nové L10n stringy `about.reviewOnAppStore` + `about.supportHeader`, `about.legalHeader` zkrácen na „Legal". Přidán `Icon.envelopeFill`. Dark snapshot re-recordnut a prochází. Codex review: 0 nálezů.
+
 **Status:** Todo — připraveno z grill session 2026-06-25.
 
 **Priorita:** v1.x (App Store readiness — chybí CTA na recenzi) · **Úsilí:** XS (jeden řádek + URL + ikony, snapshot update) · **Dopad:** Low/Medium (recenze = ASO + social proof).
