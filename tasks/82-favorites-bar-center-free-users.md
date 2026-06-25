@@ -1,6 +1,6 @@
 # 82 — Favorites bar: vycentrovat pro free uživatele
 
-**Status:** Todo — připraveno z grill session 2026-06-25.
+**Status:** Done — 2026-06-25.
 
 **Priorita:** v1.x (kosmetika suggestion baru pro free uživatele) · **Úsilí:** XS (jeden flag protáhnout do view + podmíněný Spacer + snapshot) · **Dopad:** Low (vizuální vyladění; free user má ≤6 favoritů nalevo, působí to nedotaženě).
 
