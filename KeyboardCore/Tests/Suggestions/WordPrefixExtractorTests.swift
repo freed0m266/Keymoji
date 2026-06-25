@@ -3,7 +3,7 @@ import XCTest
 
 final class WordPrefixExtractorTests: XCTestCase {
 
-	// MARK: - activeWordPrefix
+	// MARK: - activeWordPrefix (boundary = whitespace/newline only, task 79)
 
 	func testEndOfWord_returnsTrailingRun() {
 		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "Hello wor", after: nil), "wor")
@@ -18,9 +18,9 @@ final class WordPrefixExtractorTests: XCTestCase {
 		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "it's", after: nil), "it's")
 	}
 
-	func testHyphen_isBoundary() {
-		// "well-kno" → only the run after the hyphen counts.
-		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "well-kno", after: nil), "kno")
+	func testHyphen_isWordCharacter() {
+		// Whitespace-only boundary: the hyphen now stays in the token, so "well-known" is one word.
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "well-kno", after: nil), "well-kno")
 	}
 
 	func testDigits_areWordCharacters() {
@@ -37,11 +37,12 @@ final class WordPrefixExtractorTests: XCTestCase {
 		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "freedom266", after: nil), "freedom266")
 	}
 
-	func testLeadingPlus_isBoundary_phoneTokenizesWithoutIt() {
-		// A leading `+` (phone country-code marker) is a word boundary, so the token is the digits
-		// alone — `+420604731026` learns/offers as `420604731026` (task 74 decision).
-		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "+420604731026", after: nil), "420604731026")
-		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "+420604731026 "), "420604731026")
+	func testLeadingPunctuation_staysInPrefix_trimmedOnlyAtStore() {
+		// A leading `+`/`(` is now part of the active prefix (whitespace-only boundary). It's the
+		// store-side `wordCore` — not the tokenizer — that strips edge punctuation before learning.
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "+420604731026", after: nil), "+420604731026")
+		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "+420604731026 "), "+420604731026")
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "+420604731026"), "420604731026", "edge `+` trimmed for storage")
 	}
 
 	func testDiacritics_areWordCharacters() {
@@ -49,10 +50,25 @@ final class WordPrefixExtractorTests: XCTestCase {
 		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "naï", after: nil), "naï")
 	}
 
-	func testTrailingBoundary_returnsNil() {
+	func testEmailThroughDots_staysOneToken() {
+		// The whole point of task 79: an in-progress address survives the dots as a single prefix, so it
+		// keeps prefix-matching a stored `sv.mar@email.cz` at every step.
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "sv.", after: nil), "sv.")
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "sv.mar", after: nil), "sv.mar")
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "sv.mar@e", after: nil), "sv.mar@e")
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "type sv.mar@email.cz", after: nil), "sv.mar@email.cz")
+	}
+
+	func testTrailingWhitespace_returnsNil() {
+		// Only whitespace/newline ends a word now — trailing punctuation does not.
 		XCTAssertNil(WordPrefixExtractor.activeWordPrefix(before: "Hello ", after: nil))
-		XCTAssertNil(WordPrefixExtractor.activeWordPrefix(before: "Hello.", after: nil))
-		XCTAssertNil(WordPrefixExtractor.activeWordPrefix(before: "(", after: nil))
+		XCTAssertNil(WordPrefixExtractor.activeWordPrefix(before: "Hello\n", after: nil))
+	}
+
+	func testTrailingPunctuation_isNoLongerABoundary() {
+		// Punctuation stays in the token (it's trimmed only at the store gate, not here).
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "Hello.", after: nil), "Hello.")
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "(", after: nil), "(")
 	}
 
 	func testEmptyOrNil_returnsNil() {
@@ -65,36 +81,43 @@ final class WordPrefixExtractorTests: XCTestCase {
 		XCTAssertNil(WordPrefixExtractor.activeWordPrefix(before: "hel", after: "lo"))
 	}
 
-	func testCursorBeforeBoundary_isNotMidWord() {
+	func testCursorBeforeWhitespace_isNotMidWord() {
 		// Caret after "hel" with a space following is a legitimate completion point.
 		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: "hel", after: " world"), "hel")
 	}
 
-	func testColonBoundary_stripsLeadingColon() {
-		// `:` is a boundary, so a Slack-context buffer yields the bare shortcode prefix (the
-		// coordinator's Slack-priority rule is what actually suppresses word completions here).
-		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: ":sm", after: nil), "sm")
+	func testColonPrefix_keptInToken() {
+		// `:` is no longer a boundary, so the Slack-context buffer keeps the leading `:` in the prefix.
+		// (The coordinator's Slack-priority rule, not the tokenizer, is what suppresses word completions.)
+		XCTAssertEqual(WordPrefixExtractor.activeWordPrefix(before: ":sm", after: nil), ":sm")
 	}
 
-	// MARK: - lastCompletedWord
+	// MARK: - lastCompletedWord (raw trailing run; punctuation trimmed later by wordCore)
 
 	func testLastCompletedWord_afterSpace() {
 		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "Hello world "), "world")
 	}
 
-	func testLastCompletedWord_afterPunctuation() {
-		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "Hello world."), "world")
-		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "Wait, "), "Wait")
+	func testLastCompletedWord_afterPunctuation_keepsPunctuation() {
+		// The raw run now carries the trailing punctuation; `wordCore` strips it before learning.
+		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "Hello world."), "world.")
+		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "Wait, "), "Wait,")
 	}
 
 	func testLastCompletedWord_noTrailingBoundary_returnsTrailingWord() {
 		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "Hello world"), "world")
 	}
 
-	func testLastCompletedWord_onlyBoundaries_returnsNil() {
-		XCTAssertNil(WordPrefixExtractor.lastCompletedWord(in: " . "))
+	func testLastCompletedWord_onlyWhitespace_returnsNil() {
+		XCTAssertNil(WordPrefixExtractor.lastCompletedWord(in: "   "))
 		XCTAssertNil(WordPrefixExtractor.lastCompletedWord(in: ""))
 		XCTAssertNil(WordPrefixExtractor.lastCompletedWord(in: nil))
+	}
+
+	func testLastCompletedWord_punctuationRun_returnedRaw() {
+		// A pure-punctuation trailing run is returned as-is — `wordCore` is what drops it (→ nil).
+		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: " . "), ".")
+		XCTAssertNil(WordPrefixExtractor.wordCore(of: "."))
 	}
 
 	func testLastCompletedWord_preservesApostropheAndDiacritics() {
@@ -102,36 +125,49 @@ final class WordPrefixExtractorTests: XCTestCase {
 		XCTAssertEqual(WordPrefixExtractor.lastCompletedWord(in: "café "), "café")
 	}
 
-	// MARK: - trailingEmail (prose whole-email capture)
+	// MARK: - wordCore (edge non-alphanumeric trim)
 
-	func testTrailingEmail_detectsAddressAtEnd() {
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "email me at martin@gmail.com"), "martin@gmail.com")
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "martin@gmail.com"), "martin@gmail.com")
+	func testWordCore_trimsEdgePunctuation_keepsInternal() {
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "ahoj,"), "ahoj")
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "(hi)"), "hi")
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "well-known"), "well-known", "internal hyphen kept")
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "3.14"), "3.14", "internal dot kept")
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "sv.mar@email.cz"), "sv.mar@email.cz", "address untouched")
+		XCTAssertEqual(WordPrefixExtractor.wordCore(of: "e.g."), "e.g", "only the trailing dot is trimmed")
 	}
 
-	func testTrailingEmail_ignoresTrailingBoundaryAndPunctuation() {
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "at martin@gmail.com "), "martin@gmail.com")
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "at martin@gmail.com."), "martin@gmail.com")
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "(martin@gmail.com)"), "martin@gmail.com")
+	func testWordCore_nilWhenNoAlphanumericContent() {
+		XCTAssertNil(WordPrefixExtractor.wordCore(of: "..."))
+		XCTAssertNil(WordPrefixExtractor.wordCore(of: ":"))
+		XCTAssertNil(WordPrefixExtractor.wordCore(of: ""))
 	}
 
-	func testTrailingEmail_multiLevelTLDandRichLocalPart() {
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "x martin@company.co.uk"), "martin@company.co.uk")
-		XCTAssertEqual(WordPrefixExtractor.trailingEmail(in: "martin.svoboda026+tag@gmail.com"), "martin.svoboda026+tag@gmail.com")
+	// MARK: - isEmailShaped (store-gate, whole-token `^…$` match)
+
+	func testIsEmailShaped_acceptsFullAddresses() {
+		XCTAssertTrue(WordPrefixExtractor.isEmailShaped("martin@gmail.com"))
+		XCTAssertTrue(WordPrefixExtractor.isEmailShaped("sv.mar@email.cz"))
+		XCTAssertTrue(WordPrefixExtractor.isEmailShaped("martin@company.co.uk"))
+		XCTAssertTrue(WordPrefixExtractor.isEmailShaped("martin.svoboda026+tag@gmail.com"))
 	}
 
-	func testTrailingEmail_nilForNonEmails() {
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: "this is e.g. a sentence"))
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: "foo.bar baz"))
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: "U.S.A."))
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: "martin@gmail"), "no TLD → not an address")
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: ""))
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: nil))
+	func testIsEmailShaped_rejectsNonAddresses() {
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped("foo@bar"), "no TLD dot")
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped("sv.mar@email"), "half-typed, no TLD")
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped("e.g"), "no @")
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped("u.s.a"), "no @")
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped(""))
 	}
 
-	func testTrailingEmail_nilWhenEmailIsNotTrailing() {
-		// An address earlier in the text isn't returned when the text doesn't END with one — the prose
-		// path captures it at the boundary right after the address instead.
-		XCTAssertNil(WordPrefixExtractor.trailingEmail(in: "martin@gmail.com is my address"))
+	func testIsEmailShaped_requiresWholeTokenMatch() {
+		// `^…$`-anchored: surrounding text means it's not a bare address token (the harvester passes the
+		// already-isolated, edge-trimmed token, so embedded matches must not slip through).
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped("at martin@gmail.com"))
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped("martin@gmail.com is mine"))
+	}
+
+	func testIsEmailShaped_rejectsOverlongAddress() {
+		let huge = String(repeating: "a", count: 95) + "@x.com" // > 100 chars
+		XCTAssertFalse(WordPrefixExtractor.isEmailShaped(huge))
 	}
 }

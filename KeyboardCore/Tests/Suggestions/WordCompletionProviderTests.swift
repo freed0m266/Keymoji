@@ -157,6 +157,15 @@ final class WordCompletionProviderTests: XCTestCase {
 		XCTAssertEqual(provider.suggestions(for: .test(before: "hel")).first?.displayText, "hello")
 	}
 
+	func testEmailCandidate_bypassesCapitalization() {
+		// An `@` token (a learned address) ignores smart capitalization (task 79): an auto-capitalized
+		// prefix at the start of a field still inserts the stored lowercase address, not `Sv.mar@email.cz`.
+		let provider = makeProvider(recents: [("sv.mar@email.cz", 2)])
+		let result = provider.suggestions(for: .test(before: "Sv", page: .letters(.upper)))
+		XCTAssertEqual(result.map(\.displayText), ["sv.mar@email.cz"])
+		XCTAssertEqual(result.first?.replacementText, "sv.mar@email.cz", "tap inserts the lowercase address verbatim")
+	}
+
 	// MARK: - Lowercase base + directional diacritic variants
 
 	/// Builds a provider whose recents return `fixed` for any non-empty prefix — models the real

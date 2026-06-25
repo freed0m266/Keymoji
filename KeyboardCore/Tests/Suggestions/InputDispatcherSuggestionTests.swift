@@ -290,6 +290,100 @@ final class InputDispatcherSuggestionTests: XCTestCase {
 		// No learning hook supplied → nothing recorded, no crash.
 		XCTAssertTrue(recorder.calls.isEmpty)
 	}
+
+	// MARK: - Whitespace tokenizer + normalize-on-store (task 79)
+
+	private func type(_ text: String, into state: inout KeyboardState, hook: LearningHook) {
+		for ch in text {
+			let key = ch == " " ? spaceKey() : letterKey(String(ch))
+			dispatch(key, &state, learning: hook)
+		}
+	}
+
+	func testLearning_emailThroughDots_learnsWholeAddress_dropsPartials() {
+		// Typed in a prose field, `sv.mar@email.cz ` is learned as one `.emailAddress` token. The
+		// internal-dot partials the learning boundaries fire on (`sv.`, `sv.mar@email.`) are dropped: too
+		// short, or a TLD-less `@` token that isn't email-shaped.
+		var state = proseState()
+		type("sv.mar@email.cz ", into: &state, hook: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["sv.mar@email.cz"], "only the full address is learned")
+		XCTAssertEqual(recorder.calls.first?.context, .emailAddress)
+	}
+
+	func testLearning_atTokenWithoutTLD_isDropped() {
+		// `foo@bar` has an `@` but isn't a full address (no TLD) → not learned (not as prose either).
+		var state = proseState()
+		type("foo@bar ", into: &state, hook: learningHook())
+		XCTAssertTrue(recorder.calls.isEmpty)
+	}
+
+	func testLearning_trailingComma_isTrimmed() {
+		// `ahoj,` learns `ahoj` (edge punctuation trimmed by `wordCore`).
+		var state = proseState()
+		type("ahoj,", into: &state, hook: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["ahoj"])
+		XCTAssertEqual(recorder.calls.first?.context, .prose)
+	}
+
+	func testLearning_sentenceFinalWord_withoutTrailingSpace() {
+		// The period learning trigger captures `pizzu` from `pizzu.` even with no trailing space.
+		var state = proseState()
+		type("pizzu.", into: &state, hook: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["pizzu"])
+	}
+
+	func testLearning_abbreviations_areNotStored() {
+		// `e.g.` / `i.e.` trim to a 2-alphanumeric core and are dropped (AC: never stored).
+		var state = proseState()
+		type("e.g. ", into: &state, hook: learningHook())
+		type("i.e. ", into: &state, hook: learningHook())
+		XCTAssertTrue(recorder.calls.isEmpty)
+	}
+
+	func testLearning_hyphenatedWord_isOneToken() {
+		// `well-known` is a single learned token now (internal hyphen kept), not `known`.
+		var state = proseState()
+		type("well-known ", into: &state, hook: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["well-known"])
+	}
+
+	func testLearning_periodThenSpace_doesNotDoubleCount() {
+		// A second boundary right after a punctuation one must not re-learn: `hello. ` learns `hello` once.
+		var state = proseState()
+		for ch in "hello" { dispatch(letterKey(String(ch)), &state, learning: learningHook()) }
+		dispatch(boundaryKey("."), &state, learning: learningHook())
+		dispatch(spaceKey(), &state, learning: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["hello"], "learned exactly once")
+	}
+
+	func testLearning_trailingNonTriggerPunctuation_isTrimmedAndLearned() {
+		// Punctuation that isn't a learning trigger (`:`, `)`, `;`) sits between the word and the space.
+		// The space is still the *first* learning boundary, so the token reaches `wordCore` and is learned.
+		var state = proseState()
+		type("note: ", into: &state, hook: learningHook())
+		type("(hello) ", into: &state, hook: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["note", "hello"])
+	}
+
+	func testLearning_parenthesizedEmail_isLearned() {
+		// `sv.mar@email.cz)` then space: the `)` isn't a learning trigger, so the space harvests the whole
+		// token and `wordCore` trims the `)` → a full address is still learned.
+		var state = proseState()
+		type("(sv.mar@email.cz) ", into: &state, hook: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["sv.mar@email.cz"])
+		XCTAssertEqual(recorder.calls.first?.context, .emailAddress)
+	}
+
+	func testLearning_triggerThenNonTriggerThenSpace_doesNotDoubleCount() {
+		// `word.; ` — the period harvests `word`; the trailing `;`+space must NOT re-harvest it (an earlier
+		// learning boundary already sits in the gap before the space).
+		var state = proseState()
+		for ch in "etc" { dispatch(letterKey(String(ch)), &state, learning: learningHook()) }
+		dispatch(boundaryKey("."), &state, learning: learningHook())
+		dispatch(boundaryKey(";"), &state, learning: learningHook())
+		dispatch(spaceKey(), &state, learning: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["etc"], "learned exactly once despite the trailing `;`")
+	}
 }
 
 // MARK: - Mocks
