@@ -208,7 +208,6 @@ public struct OnboardingView<ViewModel: OnboardingViewModeling>: View {
 					// Same cap as the inline grid — dims past the limit (6 free, ∞ after Welcome/paid).
 					selectionLimit: viewModel.favoritesLimit
 				)
-				.mainBackground()
 			}
 		}
 	}
