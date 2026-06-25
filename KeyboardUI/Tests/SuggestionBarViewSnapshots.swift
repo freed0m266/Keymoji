@@ -96,6 +96,38 @@ final class SuggestionBarViewSnapshots: XCTestCase {
 		assertKeyboardSnapshot(view, size: size(), colorScheme: .dark)
 	}
 
+	// MARK: - Favorites centered (free users — task 82)
+
+	func testFavorites_centered_sixGlyphs() {
+		// Free single-page case at the free limit (6) → the cluster is centered, with symmetric gaps
+		// left and right rather than stuck flush-left. `centersFavorites` is the only difference from
+		// `testFavorites_firstPage`.
+		let view = SuggestionBarView(
+			suggestions: [],
+			favoriteEmojis: ["❤️", "😀", "🚀", "🎉", "🐶", "🍕"],
+			centersFavorites: true,
+			totalWidth: 387,
+			onSelect: { _ in },
+			onSelectEmoji: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: size(), colorScheme: .dark)
+		assertKeyboardSnapshot(view, size: size(), colorScheme: .light)
+	}
+
+	func testFavorites_centered_threeGlyphs() {
+		// Sparse free case (3 favorites) → larger symmetric gaps, cluster still centered (not justified
+		// across the full width — see task 82's "centered cluster, not spread" decision).
+		let view = SuggestionBarView(
+			suggestions: [],
+			favoriteEmojis: ["❤️", "😀", "🚀"],
+			centersFavorites: true,
+			totalWidth: 387,
+			onSelect: { _ in },
+			onSelectEmoji: { _ in }
+		)
+		assertKeyboardSnapshot(view, size: size(), colorScheme: .dark)
+	}
+
 	// MARK: - Overflow on a narrow device
 
 	func testLongWord_overflowOnSEWidth() {
