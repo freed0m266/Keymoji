@@ -48,3 +48,12 @@ Implemented in [task 79](../../tasks/79-whitespace-word-tokenizer-email-completi
   auto-capitalized `Sv…` prefix doesn't yield `Sv.mar@email.cz`.
 - The hot path gets marginally *cheaper* (`!isWhitespace` vs the letter/digit/diacritic check); the only added
   cost is the email regex at learn time (debounced, off the keystroke path).
+- **Store and lookup are deliberately asymmetric for *leading* edge punctuation.** `wordCore` trims edge
+  punctuation only at *learn* time, but the lookup prefix (`activeWordPrefix`) keeps it (no punctuation
+  special-casing in the tokenizer, by decision above). So a token retyped *with* a leading punctuation char
+  isn't re-offered: a `+420…` phone is stored as `420…` but typing `+420…` again yields the prefix `+420…`,
+  which prefix-matches nothing (it lands in a different `LearnedWordsIndex` bucket). This retires the task-74
+  "offers `+420…` as `420…`" behavior. Accepted as a minor consequence of the simpler model — typing the number
+  *without* the `+` still completes, and adding a symmetric lookup-side trim would re-introduce the
+  special-casing this ADR removed (and would eat the typed `+` on accept). Trailing edge punctuation is *not*
+  asymmetric: it's mid-token while composing, so it stays in the prefix and the accept deletes the exact run.

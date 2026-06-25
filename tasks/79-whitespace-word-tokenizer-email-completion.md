@@ -1,6 +1,6 @@
 # 79 — Whitespace-only tokenizer + doplňování emailu přes tečku
 
-**Status:** Todo — připraveno z grill session 2026-06-25. **Mění** tokenizační model z [tasku 40](40-word-completion-suggestions.md)/[74](74-learning-quality-numbers-emails.md). Rozhodnutí zafixované v [ADR 0003](../docs/adr/0003-whitespace-only-tokenizer-normalize-on-store.md).
+**Status:** Done — 2026-06-25. **Mění** tokenizační model z [tasku 40](40-word-completion-suggestions.md)/[74](74-learning-quality-numbers-emails.md). Rozhodnutí zafixované v [ADR 0003](../docs/adr/0003-whitespace-only-tokenizer-normalize-on-store.md).
 
 **Priorita:** v1.x (uživatel si dnes nemůže nechat nabídnout vlastní email s tečkou v local-partu — `sv.mar@email.cz`) · **Úsilí:** M (změna hranice slova + normalizace při ukládání + testy; tokenizer má velkou test-churn) · **Dopad:** High pro uživatele s tečkou/číslicí v emailu nebo nicku; zároveň čistší architektura (mizí `trailingEmail` reassembly).
 
@@ -70,6 +70,7 @@
 - Změna scoringu (to je [task 80](80-personal-recents-soft-boost-ranking.md)).
 - Zrušení `EmailQuickPickProvider` (zůstává).
 - Zvláštní zacházení s URL/`/` tokeny (necháno na délkovém filtru — vědomě, viz grill).
+- Symetrizace ukládání a vyhledávání u **vedoucí** krajní interpunkce. `wordCore` ořezává krajní interpunkci jen při ukládání; lookup prefix (`activeWordPrefix`) ji ponechává (žádný speciál na interpunkci v tokenizeru). Důsledek: telefon `+420…` se uloží jako `420…`, ale opětovné psaní `+420…` se znovu nenabídne (prefix `+420…` nematchuje uložené `420…`). Vědomě zachováno — psaní bez `+` doplňuje normálně; lookup-side trim by vrátil odstraněný speciál (a na accept by „snědl" napsané `+`). Viz [ADR 0003 Consequences](../docs/adr/0003-whitespace-only-tokenizer-normalize-on-store.md).
 
 ## Akceptační kritéria
 
