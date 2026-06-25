@@ -384,6 +384,126 @@ final class InputDispatcherSuggestionTests: XCTestCase {
 		dispatch(spaceKey(), &state, learning: learningHook())
 		XCTAssertEqual(recorder.calls.map(\.word), ["etc"], "learned exactly once despite the trailing `;`")
 	}
+
+	// MARK: - Auto-inserted space absorbed by punctuation (task 84)
+
+	private func actionKey(_ action: KeyAction) -> Key {
+		Key(id: "action.\(String(describing: action))", primary: .text(""), alternates: [], action: action, visualWeight: .standard, role: .system)
+	}
+
+	func testAcceptThenSentencePunctuation_absorbsAutoSpace_forAllMarks() {
+		// `word ` + `.` `,` `?` `!` → `word.`/`word,`/… (the accept-space is deleted), matching Apple.
+		for mark in [".", ",", "?", "!"] {
+			proxy = SuggestionMockProxy()
+			var state = proseState()
+			proxy.documentContextBeforeInput = "hel"
+			dispatch(acceptKey("hello"), &state)
+			dispatch(boundaryKey(mark), &state)
+			XCTAssertEqual(proxy.documentContextBeforeInput, "hello\(mark)", "auto-space absorbed before \(mark)")
+			XCTAssertFalse(state.lastSpaceWasAuto, "absorption closes the one-shot window")
+		}
+	}
+
+	func testAcceptThenPunctuation_doesNotReLearnWord() {
+		// The word was counted at accept; absorbing the auto-space must NOT re-run the learning hook on the
+		// now space-less `hello.` context (it would otherwise slip past the double-count guard).
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state, learning: learningHook())
+		dispatch(boundaryKey("."), &state, learning: learningHook())
+		XCTAssertEqual(recorder.calls.map(\.word), ["hello"], "learned exactly once — accept, not the absorbed `.`")
+	}
+
+	func testAcceptThenLetter_keepsAutoSpace() {
+		// A non-punctuation keystroke after accept leaves the trailing space exactly as a normal space.
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state)
+		dispatch(letterKey("X"), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "hello X")
+		XCTAssertFalse(state.lastSpaceWasAuto, "the window closes after the next keystroke")
+	}
+
+	func testManualSpaceThenPunctuation_keepsSpace() {
+		// A user-typed space is never absorption-eligible: `hello ` + `.` stays `hello .`.
+		var state = proseState()
+		for ch in "hello" { dispatch(letterKey(String(ch)), &state) }
+		dispatch(spaceKey(), &state)
+		XCTAssertFalse(state.lastSpaceWasAuto, "a typed space is not an auto space")
+		dispatch(boundaryKey("."), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "hello .")
+	}
+
+	func testDoubleTapPeriodThenComma_keepsSpace() {
+		// The `". "` produced by double-tap space is not an accept-space, so the trailing blank survives.
+		var state = proseState()
+		let t0 = Date(timeIntervalSince1970: 1_000)
+		dispatch(spaceKey(), &state, now: { t0 })
+		dispatch(spaceKey(), &state, now: { t0.addingTimeInterval(0.3) })
+		XCTAssertEqual(proxy.documentContextBeforeInput, ". ")
+		XCTAssertFalse(state.lastSpaceWasAuto, "`. ` from double-tap is not an auto space")
+		dispatch(boundaryKey(","), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, ". ,")
+	}
+
+	func testAcceptInEmail_thenPeriod_noAbsorption() {
+		// Email accepts append no trailing space → nothing is marked auto → no regression when punctuation follows.
+		var state = KeyboardState(
+			page: .letters(.lower),
+			currentEligibility: SuggestionEligibility(allowDisplay: true, learningContext: .emailAddress)
+		)
+		proxy.documentContextBeforeInput = "mar"
+		dispatch(acceptKey("martin@x.com"), &state)
+		XCTAssertFalse(state.lastSpaceWasAuto, "email accept appends no space, so there's nothing to absorb")
+		dispatch(boundaryKey("."), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "martin@x.com.")
+	}
+
+	func testAcceptThenNonSentencePunctuation_doesNotAbsorb() {
+		// Only `.` `,` `?` `!` absorb; a `;` after accept leaves the space (`hello ;`).
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state)
+		dispatch(boundaryKey(";"), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "hello ;", "`;` is not in the absorption set")
+	}
+
+	func testAbsorption_isOneShot_secondMarkDoesNotDeleteAgain() {
+		// After absorbing once the flag is cleared, so a second punctuation just appends (`hello..`).
+		var state = proseState()
+		proxy.documentContextBeforeInput = "hel"
+		dispatch(acceptKey("hello"), &state)
+		dispatch(boundaryKey("."), &state)
+		let deletesAfterAbsorb = proxy.deleteCount
+		dispatch(boundaryKey("."), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "hello..")
+		XCTAssertEqual(proxy.deleteCount, deletesAfterAbsorb, "the second mark must not delete another char")
+	}
+
+	func testAutoSpaceFlag_clearedByEveryResetAction() {
+		// The spec makes resetting lastSpaceWasAuto on every action that resets lastInsertWasSpace a hard
+		// requirement (task 84, Scope). Without these, a later `.` could absorb a space the cursor has moved
+		// past or that a page hop should have decoupled. switchPage/cursorOffset/cursorLineOffset are the
+		// load-bearing guards: they don't mutate the document, so the `hasSuffix(" ")` check in
+		// absorbAutoSpaceIfNeeded wouldn't catch a dropped reset there.
+		let resetActions: [KeyAction] = [
+			.backspace,
+			.deleteWord,
+			.return,
+			.switchPage(.symbols(.primary)),
+			.cursorOffset(2),
+			.cursorLineOffset(1),
+		]
+		for action in resetActions {
+			proxy = SuggestionMockProxy()
+			var state = proseState()
+			proxy.documentContextBeforeInput = "hel"
+			dispatch(acceptKey("hello"), &state)
+			XCTAssertTrue(state.lastSpaceWasAuto, "precondition: accept marks the trailing space as auto")
+			dispatch(actionKey(action), &state)
+			XCTAssertFalse(state.lastSpaceWasAuto, "\(action) must clear the one-shot auto-space flag")
+		}
+	}
 }
 
 // MARK: - Mocks
