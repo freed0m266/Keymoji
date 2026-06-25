@@ -14,6 +14,7 @@ import KeymojiCore
 public protocol AboutViewModeling: Observable, AnyObject {
 	var versionString: String { get }
 
+	func openAppStoreReview()
 	func openPrivacyPolicy()
 	func openSupportEmail()
 }
@@ -27,6 +28,11 @@ public func aboutVM() -> some AboutViewModeling {
 final class AboutViewModel: BaseViewModel, AboutViewModeling {
 
 	// MARK: - Public API
+
+	func openAppStoreReview() {
+		guard let url = URL(string: KeymojiURLs.appStoreReview) else { return }
+		UIApplication.shared.open(url)
+	}
 
 	func openPrivacyPolicy() {
 		guard let url = URL(string: KeymojiURLs.privacyPolicy) else { return }

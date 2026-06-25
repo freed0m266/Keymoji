@@ -28,6 +28,7 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 		Form {
 			headerSection
 			privacySection
+			supportSection
 			legalSection
 		}
 		.aboutBackground()
@@ -67,19 +68,31 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 		}
 	}
 
+	private var supportSection: some View {
+		Section {
+			ListButton(title: "🌟 \(Texts.reviewOnAppStore)") {
+				viewModel.openAppStoreReview()
+			}
+			ListButton(title: "✉️ \(Texts.support)") {
+				viewModel.openSupportEmail()
+			}
+		} header: {
+			Text(Texts.supportHeader)
+		}
+		.buttonStyle(.plain)
+	}
+
 	private var legalSection: some View {
 		Section {
-			ListButton(title: Texts.privacyPolicyLink) {
+			ListButton(title: "🛡️ \(Texts.privacyPolicyLink)") {
 				viewModel.openPrivacyPolicy()
-			}
-			ListButton(title: Texts.support) {
-				viewModel.openSupportEmail()
 			}
 		} header: {
 			Text(Texts.legalHeader)
 		} footer: {
 			Text(Texts.copyright(currentYear))
 		}
+		.buttonStyle(.plain)
 	}
 }
 

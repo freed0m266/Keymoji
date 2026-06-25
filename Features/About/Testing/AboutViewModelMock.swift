@@ -14,6 +14,7 @@ import Foundation
 final class AboutViewModelMock: AboutViewModeling {
 	var versionString: String = "1.0 (1)"
 
+	func openAppStoreReview() {}
 	func openPrivacyPolicy() {}
 	func openSupportEmail() {}
 }

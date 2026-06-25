@@ -5,4 +5,5 @@ import Foundation
 public enum KeymojiURLs {
 	public static let privacyPolicy = "https://martinfreedom.com/keymoji/privacy.html"
 	public static let supportEmail = "mailto:martin.svoboda026@gmail.com"
+	public static let appStoreReview = "https://apps.apple.com/app/id6776134522?action=write-review"
 }
