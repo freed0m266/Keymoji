@@ -38,25 +38,17 @@ public enum InputDispatcher {
 
 		switch key.action {
 		case .insertText(let text):
-			let shifted = textWithShiftApplied(text, state: state)
-			proxy.insertText(shifted)
-			ShiftStateMachine.apply(.characterInserted, to: &state)
-			updateSpaceTracking(insertedText: shifted, state: &state)
-			applySlackEmojiSubstitutionIfNeeded(justInserted: shifted, state: &state, proxy: proxy)
-			learnIfWordBoundary(insertedText: shifted, state: state, proxy: proxy, learning: learning)
+			insertCharacter(textWithShiftApplied(text, state: state), state: &state, proxy: proxy, learning: learning)
 
 		case .insertRawText(let text):
 			// Long-press alternates ship already-cased text; skip shift apply.
-			proxy.insertText(text)
-			ShiftStateMachine.apply(.characterInserted, to: &state)
-			updateSpaceTracking(insertedText: text, state: &state)
-			applySlackEmojiSubstitutionIfNeeded(justInserted: text, state: &state, proxy: proxy)
-			learnIfWordBoundary(insertedText: text, state: state, proxy: proxy, learning: learning)
+			insertCharacter(text, state: &state, proxy: proxy, learning: learning)
 
 		case .backspace:
 			proxy.deleteBackward()
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			state.lastSpaceWasAuto = false
 
 		case .deleteWord:
 			let count = trailingWordDeleteCount(in: proxy.documentContextBeforeInput ?? "")
@@ -68,6 +60,7 @@ public enum InputDispatcher {
 			}
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			state.lastSpaceWasAuto = false
 
 		case .shift:
 			ShiftStateMachine.apply(.shiftTapped(at: now()), to: &state)
@@ -87,6 +80,7 @@ public enum InputDispatcher {
 			proxy.insertText("\n")
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			state.lastSpaceWasAuto = false
 
 		case .dismissKeyboard:
 			controller.dismissKeyboard()
@@ -102,6 +96,7 @@ public enum InputDispatcher {
 			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			state.lastSpaceWasAuto = false
 
 		case .cursorOffset(let offset):
 			// Trackpad-mode scrubbing. Skip the no-op offset to avoid bouncing the proxy needlessly.
@@ -111,6 +106,7 @@ public enum InputDispatcher {
 			}
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			state.lastSpaceWasAuto = false
 
 		case .cursorLineOffset(let lines):
 			// Vertical trackpad-mode scrubbing. Resolve "move N lines" into a character offset by
@@ -131,6 +127,7 @@ public enum InputDispatcher {
 			}
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
+			state.lastSpaceWasAuto = false
 
 		case .suggestionAccept(_, let replacementText):
 			// Replace the in-progress word with the chosen completion + a trailing space (SH3).
@@ -155,6 +152,10 @@ public enum InputDispatcher {
 			// when we actually appended one (no space → no pending double-tap to track).
 			state.lastInsertWasSpace = appendsSpace
 			state.lastSpaceInsertedAt = appendsSpace ? now() : nil
+			// Mark that trailing space as *auto-inserted* so the next sentence-punctuation keystroke can
+			// absorb it (task 84). Only set here — a user-typed space and the `". "` from double-tap leave
+			// this `false`. Email accepts append no space, so `appendsSpace` (hence this flag) is `false`.
+			state.lastSpaceWasAuto = appendsSpace
 			// Accepting a chip *is* using the word — learn/increment it so the counter reflects real
 			// usage, not just how often the word was typed out in full (task 74, Fáze D). Same `.prose`
 			// gate as word-boundary learning: email fields are harvested whole at field-end (no double
@@ -171,6 +172,51 @@ public enum InputDispatcher {
 				state.page = .letters(.lower)
 			}
 		}
+	}
+
+	// MARK: - Character insertion
+
+	/// Shared insert path for `.insertText` (shift already applied by the caller) and `.insertRawText`.
+	/// Before inserting, gives sentence punctuation the chance to absorb a preceding auto-inserted accept
+	/// space (task 84); when it does, the word was already counted at accept, so the word-boundary
+	/// learning hook is skipped to avoid double-counting it.
+	private static func insertCharacter(
+		_ text: String,
+		state: inout KeyboardState,
+		proxy: any TextDocumentProxying,
+		learning: LearningHook?
+	) {
+		let absorbedAutoSpace = absorbAutoSpaceIfNeeded(insertedText: text, state: state, proxy: proxy)
+		proxy.insertText(text)
+		ShiftStateMachine.apply(.characterInserted, to: &state)
+		updateSpaceTracking(insertedText: text, state: &state)
+		applySlackEmojiSubstitutionIfNeeded(justInserted: text, state: &state, proxy: proxy)
+		// Skip learning when we just absorbed the accept-space: the accepted word was already learned at
+		// `.suggestionAccept`, and the now space-less `word.` context would slip past the double-count guard
+		// in `learnIfWordBoundary` (no boundary sits between the word and the punctuation) and re-count it.
+		if !absorbedAutoSpace {
+			learnIfWordBoundary(insertedText: text, state: state, proxy: proxy, learning: learning)
+		}
+	}
+
+	/// Sentence punctuation that absorbs a preceding *auto-inserted* space — `learningBoundaries` minus the
+	/// space itself. `;` `:` `)` and friends are intentionally excluded (they don't end a sentence/clause).
+	private static let absorbingPunctuation: Set<String> = [".", ",", "?", "!"]
+
+	/// When the previous insertion was an auto-inserted accept space and the user now types sentence
+	/// punctuation, delete that space so the mark hugs the word (`word ` + `.` → `word.`), matching Apple.
+	/// Returns `true` when it absorbed. The `hasSuffix(" ")` guard keeps it safe if the cursor moved off the
+	/// space; user-typed spaces and the `". "` from double-tap never set `lastSpaceWasAuto`, so only the
+	/// accept-space is eligible.
+	private static func absorbAutoSpaceIfNeeded(
+		insertedText: String,
+		state: KeyboardState,
+		proxy: any TextDocumentProxying
+	) -> Bool {
+		guard state.lastSpaceWasAuto, absorbingPunctuation.contains(insertedText) else { return false }
+		guard proxy.documentContextBeforeInput?.hasSuffix(" ") == true else { return false }
+		proxy.deleteBackward()
+		return true
 	}
 
 	// MARK: - Emoji search mode
@@ -249,6 +295,10 @@ public enum InputDispatcher {
 		controller: any KeyboardControlling,
 		now: Date
 	) {
+		// Any space the user actually taps — a single space, the `". "` double-tap substitution, or the
+		// dismiss variant — is *not* an auto-inserted accept space, so it can never be absorbed by a later
+		// punctuation mark (task 84). Clear the flag up front for every branch below.
+		state.lastSpaceWasAuto = false
 		let withinWindow = state.lastSpaceInsertedAt.map { now.timeIntervalSince($0) < doubleSpaceWindow } ?? false
 		let isDoubleTap = state.lastInsertWasSpace && withinWindow
 
@@ -287,6 +337,10 @@ public enum InputDispatcher {
 		if !state.lastInsertWasSpace {
 			state.lastSpaceInsertedAt = nil
 		}
+		// A character insert (even a user-typed space) is never an auto-inserted accept space — only
+		// `.suggestionAccept` sets `lastSpaceWasAuto`. Clearing it here ends the one-shot absorption window:
+		// the flag survives exactly until the next keystroke after an accept (task 84).
+		state.lastSpaceWasAuto = false
 	}
 
 	// MARK: - Word delete

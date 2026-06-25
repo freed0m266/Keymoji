@@ -41,6 +41,13 @@ public struct KeyboardState: Sendable, Equatable {
 	/// insertion or after a period-substitution (to prevent triple-tap chaining).
 	public var lastSpaceInsertedAt: Date?
 
+	/// Whether the most recently inserted space was *auto-inserted* by Keymoji — the trailing space an
+	/// accepted word completion appends — as opposed to one the user typed. Lets sentence punctuation
+	/// (`.` `,` `?` `!`) absorb only the accept-space (task 84): a user-typed space and the `". "` from
+	/// double-tap leave this `false`. Cleared on the very next keystroke, so absorption is a one-shot
+	/// window tied to the accept.
+	public var lastSpaceWasAuto: Bool
+
 	/// When shift was last tapped. Used by `ShiftStateMachine` to detect double-tap → caps lock.
 	public var lastShiftTapAt: Date?
 
@@ -120,6 +127,7 @@ public struct KeyboardState: Sendable, Equatable {
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
+		lastSpaceWasAuto: Bool = false,
 		lastShiftTapAt: Date? = nil,
 		autoCapitalized: Bool = false,
 		keyboardWidth: CGFloat = 0,
@@ -143,6 +151,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt
+		self.lastSpaceWasAuto = lastSpaceWasAuto
 		self.lastShiftTapAt = lastShiftTapAt
 		self.autoCapitalized = autoCapitalized
 		self.keyboardWidth = keyboardWidth
