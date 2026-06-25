@@ -15,7 +15,10 @@ public protocol SystemLexiconProviding: Sendable {
 }
 
 /// Prefix-match word completion from three sources, merged by weighted score:
-/// 1. personal recents — the strongest signal (frequency-weighted),
+/// 1. personal recents — frequency-weighted, plus a constant `personalBoost` so a well-used learned
+///    word (≥ 4×) outranks the best `UITextChecker` hit, while a freshly-learned one (2–3×) still
+///    yields the top slot; below the top slot, learned words outrank weaker dictionary hits from
+///    count 2 (task 80),
 /// 2. `UITextChecker` system completions — ordinal-weighted (best candidate highest), and
 /// 3. `UILexicon` supplementary entries — a flat low weight.
 ///
@@ -30,6 +33,13 @@ public struct WordCompletionProvider: SuggestionProviding {
 	/// conservatively. Applies only to the personal pool — `UITextChecker`/`UILexicon` are dictionary
 	/// sources, not typo-prone, so the threshold never touches them.
 	public static let minSuggestCount = 2
+
+	/// Constant added to every personal-recents score (task 80). It lifts a learned word above the
+	/// best `UITextChecker` hit (0.9) once it's been typed ≥ 4×: count 2 → 0.85 (yields the top slot
+	/// to the dictionary), count 3 → 0.90 (ties), count 4 → 0.95 (wins). Tunable alongside
+	/// `minSuggestCount` so the crossover can move without rewriting the formula (+0.25 → count 3,
+	/// +0.15 → count 5). Applies only to the personal pool — `UITextChecker`/`UILexicon` are unboosted.
+	public static let personalBoost = 0.2
 
 	private let textChecker: any TextChecking
 	private let systemLexicon: any SystemLexiconProviding
@@ -87,15 +97,23 @@ public struct WordCompletionProvider: SuggestionProviding {
 			}
 		}
 
-		// (a) Personal recents: 0.55 + 0.05 · min(count, 10), clamped into [0, 1]. The `minSuggestCount`
-		// gate (task 74, Fáze A) drops singletons here — they're learned but not yet trusted enough to
-		// offer. The threshold is uniform across every field and token kind (task 77 removed the prior
-		// email-address exemption), so addresses clear the same bar as prose. The merge below still
-		// surfaces a sub-threshold word if a dictionary source vouches for it (real words aren't typos),
-		// so the cut only ever removes pool-exclusive one-offs.
+		// (a) Personal recents: 0.55 + 0.05 · min(count, 10) + `personalBoost` (task 80), rounded to the
+		// cents place. The boost lifts a learned word above the best `UITextChecker` hit (0.9) once it's
+		// well-used: count 2 → 0.85 (yields the top slot), count 3 → 0.90 (ties), count 4 → 0.95 (wins);
+		// below the top slot it outranks weaker dictionary hits from count 2. Rounding pins those
+		// crossovers exactly — without it `0.55 + 0.05·3 + 0.2` carries binary-FP dust (0.90000…13) and
+		// the count-3 "tie" would strictly outrank the 0.9 dictionary hit, pulling the firm crossover
+		// down to count 3. There's no `[0, 1]` clamp — score is purely ordinal, so letting it exceed 1.0
+		// keeps high-count words (8/9/10) sorting by count instead of flattening onto a shared ceiling.
+		// The `minSuggestCount` gate (task 74, Fáze A) drops singletons here — they're learned but not yet
+		// trusted enough to offer. The threshold is uniform across every field and token kind (task 77
+		// removed the prior email-address exemption), so addresses clear the same bar as prose. The merge
+		// below still surfaces a sub-threshold word if a dictionary source vouches for it (real words
+		// aren't typos), so the cut only ever removes pool-exclusive one-offs.
 		for match in recents.matches(prefix: prefix) {
 			guard match.count >= Self.minSuggestCount else { continue }
-			let score = min(0.55 + 0.05 * Double(min(match.count, 10)), 1.0)
+			let raw = 0.55 + 0.05 * Double(min(match.count, 10)) + Self.personalBoost
+			let score = (raw * 100).rounded() / 100
 			consider(match.word, score: score)
 		}
 
