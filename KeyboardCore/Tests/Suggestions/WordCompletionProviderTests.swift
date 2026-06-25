@@ -19,21 +19,23 @@ final class WordCompletionProviderTests: XCTestCase {
 
 	func testWeightedMerge_ordersByScore() {
 		let provider = makeProvider(
-			recents: [("hello", 10)],          // 0.55 + 0.05*10 → clamped 1.0
+			recents: [("hello", 10)],          // 0.55 + 0.05*10 + 0.2 boost → 1.25
 			checker: ["help", "helicopter"],   // idx0 → 0.9, idx1 → 0.4
 			lexicon: ["hey"]                   // flat 0.3
 		)
 		let result = provider.suggestions(for: .test(before: "he"))
 		XCTAssertEqual(result.map(\.displayText), ["hello", "help", "helicopter", "hey"])
-		XCTAssertEqual(result.first?.score, 1.0)
+		XCTAssertEqual(result.first?.score ?? 0, 1.25, accuracy: 0.0001)
 		XCTAssertEqual(result.first(where: { $0.displayText == "help" })?.score, 0.9)
 		XCTAssertEqual(result.first(where: { $0.displayText == "helicopter" })?.score ?? 0, 0.4, accuracy: 0.0001)
 		XCTAssertEqual(result.first(where: { $0.displayText == "hey" })?.score, 0.3)
 	}
 
-	func testRecentsScore_clampedToOne() {
+	func testRecentsScore_countContributionSaturatesAtTen_noUpperClamp() {
+		// The count term saturates at `min(count, 10)`, but there's no `[0, 1]` clamp (task 80): a
+		// count-99 word scores 0.55 + 0.05*10 + 0.2 = 1.25, the same as count 10, and is free to exceed 1.0.
 		let provider = makeProvider(recents: [("hello", 99)])
-		XCTAssertEqual(provider.suggestions(for: .test(before: "he")).first?.score, 1.0)
+		XCTAssertEqual(provider.suggestions(for: .test(before: "he")).first?.score ?? 0, 1.25, accuracy: 0.0001)
 	}
 
 	func testAllChips_arePlainWordCompletions() {
@@ -55,12 +57,50 @@ final class WordCompletionProviderTests: XCTestCase {
 	// MARK: - Case-insensitive dedupe
 
 	func testDedupe_caseInsensitive_keepsHighestScore() {
-		// Recents "Hello" (count 2 → 0.65) and checker "hello" (idx0 → 0.9) collapse to one chip.
+		// Recents "Hello" (count 2 → 0.85 boosted) and checker "hello" (idx0 → 0.9) collapse to one chip.
 		let provider = makeProvider(recents: [("Hello", 2)], checker: ["hello"])
 		let result = provider.suggestions(for: .test(before: "he"))
 		XCTAssertEqual(result.count, 1)
 		XCTAssertEqual(result.first?.displayText, "Hello", "recents' base casing is preserved")
 		XCTAssertEqual(result.first?.score, 0.9, "the higher (checker) score wins")
+	}
+
+	// MARK: - Personal-recents soft boost & crossover (task 80)
+
+	func testPersonalBoost_countTwo_yieldsTopSlotToBestDictionaryHit_butBeatsWeakerOnes() {
+		// A freshly-learned word (count 2 → 0.85) sits just under the best `UITextChecker` hit (0.9),
+		// so the dictionary keeps the top slot — but 0.85 still outranks every weaker checker hit.
+		let provider = makeProvider(
+			recents: [("hello", 2)],                       // 0.85
+			checker: ["help", "held", "helm", "helix"]     // 0.9, 0.733, 0.567, 0.4
+		)
+		let result = provider.suggestions(for: .test(before: "hel"))
+		XCTAssertEqual(result.map(\.displayText), ["help", "hello", "held", "helm", "helix"])
+	}
+
+	func testPersonalBoost_countThree_tiesBestDictionaryHitExactly_notAStrictWin() {
+		// count 3 → 0.90 must land *exactly* on the dictionary top (0.9), a genuine tie — not the
+		// 0.90000…13 binary-FP dust that would strictly outrank it and pull the crossover down to count 3.
+		let provider = makeProvider(recents: [("hello", 3)], checker: ["help"])
+		let score = provider.suggestions(for: .test(before: "hel")).first(where: { $0.displayText == "hello" })?.score
+		XCTAssertEqual(score, 0.9, "count-3 score is exactly the dictionary top, so count 4 is the firm crossover")
+	}
+
+	func testPersonalBoost_countFour_winsTopSlotOverBestDictionaryHit() {
+		// The crossover: at count 4 (0.95) the learned word overtakes the best dictionary hit (0.9).
+		let provider = makeProvider(recents: [("hello", 4)], checker: ["help"])
+		let result = provider.suggestions(for: .test(before: "hel"))
+		XCTAssertEqual(result.map(\.displayText), ["hello", "help"])
+		XCTAssertEqual(result.first?.score ?? 0, 0.95, accuracy: 0.0001)
+	}
+
+	func testTwoLearnedWords_sortByCountAboveEight_clampDoesNotFlatten() {
+		// Without the old `[0, 1]` clamp, two high-count words keep distinct scores and sort by count
+		// (count 10 → 1.25 over count 9 → 1.20). Order is count-driven, *opposite* to the alphabetical
+		// tie-break the clamp would have forced when both saturated at 1.0.
+		let provider = makeProvider(recents: [("helium", 9), ("helmet", 10)])
+		let result = provider.suggestions(for: .test(before: "hel"))
+		XCTAssertEqual(result.map(\.displayText), ["helmet", "helium"])
 	}
 
 	// MARK: - Display threshold (minSuggestCount, Fáze A)
