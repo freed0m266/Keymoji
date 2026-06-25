@@ -15,6 +15,11 @@ public struct KeyboardView: View {
 	/// panel so the two never disagree. The caller (`KeyboardViewController`) decides the order —
 	/// manual or frequency-sorted — and freezes it while the favorites are on screen.
 	public let favoriteEmojis: [String]
+	/// Whether the suggestion bar's favorites row should be horizontally centered rather than
+	/// left-aligned. Semantic, monetization-agnostic — the host derives it from the entitlement
+	/// (centered for the single-page free case; left-aligned for multi-page Plus). Threaded straight
+	/// into `SuggestionBarView`. Defaults to `false` so previews/tests keep the leading alignment.
+	public let centersFavorites: Bool
 	public let searchQuery: String
 	public let suggestions: [Suggestion]
 	/// Whether the current field permits the top bar at all. The host passes `currentEligibility.allowDisplay`,
@@ -46,6 +51,7 @@ public struct KeyboardView: View {
 		width: CGFloat,
 		recentEmojis: [String] = [],
 		favoriteEmojis: [String] = [],
+		centersFavorites: Bool = false,
 		searchQuery: String = "",
 		suggestions: [Suggestion] = [],
 		fieldAllowsBar: Bool = true,
@@ -62,6 +68,7 @@ public struct KeyboardView: View {
 		self.width = width
 		self.recentEmojis = recentEmojis
 		self.favoriteEmojis = favoriteEmojis
+		self.centersFavorites = centersFavorites
 		self.searchQuery = searchQuery
 		self.suggestions = suggestions
 		self.fieldAllowsBar = fieldAllowsBar
@@ -144,6 +151,7 @@ public struct KeyboardView: View {
 				SuggestionBarView(
 					suggestions: suggestions,
 					favoriteEmojis: barFavorites,
+					centersFavorites: centersFavorites,
 					totalWidth: max(0, width - horizontalPadding * 2),
 					onSelect: onSelectSuggestion,
 					onSelectEmoji: { emoji in insertEmojiKey(emoji) },

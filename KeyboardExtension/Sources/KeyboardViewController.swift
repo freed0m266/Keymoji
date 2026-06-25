@@ -502,6 +502,10 @@ final class KeyboardViewController: UIInputViewController {
 		if model.searchQuery != state.searchQuery { model.searchQuery = state.searchQuery }
 		let allowsBar = state.currentEligibility.allowDisplay
 		if model.fieldAllowsBar != allowsBar { model.fieldAllowsBar = allowsBar }
+		// Re-derive on every sync so an entitlement change picked up mid-session (promo trial expiring,
+		// or the entitlement resolving after a reinstall) flips the bar's alignment to match.
+		let centersFavorites = !state.effectiveIsPlus
+		if model.centersFavorites != centersFavorites { model.centersFavorites = centersFavorites }
 		scheduleSuggestions()
 		refreshFavorites()
 	}
@@ -599,6 +603,10 @@ final class KeyboardViewController: UIInputViewController {
 			width: state.keyboardWidth,
 			recentEmojis: state.recentEmojis,
 			favoriteEmojis: favoritesDisplayOrder,
+			// Free users see a single page of ≤6 favorites — center the cluster so it doesn't look
+			// stranded at the left. Plus is multi-page/paged and wants its last partial page flush-left,
+			// so it stays left-aligned. The view only learns "center or not", never the entitlement.
+			centersFavorites: !state.effectiveIsPlus,
 			searchQuery: state.searchQuery,
 			suggestions: [],
 			fieldAllowsBar: state.currentEligibility.allowDisplay,

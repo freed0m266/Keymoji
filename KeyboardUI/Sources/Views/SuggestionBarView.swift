@@ -21,6 +21,12 @@ public struct SuggestionBarView: View {
 	/// only when there are no `suggestions` (never alongside them; see `body`). Empty by default so
 	/// existing call sites and snapshots keep their behavior.
 	public let favoriteEmojis: [String]
+	/// When true, the favorites cluster is horizontally centered (symmetric gaps either side) instead
+	/// of left-aligned. Semantic, monetization-agnostic: the host sets it for the single-page case
+	/// where favorites would otherwise look stranded at the left (free users — ≤6 favorites, no
+	/// paging). Defaults to `false` so existing call sites and snapshots keep their leading alignment,
+	/// which is what multi-page (Plus) wants for the last partial page.
+	public let centersFavorites: Bool
 	public let totalWidth: CGFloat
 	public let onSelect: (Suggestion) -> Void
 	/// Tap handler for a favorite emoji glyph. The host routes it through the same emoji-insert
@@ -47,6 +53,7 @@ public struct SuggestionBarView: View {
 	public init(
 		suggestions: [Suggestion],
 		favoriteEmojis: [String] = [],
+		centersFavorites: Bool = false,
 		totalWidth: CGFloat,
 		onSelect: @escaping (Suggestion) -> Void,
 		onSelectEmoji: @escaping (String) -> Void = { _ in },
@@ -55,6 +62,7 @@ public struct SuggestionBarView: View {
 	) {
 		self.suggestions = suggestions
 		self.favoriteEmojis = favoriteEmojis
+		self.centersFavorites = centersFavorites
 		self.totalWidth = totalWidth
 		self.onSelect = onSelect
 		self.onSelectEmoji = onSelectEmoji
@@ -157,6 +165,13 @@ public struct SuggestionBarView: View {
 		TabView {
 			ForEach(Array(emojiPages.enumerated()), id: \.offset) { index, page in
 				HStack(spacing: 0) {
+					// Centering (`centersFavorites`): a matching leading Spacer balances the trailing one,
+					// so the cluster sits centered with symmetric gaps — for the single-page free case where
+					// a left-stuck row looks unfinished. Left-aligned (default) keeps the multi-page (Plus)
+					// last partial page flush-left.
+					if centersFavorites {
+						Spacer(minLength: 0)
+					}
 					ForEach(page, id: \.self) { emoji in
 						Button {
 							selectEmoji(emoji)
@@ -168,7 +183,7 @@ public struct SuggestionBarView: View {
 						}
 						.buttonStyle(.plain)
 					}
-					Spacer(minLength: 0) // last (partial) page stays left-aligned
+					Spacer(minLength: 0) // last (partial) page stays left-aligned unless centered
 				}
 				.tappable()
 				.padding(.horizontal, horizontalPadding)
@@ -240,6 +255,19 @@ private func pillSuggestion(_ shortcode: String, _ emoji: String) -> Suggestion 
 	SuggestionBarView(
 		suggestions: [],
 		favoriteEmojis: ["❤️", "😀", "🚀", "🎉", "🐶", "🍕", "👍"],
+		totalWidth: 387,
+		onSelect: { _ in },
+		onSelectEmoji: { _ in }
+	)
+	.frame(width: 393, height: 40)
+	.preferredColorScheme(.dark)
+}
+
+#Preview("Favorite emojis / centered (free) / dark") {
+	SuggestionBarView(
+		suggestions: [],
+		favoriteEmojis: ["❤️", "😀", "🚀", "🐶"],
+		centersFavorites: true,
 		totalWidth: 387,
 		onSelect: { _ in },
 		onSelectEmoji: { _ in }
