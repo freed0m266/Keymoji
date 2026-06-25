@@ -182,7 +182,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.letterAlternateSet = store.letterAlternateSet
 		self.suggestionsEnabled = store.suggestionsEnabled
 		super.init()
-		self.learnedWordCount = recentsStore.count
+		self.learnedWordCount = recentsStore.count(atLeast: WordCompletionProvider.minSuggestCount)
 		refreshPromoState()
 		// A cross-process change to the shared promo expiry lands here — refresh the row live.
 		promoObservation = notifier.addObserver(for: .promoPlusExpiresAt) { [weak self] in
@@ -193,7 +193,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 	// MARK: - Public API
 
 	func refreshLearnedWordCount() {
-		learnedWordCount = recentsStore.count
+		learnedWordCount = recentsStore.count(atLeast: WordCompletionProvider.minSuggestCount)
 	}
 
 	func activateWelcomeTrial() {

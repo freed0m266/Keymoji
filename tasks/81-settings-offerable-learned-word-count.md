@@ -1,5 +1,7 @@
 # 81 — Settings: čítač = jen nabízitelná naučená slova
 
+**Status:** Done — 2026-06-25 (větev `feature/81-settings-offerable-learned-word-count`). Přidána skladová metoda `LearnedWordsIndex.count(atLeast:)` (jeden alokačně-bezzátěžový průchod `entries` pod `lock`) + průchozí `PersonalRecentsStore.count(atLeast:)`. `SettingsViewModel` (init i `refreshLearnedWordCount()`) teď volá `recentsStore.count(atLeast: WordCompletionProvider.minSuggestCount)` → čítač = nabízitelná slova, souhlasí s editorem; jen-singletony → 0. Tři nové testy v `PersonalRecentsStoreTests`. Codex review: 0 nálezů.
+
 **Status:** Todo — připraveno z grill session 2026-06-25. Dotahuje [task 77](77-learned-words-uniform-suggest-threshold.md) (skryl singletony v seznamu, ale čítač zůstal na totalu).
 
 **Priorita:** v1.x (číslo v Settings nesouhlasí se seznamem v editoru — matoucí) · **Úsilí:** XS (jedna skladová count metoda + jeden řádek ve VM + test) · **Dopad:** Low/Medium (konzistence + číslo dává smysl).

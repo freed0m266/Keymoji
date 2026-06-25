@@ -213,6 +213,32 @@ final class PersonalRecentsStoreTests: XCTestCase {
 		XCTAssertEqual(Set(small.allLearnedWords().map(\.word)), ["aaa", "bbb", "ccc"])
 	}
 
+	// MARK: - Offerable count (task 81: Settings counter = words at/above the suggest threshold)
+
+	func testCountAtLeast_countsOnlyEntriesAtOrAboveThreshold() {
+		// 5 words used twice (offerable) + 3 used once (sub-threshold singletons).
+		for index in 0..<5 {
+			store.learn("word\(index)", fromContextType: .prose)
+			store.learn("word\(index)", fromContextType: .prose)
+		}
+		for index in 0..<3 {
+			store.learn("once\(index)", fromContextType: .prose)
+		}
+		XCTAssertEqual(store.count, 8, "total counts every distinct word")
+		XCTAssertEqual(store.count(atLeast: 2), 5, "offerable count excludes the singletons")
+	}
+
+	func testCountAtLeast_onlySingletons_isZero() {
+		store.learn("alpha", fromContextType: .prose)
+		store.learn("bravo", fromContextType: .prose)
+		XCTAssertEqual(store.count, 2)
+		XCTAssertEqual(store.count(atLeast: 2), 0, "a pool of only singletons offers nothing")
+	}
+
+	func testCountAtLeast_emptyStore_isZero() {
+		XCTAssertEqual(store.count(atLeast: 2), 0)
+	}
+
 	// MARK: - Clear
 
 	func testClear_wipesEverything() {

@@ -136,6 +136,14 @@ final class LearnedWordsIndex: @unchecked Sendable {
 		return entries.count
 	}
 
+	/// Number of entries whose learned `count` is at least `minCount`. Single allocation-free pass over
+	/// `entries` under `lock` (no intermediate array), so the Settings counter can report only the words
+	/// that are actually *offerable* without materializing the pool. Called on-appear, not on the hot path.
+	func count(atLeast minCount: Int) -> Int {
+		lock.lock(); defer { lock.unlock() }
+		return entries.reduce(0) { $0 + ($1.value.count >= minCount ? 1 : 0) }
+	}
+
 	func allLearnedWords() -> [LearnedWord] {
 		lock.lock(); defer { lock.unlock() }
 		return entries.map { LearnedWord(word: $0.key, count: $0.value.count, lastUsed: $0.value.lastUsed) }
