@@ -1,6 +1,6 @@
 # 85 — Auto-capitalization: oprava bugu s tečkou + master toggle
 
-**Status:** Todo — připraveno z grill session 2026-06-25.
+**Status:** Done — 2026-06-25. (Připraveno z grill session 2026-06-25.)
 
 **Priorita:** v1.x (bug — velké písmeno po tečce **nikdy** nenaskočí) · **Úsilí:** M (root-cause v pipeline + cross-process toggle + integrační test) · **Dopad:** Medium (každodenní psaní + nový uživatelský toggle).
 
