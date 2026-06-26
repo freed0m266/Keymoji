@@ -26,11 +26,11 @@ Mít připravený App Store listing, screenshoty a klíčová slova před první
   2. Emoji režim + favorites / shortcodes (task 17, 18, 32).
   3. Word completion suggestion bar (task 40).
   4. Host app Settings — viditelné toggly (haptika, zvuk, QWERTY/QWERTZ, light/dark override).
-  5. Onboarding / „Allow Full Access for haptics & sound" obrazovka (task 11, 38) — proaktivně vysvětlit Full Access.
+  5. Onboarding / „Allow Full Access for haptics" obrazovka (task 11, 38) — proaktivně vysvětlit Full Access.
   6. (volitelně) About screen s privacy statementem (task 13) — posílit privacy claim.
 - **Popis (description):** highlight 4–5 klíčových výhod jako bullet list:
   - 100% on-device, žádné sledování, žádný analytics, žádný network access.
-  - Full Access slouží **jen** pro haptiku a zvuky kláves — vysvětlit, proč o něj iOS žádá (iOS sandbox blokuje haptiku i `playInputClick`/`AudioServicesPlaySystemSound` bez Full Access). Suggestions, nastavení i emoji fungují i bez něj.
+  - Full Access slouží **jen** pro haptiku — vysvětlit, proč o něj iOS žádá (iOS sandbox blokuje haptiku bez Full Access; zvuky kláves fungují i bez něj — ověřeno na zařízení, task 87). Suggestions, nastavení i emoji fungují i bez něj.
   - Emoji search + favorites + Slack-style `:shortcodes:`.
   - QWERTY / QWERTZ přepínání, light/dark override.
   - Haptika a zvuk feedback, plně laditelné.
@@ -68,8 +68,8 @@ Mít připravený App Store listing, screenshoty a klíčová slova před první
 
 ## Rizika
 
-- **Full Access vysvětlení** — App Store review je u custom keyboardů citlivý na „Allow Full Access". Description i screenshot 5 musí jasně říct, že Full Access je **jen** pro haptiku a zvuky kláves, ne pro data. Nesoulad s privacy labelem = rejection.
-- **Nesoulad s privacy policy (task 13)** — `marketing/privacy-policy.html` aktuálně tvrdí, že Full Access je pro „haptic feedback" + „reading/writing preferences in a shared container". Obojí je nepřesné: (a) chybí **zvuky** (taky vyžadují Full Access), (b) přístup k shared containeru je gated **App Group entitlementem**, ne Full Accessem. Před submission sjednotit policy text i listing copy na pravdivé znění: „Full Access enables haptic feedback and key click sounds." (Drobná oprava task 13 artefaktu — flag, ne scope tohoto tasku.)
+- **Full Access vysvětlení** — App Store review je u custom keyboardů citlivý na „Allow Full Access". Description i screenshot 5 musí jasně říct, že Full Access je **jen** pro haptiku (ne pro zvuky kláves, ne pro data). Nesoulad s privacy labelem = rejection.
+- **Nesoulad s privacy policy (task 13)** — `marketing/privacy-policy.html` aktuálně tvrdí, že Full Access je pro „haptic feedback" + „reading/writing preferences in a shared container". To druhé je nepřesné: přístup k shared containeru je gated **App Group entitlementem**, ne Full Accessem. (Full Access je **jen** pro haptiku — zvuky kláves Full Access nevyžadují, ověřeno na zařízení, task 87.) Před submission sjednotit policy text na pravdivé znění: „Full Access enables haptic feedback." (Drobná oprava task 13 artefaktu — flag, ne scope tohoto tasku.)
 - **Privacy label vs. realita** — pokud do appky kdykoli přibude jakýkoli SDK se síťovým přístupem, label „Data Not Collected" přestane platit a je to App Store violation. Držet privacy claim doslova (viz README non-goal: žádné analytics/telemetry).
 - **Název delší než 30 znaků** — „Keymoji – Private Keyboard" zkontrolovat byte count.
 

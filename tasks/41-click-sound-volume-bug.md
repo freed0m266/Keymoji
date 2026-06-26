@@ -27,7 +27,7 @@ Pořadí od nejpravděpodobnější:
 3. **`playInputClick()` se za určitých okolností degraduje na `AudioServicesPlaySystemSound(1104)`** (Tock sound) přes výchozí media volume. iOS dokumentace tvrdí že `playInputClick` honours system keyboard-click setting (fixed quiet level), ale prakticky se objevuje v Stack Overflow / Apple Developer Forums posts (2018–2024) že pokud audio session není ready, fall-backuje na system sound API které jede přes ringer/media volume.
    - **Co ověřit:** vyzkoušet nahradit dočasně `playInputClick()` přímým `AudioServicesPlaySystemSound(1104)` a porovnat hlasitostní profil. Pokud je identický → hypotéza 3 (fall-back path), pokud výrazně jinak → ne ono.
 
-4. **Allow Full Access timing.** `playInputClick()` per Apple guide vyžaduje Allow Full Access. Pokud extension startuje a Full Access se ještě nedotáhne (cross-process IPC s host appem), první stisky můžou jít přes alternative path. Nejméně pravděpodobné, ale pro úplnost.
+4. **Allow Full Access timing — vyloučeno.** Zvažováno, že `playInputClick()` potřebuje Allow Full Access; na zařízení ověřeno, že **nepotřebuje** (Full Access gateuje jen haptiku, ne zvuk — viz task 87), takže tahle hypotéza neplatí.
 
 ## Reprodukce
 
@@ -60,7 +60,7 @@ Manuální verifikace dle hypotézy 1 — pokud control scenario je OK a repro s
    - Pokud hypotéza 3 (fallback path): kombinovat fix 1 + 2 — explicit session setup zajistí že fallback path nikdy nesáhne na media volume.
 
 3. **Regression check existing path.**
-   - Click sound stále hraje (Sounds & Haptics on, Allow Full Access on, Keymoji Settings click toggle on).
+   - Click sound stále hraje (Sounds & Haptics on, Keymoji Settings click toggle on).
    - Click sound stále nehraje když Settings toggle off.
    - Click sound stále nehraje když user vypne Keyboard Clicks v Sounds & Haptics.
    - Host app playback hudby není přerušený nebo paused když začnu psát (kritické — `.mixWithOthers` musí tam být, jinak break music).

@@ -46,7 +46,7 @@ Známé systémové keyboard sound IDs (k **ověření na reálném zařízení*
 **Trade-off (záměrně zvážit, ne ignorovat):** task [41](41-click-sound-volume-bug.md) a komentáře v
 [`KeyClickSounding.swift`](../KeyboardCore/Sources/Public/KeyClickSounding.swift) zdůrazňují, že
 `playInputClick()` je idiomatická Apple cesta, kterou systém **gateuje** dle „Keyboard Clicks"
-v Settings → Sounds & Haptics (+ Allow Full Access). `AudioServicesPlaySystemSound` tuhle bránu
+v Settings → Sounds & Haptics. `AudioServicesPlaySystemSound` tuhle bránu
 **obchází** — hraje i když má uživatel Keyboard Clicks vypnuté, a jede přes media/ringer volume
 (potenciální regrese hlasitosti z tasku 41). Před přechodem je proto nutné ověřit:
 1. Zda `AudioServicesPlaySystemSound` s keyboard IDs respektuje „Keyboard Clicks" toggle (pravděpodobně **ne**).
@@ -54,7 +54,7 @@ v Settings → Sounds & Haptics (+ Allow Full Access). `AudioServicesPlaySystemS
 
 Pokud `AudioServicesPlaySystemSound` brání respekt systémového toggle, je potřeba si ho hlídat
 sami — číst stav „Keyboard Clicks" nelze přímo, takže fallback je: gate čistě naším app-side
-toggle (`AppGroupStore`) + respekt Allow Full Access, a v tasku poznamenat, že systémový
+toggle (`AppGroupStore`), a v tasku poznamenat, že systémový
 „Keyboard Clicks" toggle už neplatí (degradace vůči nativní paritě — zvážit, zda je odlišný zvuk
 mezerníku tu cenu hoden).
 

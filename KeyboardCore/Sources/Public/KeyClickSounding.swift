@@ -5,9 +5,8 @@ import Foundation
 /// implementation lives in `KeyboardExtension/UIKitClickSound` and wraps
 /// `UIDevice.current.playInputClick()`. iOS only emits the click when the controller's *visible
 /// input view* adopts `UIInputViewAudioFeedback` (the controller itself is not inspected) **and**
-/// the user has "Keyboard Clicks" enabled in Settings → Sounds & Haptics, **and** the extension
-/// has Allow Full Access. The system gates audibility for us, the app-side toggle just decides
-/// whether to call `play()` in the first place.
+/// the user has "Keyboard Clicks" enabled in Settings → Sounds & Haptics. The system gates
+/// audibility for us, the app-side toggle just decides whether to call `play()` in the first place.
 ///
 /// `@MainActor` matches `UIDevice` isolation.
 ///

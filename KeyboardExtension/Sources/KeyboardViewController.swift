@@ -1034,8 +1034,8 @@ extension KeyboardViewController: KeyboardControlling {}
 // `UIDevice.current.playInputClick()` only produces audio when the *visible input view* — not the
 // controller — conforms to `UIInputViewAudioFeedback` and returns `true` from
 // `enableInputClicksWhenVisible`. iOS additionally gates audibility on the user's Settings →
-// Sounds & Haptics → Keyboard Clicks preference, and (per Apple's custom keyboard guide)
-// `playInputClick` requires Allow Full Access to be enabled for the extension.
+// Sounds & Haptics → Keyboard Clicks preference. Full Access is not required for key click sound;
+// it gates haptics only.
 private final class KeymojiInputView: UIInputView, UIInputViewAudioFeedback {
 	var enableInputClicksWhenVisible: Bool { true }
 }

@@ -7,8 +7,8 @@ import KeyboardCore
 ///
 /// - **Character keys** use `UIDevice.current.playInputClick()`. It only produces audio when the
 ///   controller's *visible input view* conforms to `UIInputViewAudioFeedback` (see `KeymojiInputView`
-///   in `KeyboardViewController.swift`), the user has "Keyboard Clicks" enabled in Settings →
-///   Sounds & Haptics, and the extension has Allow Full Access. This is the idiomatic Apple path
+///   in `KeyboardViewController.swift`) and the user has "Keyboard Clicks" enabled in Settings →
+///   Sounds & Haptics. This is the idiomatic Apple path
 ///   and routes through the quiet UI-sound level — the volume profile validated in task 41.
 ///
 /// - **Space and delete** use `AudioServicesPlaySystemSound(_:)` with specific keyboard sound IDs,
@@ -16,8 +16,7 @@ import KeyboardCore
 ///   `AudioServicesPlaySystemSound` does *not* honor the system "Keyboard Clicks" toggle (that
 ///   state can't be read by an extension), so space/delete will click even if the user disabled
 ///   system keyboard clicks — while still being gated by our app-side `isEnabled` toggle
-///   (`AppGroupStore.keyClickSoundEnabled`) and by Allow Full Access (without it the extension's
-///   custom audio path is unavailable). The character path above keeps honoring the system toggle,
+///   (`AppGroupStore.keyClickSoundEnabled`). The character path above keeps honoring the system toggle,
 ///   so only space/delete diverge. We accept this small loss of native parity to gain the distinct
 ///   space/delete sounds the native keyboard has.
 ///

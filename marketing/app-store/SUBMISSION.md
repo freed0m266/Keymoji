@@ -79,15 +79,15 @@ Required device sizes: **6.9" (iPhone 16 Pro Max)** and **6.5" (iPhone 11 Pro Ma
 2. [ ] Emoji mode + favorites / shortcodes (tasks 17, 18, 32)
 3. [ ] Word completion suggestion bar (task 40)
 4. [ ] Host app Settings — haptics, sound, QWERTY/QWERTZ, light/dark toggles
-5. [ ] Onboarding "Allow Full Access for haptics & sound" screen (tasks 11, 38)
+5. [ ] Onboarding "Allow Full Access for haptics" screen (tasks 11, 38)
 6. [ ] (optional) About screen with the privacy statement (task 13)
 
 ## Review notes (App Review Information)
 
 Recommended note to pre-empt the custom-keyboard Full Access question:
 
-> Keymoji requests "Allow Full Access" solely to use the haptic feedback and key
-> click sound APIs, which iOS gates behind Full Access for keyboard extensions.
+> Keymoji requests "Allow Full Access" solely to use the haptic feedback API,
+> which iOS gates behind Full Access for keyboard extensions.
 > The keyboard extension contains no networking code and makes no network requests;
 > nothing you type ever leaves the device. The app sends only anonymous, opt-out
 > usage statistics (which settings are used — never content) via TelemetryDeck.
@@ -97,7 +97,7 @@ Recommended note to pre-empt the custom-keyboard Full Access question:
 
 - [ ] `check-lengths.sh` passes.
 - [ ] Privacy label, privacy policy, and listing copy all tell the same story:
-      Full Access is for haptics + key click sounds only (**not** data, **not** the
+      Full Access is for haptic feedback only (**not** data, **not** the
       shared container, which the App Group entitlement gates), and the only data
       leaving the device is anonymous, opt-out usage statistics — never content.
 - [ ] Screenshots uploaded for both sizes.

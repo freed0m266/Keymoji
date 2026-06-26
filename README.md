@@ -77,7 +77,7 @@ open Keymoji.xcworkspace
 To use Keymoji as your iOS keyboard after building & installing:
 
 1. Settings → General → Keyboard → Keyboards → Add New Keyboard → Keymoji
-2. Tap Keymoji in the list → enable **Allow Full Access** (required by iOS for haptic feedback and key click sounds; Keymoji doesn't use it for anything else — see [Privacy](#privacy))
+2. Tap Keymoji in the list → enable **Allow Full Access** (required by iOS for haptic feedback; Keymoji doesn't use it for anything else — see [Privacy](#privacy))
 3. In any text field, tap the globe icon and pick Keymoji
 
 The host app's onboarding screen walks through these steps with live status detection.
@@ -173,7 +173,7 @@ Keymoji's `marketing/privacy-policy.html` is the source of truth — hosted at t
 - **Anonymous, opt-out usage stats.** The host app reports which settings get used and app/feature lifecycle events via TelemetryDeck — anonymised on-device, never content, no IDFA, no cross-app tracking. Off in Settings → Privacy stops it entirely.
 - **Learned words stay local.** Words used to speed up typing live in a private App Group container only Keymoji can read — never uploaded, not even to Apple.
 - **No ad/attribution SDKs.** TelemetryDeck (host-app analytics) and SwiftyBeaver (console logging) only.
-- **"Allow Full Access" is required only for haptics and key click sounds** — an iOS sandbox restriction, not a data-collection mechanism. Leave it off and the rest of the keyboard works the same.
+- **"Allow Full Access" is required only for haptic feedback** — an iOS sandbox restriction, not a data-collection mechanism. Leave it off and the rest of the keyboard works the same.
 
 ## Tests
 
