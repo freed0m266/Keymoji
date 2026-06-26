@@ -82,18 +82,21 @@ NEVER REWRITES WHAT YOU TYPE
 
 No silent autocorrect. Keymoji suggests — it never swaps your words behind your back or "fixes" a name into something it isn't. What you type is what you get; tap a suggestion only when you actually want it.
 
+FREE FOREVER — PLUS IS OPTIONAL
+
+Every typing feature is free, forever — layouts, suggestions, accents, search, shortcodes, and your first six favorite emoji. Want more? Keymoji Plus is a single one-time unlock — no subscription, ever — for unlimited favorites, multiple swipeable pages, and auto-sort by most-used.
+
 PRIVATE BY DESIGN
 
 What you type never leaves your iPhone — the keyboard makes no network calls at all, and there's no silent autocorrect rewriting your words. The app shares anonymous usage stats (which settings get used — never what you type) to guide what's built next, and you can turn that off in Settings. No tracking, no ads, no accounts. The words it learns to speed you up stay in a private container only Keymoji can read, never uploaded, not even to Apple. Don't take our word for it: the source code is public on GitHub.
 
 ABOUT "ALLOW FULL ACCESS"
 
-iOS makes every custom keyboard request "Allow Full Access" before it can play haptics or key click sounds. That's an iOS sandbox rule — not a data switch. Keymoji uses it for exactly two things:
+iOS makes every custom keyboard request "Allow Full Access" before it can play haptic feedback. That's an iOS sandbox rule — not a data switch. Keymoji uses it for exactly one thing:
 
 • Haptic feedback (vibration) when you type
-• Key click sounds
 
-Nothing else — no contacts, no location, and nothing you type ever leaves your iPhone. The keyboard itself makes no network calls at all; the app sends only anonymous usage stats (opt-out, never your typing) plus Apple's standard purchase check for Keymoji Plus. Prefer Full Access off? Leave it off, and every typing feature still works — just silent.
+Nothing else — no contacts, no location, and nothing you type ever leaves your iPhone. The keyboard itself makes no network calls at all; the app sends only anonymous usage stats (opt-out, never your typing) plus Apple's standard purchase check for Keymoji Plus. Prefer Full Access off? Leave it off — every typing feature still works, key click sounds included; you just won't feel the haptic buzz.
 
 Built by one developer who wanted a fast, private keyboard with emoji done right — and uses it every day.
 
