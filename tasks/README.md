@@ -122,6 +122,10 @@ Připraveno v grill-with-docs session; čtyři nezávislé tasky.
 85. [85 — Auto-capitalization: oprava bugu s tečkou + master toggle](85-auto-capitalization-period-fix-toggle.md) — M; bug je v pipeline (re-run jen při změně stránky), ne v `AutoCapitalizer`; toggle default ON.
 86. [86 — Anonymní host-app analytics (TelemetryDeck) + privacy reconciliation](86-anonymous-host-app-analytics-telemetrydeck.md) — L; host-only, nikdy obsah, opt-out default ON; přepis privacy slibu ([ADR 0004](../docs/adr/0004-anonymous-host-app-analytics.md)).
 
+## v1.x — Copy & positioning
+
+87. [87 — Plus copy retext (marketing-psychology) + oprava Full Access claimů](87-plus-copy-retext-and-fullaccess-claims.md) — M; přetextování Plus paywallu/trialu/favorites (reciprocity-first), App Store listing Plus sekce, a sjednocení pravdy „Full Access = jen haptika, ne zvuk" napříč copy/kódem/historickými tasky.
+
 ## Mimo scope úplně
 
 - **iPad support.** iPad keyboard má vlastní layout (split, floating, mini), to je celý vlastní projekt. Keymoji zůstává iPhone only minimálně do v1.5.
