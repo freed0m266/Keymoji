@@ -1,6 +1,6 @@
 # 86 — Anonymní host-app analytics (TelemetryDeck) + privacy reconciliation
 
-**Status:** Todo — připraveno z grill session 2026-06-25.
+**Status:** Done — 2026-06-26 (TelemetryDeck SDK + host-only `Analytics` framework, opt-out toggle, privacy reconciliation; Codex P1 ×2 applied: SDK fully terminated on opt-out, placeholder App ID inert until set).
 
 **Priorita:** v1.x (data pro produktová rozhodnutí; zavést před širším releasem) · **Úsilí:** L (SDK integrace + DI + opt-out toggle + přepis 5 míst privacy positioning + ADR) · **Dopad:** High (produktová data o cílovce **+ dotčení privacy positioningu** appky).
 
