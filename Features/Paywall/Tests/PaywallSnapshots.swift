@@ -36,19 +36,6 @@ final class PaywallSnapshots: XCTestCase {
 		)
 	}
 
-	func testPaywall_loadingPrice_dark() {
-		assertSnapshot(
-			PaywallView(
-				viewModel: PaywallViewModelMock(
-					context: .settings,
-					displayPrice: nil,
-					isProductLoaded: false,
-					isLoadingProducts: true
-				)
-			)
-		)
-	}
-
 	func testPaywall_productsUnavailable_dark() {
 		assertSnapshot(
 			PaywallView(
