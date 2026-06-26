@@ -481,16 +481,13 @@ final class InputDispatcherSuggestionTests: XCTestCase {
 	}
 
 	func testAutoSpaceFlag_clearedByEveryResetAction() {
-		// The spec makes resetting lastSpaceWasAuto on every action that resets lastInsertWasSpace a hard
-		// requirement (task 84, Scope). Without these, a later `.` could absorb a space the cursor has moved
-		// past or that a page hop should have decoupled. switchPage/cursorOffset/cursorLineOffset are the
-		// load-bearing guards: they don't mutate the document, so the `hasSuffix(" ")` check in
-		// absorbAutoSpaceIfNeeded wouldn't catch a dropped reset there.
+		// Resetting lastSpaceWasAuto on these navigational/destructive actions stops a later `.` from
+		// absorbing a space the cursor has moved past or a word the user has walked away from. A page
+		// switch is deliberately NOT in this list — see testAcceptThenSwitchPageThenPunctuation_absorbs.
 		let resetActions: [KeyAction] = [
 			.backspace,
 			.deleteWord,
 			.return,
-			.switchPage(.symbols(.primary)),
 			.cursorOffset(2),
 			.cursorLineOffset(1),
 		]
@@ -502,6 +499,23 @@ final class InputDispatcherSuggestionTests: XCTestCase {
 			XCTAssertTrue(state.lastSpaceWasAuto, "precondition: accept marks the trailing space as auto")
 			dispatch(actionKey(action), &state)
 			XCTAssertFalse(state.lastSpaceWasAuto, "\(action) must clear the one-shot auto-space flag")
+		}
+	}
+
+	func testAcceptThenSwitchPageThenPunctuation_absorbs() {
+		// The real-world path for `,` `?` `!`: they live only on the symbols page, so the user must tap `123`
+		// (a `.switchPage`) to reach them. The flag must survive that switch or absorption never fires for
+		// those three marks. Reproduces the reported "Ahoj, co delas dneska ?" bug.
+		for mark in [",", "?", "!"] {
+			proxy = SuggestionMockProxy()
+			var state = proseState()
+			proxy.documentContextBeforeInput = "co delas dne"
+			dispatch(acceptKey("dneska"), &state)
+			XCTAssertEqual(proxy.documentContextBeforeInput, "co delas dneska ")
+			dispatch(actionKey(.switchPage(.symbols(.primary))), &state)
+			XCTAssertTrue(state.lastSpaceWasAuto, "the accept-space must survive the hop to the symbols page")
+			dispatch(boundaryKey(mark), &state)
+			XCTAssertEqual(proxy.documentContextBeforeInput, "co delas dneska\(mark)", "auto-space absorbed before \(mark)")
 		}
 	}
 }
