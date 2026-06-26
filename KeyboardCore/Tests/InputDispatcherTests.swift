@@ -336,6 +336,55 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
 
+	func testDeletingAroundSentenceBoundary_togglesShiftBothWays() {
+		// The full reverse-direction scenario: deletion must re-promote/demote symmetrically, and a
+		// re-typed space must re-promote — keying off `autoCapitalized` so it round-trips cleanly.
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Ahoj", into: &state)
+		dispatch(letterKey("."), &state)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))   // "Ahoj. " → shift on
+
+		// Type the auto-capitalized letter: the upper page uppercases it → "Ahoj. D", then downshifts.
+		dispatch(letterKey("d"), &state)
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Ahoj. D")
+		XCTAssertEqual(state.page, .letters(.lower))
+
+		// Delete "D" → context back to "Ahoj. " → shift re-activates (new `.backspace` re-run).
+		dispatch(makeKey(.backspace), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Ahoj. ")
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))
+
+		// Delete the space → context "Ahoj." → no trigger → shift de-activates.
+		dispatch(makeKey(.backspace), &state)
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Ahoj.")
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.lower))
+
+		// Re-type the space → context "Ahoj. " → shift re-activates again.
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 2000) })
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Ahoj. ")
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))
+	}
+
+	func testDeletingSpace_withManualShift_doesNotRevert() {
+		// A manually-held shift (autoCapitalized == false) must survive a delete that removes a trigger —
+		// only auto-driven promotions are reverted.
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Ahoj", into: &state)
+		dispatch(letterKey("."), &state)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		state.page = .letters(.upper)        // simulate a manual shift tap
+		state.autoCapitalized = false
+		dispatch(makeKey(.backspace), &state)  // delete the space → "Ahoj."
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))   // manual shift preserved
+	}
+
 	func testDoubleSpace_onSymbolsPrimary_substitutesAndSwitches() {
 		var state = KeyboardState(page: .symbols(.primary))
 		let t0 = Date(timeIntervalSince1970: 1000)
