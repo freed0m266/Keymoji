@@ -89,6 +89,8 @@
 "settings.keyboard.spaceDoubleTap.dismissKeyboard" = "Hide keyboard";
 "settings.keyboard.spaceDoubleTap.none" = "Do nothing";
 "settings.keyboard.spaceDoubleTapFooter" = "Choose what happens when you tap the space bar twice in quick succession.";
+"settings.keyboard.autoCapitalization" = "Auto-capitalization";
+"settings.keyboard.autoCapitalizationFooter" = "Capitalize the first letter of each sentence. Fields that ask for lowercase (like usernames and passwords) are never capitalized.";
 "settings.favorites.row" = "Favorite emojis";
 "settings.favorites.footer" = "Pinned to the front of the emoji panel for quick access.";
 "settings.favorites.header" = "Emojis";

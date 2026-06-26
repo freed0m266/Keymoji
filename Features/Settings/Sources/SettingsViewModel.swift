@@ -30,6 +30,7 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var showNumberRow: Bool { get set }
 	var hapticFeedbackEnabled: Bool { get set }
 	var keyClickSoundEnabled: Bool { get set }
+	var autoCapitalizationEnabled: Bool { get set }
 	var appearance: AppearancePreference { get set }
 	var spaceDoubleTapAction: SpaceDoubleTapAction { get set }
 	var letterLayout: LetterLayout { get set }
@@ -81,6 +82,13 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		didSet {
 			store.keyClickSoundEnabled = keyClickSoundEnabled
 			notifier.post(.keyClickSoundEnabled)
+		}
+	}
+
+	var autoCapitalizationEnabled: Bool {
+		didSet {
+			store.autoCapitalizationEnabled = autoCapitalizationEnabled
+			notifier.post(.autoCapitalizationEnabled)
 		}
 	}
 
@@ -176,6 +184,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.showNumberRow = store.showNumberRow
 		self.hapticFeedbackEnabled = store.hapticFeedbackEnabled
 		self.keyClickSoundEnabled = store.keyClickSoundEnabled
+		self.autoCapitalizationEnabled = store.autoCapitalizationEnabled
 		self.appearance = store.appearance
 		self.spaceDoubleTapAction = store.spaceDoubleTapAction
 		self.letterLayout = store.letterLayout

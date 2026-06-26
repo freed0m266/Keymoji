@@ -33,6 +33,12 @@ public struct KeyboardState: Sendable, Equatable {
 	/// `AppGroupStore.spaceDoubleTapAction`, refreshed by `KeyboardViewController.viewWillAppear`.
 	public var spaceDoubleTapAction: SpaceDoubleTapAction
 
+	/// Master toggle for sentence auto-capitalization. Runtime mirror of
+	/// `AppGroupStore.autoCapitalizationEnabled`, refreshed on `viewWillAppear` and on the
+	/// `.autoCapitalizationEnabled` Darwin notification. When `false`, `AutoCapitalizer` never promotes
+	/// to `letters(.upper)` (the per-field autocapitalization trait is still honored when `true`).
+	public var autoCapitalizationEnabled: Bool
+
 	/// Whether the most recently inserted character was a space. Drives the
 	/// double-tap-space → ". " substitution.
 	public var lastInsertWasSpace: Bool
@@ -125,6 +131,7 @@ public struct KeyboardState: Sendable, Equatable {
 		letterLayout: LetterLayout = .qwerty,
 		letterAlternateSet: LetterAlternateSet = .all,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
+		autoCapitalizationEnabled: Bool = true,
 		lastInsertWasSpace: Bool = false,
 		lastSpaceInsertedAt: Date? = nil,
 		lastSpaceWasAuto: Bool = false,
@@ -149,6 +156,7 @@ public struct KeyboardState: Sendable, Equatable {
 		self.letterLayout = letterLayout
 		self.letterAlternateSet = letterAlternateSet
 		self.spaceDoubleTapAction = spaceDoubleTapAction
+		self.autoCapitalizationEnabled = autoCapitalizationEnabled
 		self.lastInsertWasSpace = lastInsertWasSpace
 		self.lastSpaceInsertedAt = lastSpaceInsertedAt
 		self.lastSpaceWasAuto = lastSpaceWasAuto

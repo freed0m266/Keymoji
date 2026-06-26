@@ -216,6 +216,9 @@ final class KeyboardViewController: UIInputViewController {
 			settingsNotifier.addObserver(for: .suggestionsEnabled) { [weak self] in
 				self?.refreshFromStore()
 			},
+			settingsNotifier.addObserver(for: .autoCapitalizationEnabled) { [weak self] in
+				self?.refreshFromStore()
+			},
 			// The host app edited the learned-words pool (removed/cleared entries) — reload the
 			// in-memory index from disk so the running keyboard reflects the change live (task 73).
 			// Drop the suggestion memo (the pool changed under a possibly-identical context) and rebuild
@@ -241,6 +244,14 @@ final class KeyboardViewController: UIInputViewController {
 		let doubleTap = store.spaceDoubleTapAction
 		if state.spaceDoubleTapAction != doubleTap {
 			state.spaceDoubleTapAction = doubleTap
+			changed = true
+		}
+		let autoCapOn = store.autoCapitalizationEnabled
+		if state.autoCapitalizationEnabled != autoCapOn {
+			state.autoCapitalizationEnabled = autoCapOn
+			// Reflect the flip immediately on a visible keyboard: turning it off should drop a pending
+			// auto-promotion, turning it on should re-evaluate the current context.
+			refreshAutoCapitalization()
 			changed = true
 		}
 		let layout = store.letterLayout
@@ -897,22 +908,28 @@ final class KeyboardViewController: UIInputViewController {
 			if state.recentEmojis != recentsBefore, state.recentEmojis != store.recentEmojis {
 				store.recentEmojis = state.recentEmojis
 			}
-			// Re-evaluate auto-cap only after `switchPage` — that's the one action where the document
-			// can already carry a pending auto-cap (e.g. user typed `? ` on symbols, then hit ABC) but
-			// `textDidChange` won't fire. For text-changing actions, `textDidChange` triggers the
-			// re-eval automatically. For `.shift` we must NOT re-evaluate: doing so would immediately
-			// override a manual lowercase override at sentence start (Instagram message field, etc.).
-			// `.space` on a symbol page implicitly switches to letters *after* `insertText`; any
-			// `textDidChange` that fired synchronously during the insert saw the old `.symbols` page
-			// and skipped auto-cap, so re-run here for that implicit transition (covers "Yes! How…").
-			// `.suggestionAccept` does the same implicit symbols → letters hop (task 74, Fáze B), so it
-			// needs the identical re-run.
-			if case .switchPage = key.action {
+			// Re-evaluate auto-cap after the actions that can leave a fresh sentence trigger in the
+			// document. `textDidChange` is *not* reliable for this: it fires synchronously *during*
+			// `insertText`, so it can read a `documentContextBeforeInput` that doesn't yet include the
+			// space/character just inserted (e.g. it sees `Hello.` not `Hello. `) and skip the promotion.
+			// So we re-run here, after dispatch returns, when the proxy context is settled (task 85, Part A):
+			//   • `.switchPage` — the document may already carry a pending auto-cap (e.g. `? ` typed on
+			//     symbols, then ABC) that `textDidChange` won't surface.
+			//   • `.space` / `.insertText` / `.insertRawText` — re-run **regardless of any page change**.
+			//     A sentence terminator typed via a key that doesn't switch pages — the dedicated `.` dot
+			//     key on the letter page, or the `". "` double-tap substitution — leaves the page on
+			//     letters, so the old page-change guard never fired and the period never capitalized while
+			//     `?`/`!` (which hop symbols → letters) did. Idempotent, so safe on every text action.
+			//   • `.suggestionAccept` — does the same implicit symbols → letters hop (task 74, Fáze B).
+			// `.shift` is deliberately excluded: re-running would immediately override a manual lowercase
+			// override at sentence start (Instagram message field, etc.).
+			switch key.action {
+			case .switchPage, .space, .insertText, .insertRawText:
 				refreshAutoCapitalization()
-			} else if case .space = key.action, pageBefore != state.page {
+			case .suggestionAccept where pageBefore != state.page:
 				refreshAutoCapitalization()
-			} else if case .suggestionAccept = key.action, pageBefore != state.page {
-				refreshAutoCapitalization()
+			default:
+				break
 			}
 			rebuild()
 		}
@@ -960,31 +977,18 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func refreshAutoCapitalization() {
-		// Auto-cap only ever flips between `letters(.lower)` and `letters(.upper)`; it must never
-		// touch a numeric page (task 59). It can't today — numeric fields report `.none` autocap and
-		// the branches below only match `.letters` — but this makes the invariant explicit and
-		// independent of the `textDidChange` call ordering.
-		guard !state.page.isNumeric else { return }
+		// The page flip (and the numeric-page guard) lives in `AutoCapitalizer.applyAutoCapitalization`
+		// so it's testable without a real text proxy; here we just feed it the live proxy reads and the
+		// master toggle (`state.autoCapitalizationEnabled`, task 85) and rebuild when the page changed.
 		let rawType = textDocumentProxy.autocapitalizationType ?? .sentences
 		let autoCapType = AutocapitalizationTypeMapping.map(rawType)
-		let shouldCap = AutoCapitalizer.shouldCapitalize(
+		let changed = AutoCapitalizer.applyAutoCapitalization(
+			to: &state,
 			documentContextBeforeInput: textDocumentProxy.documentContextBeforeInput,
-			autocapitalizationType: autoCapType
+			autocapitalizationType: autoCapType,
+			enabled: state.autoCapitalizationEnabled
 		)
-
-		if shouldCap {
-			if case .letters(.lower) = state.page {
-				state.page = .letters(.upper)
-				state.autoCapitalized = true
-				rebuild()
-			}
-		} else if state.autoCapitalized {
-			state.autoCapitalized = false
-			if case .letters(.upper) = state.page {
-				state.page = .letters(.lower)
-				rebuild()
-			}
-		}
+		if changed { rebuild() }
 	}
 }
 

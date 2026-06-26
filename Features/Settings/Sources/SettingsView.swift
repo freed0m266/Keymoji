@@ -160,6 +160,12 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		} footer: {
 			Text(Texts.Keyboard.spaceDoubleTapFooter)
 		}
+
+		Section {
+			Toggle(Texts.Keyboard.autoCapitalization, isOn: $viewModel.autoCapitalizationEnabled)
+		} footer: {
+			Text(Texts.Keyboard.autoCapitalizationFooter)
+		}
 	}
 
 	/// Consume the gift, then surface a short toast confirming the new expiry. The row itself flips to

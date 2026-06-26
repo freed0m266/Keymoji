@@ -9,6 +9,9 @@ public enum AppGroupStoreKey: String, Sendable, CaseIterable {
 	case onboardingComplete
 	case appearance
 	case spaceDoubleTapAction
+	/// Master on/off for sentence auto-capitalization (`Bool`). Defaults to `true`. Written by the host
+	/// app's Settings screen, read (never written) by the keyboard extension to gate auto-cap promotion.
+	case autoCapitalizationEnabled
 	case letterLayout
 	/// Active long-press diacritic set (`LetterAlternateSet` raw value). When unset, the typed
 	/// accessor derives a default from the device locale instead of returning a fixed value.

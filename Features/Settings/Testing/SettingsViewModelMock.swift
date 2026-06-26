@@ -16,6 +16,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 	var showNumberRow: Bool
 	var hapticFeedbackEnabled: Bool
 	var keyClickSoundEnabled: Bool
+	var autoCapitalizationEnabled: Bool
 	var appearance: AppearancePreference
 	var spaceDoubleTapAction: SpaceDoubleTapAction
 	var letterLayout: LetterLayout
@@ -30,6 +31,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		showNumberRow: Bool = true,
 		hapticFeedbackEnabled: Bool = true,
 		keyClickSoundEnabled: Bool = false,
+		autoCapitalizationEnabled: Bool = true,
 		appearance: AppearancePreference = .system,
 		spaceDoubleTapAction: SpaceDoubleTapAction = .insertPeriod,
 		letterLayout: LetterLayout = .qwerty,
@@ -43,6 +45,7 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		self.showNumberRow = showNumberRow
 		self.hapticFeedbackEnabled = hapticFeedbackEnabled
 		self.keyClickSoundEnabled = keyClickSoundEnabled
+		self.autoCapitalizationEnabled = autoCapitalizationEnabled
 		self.appearance = appearance
 		self.spaceDoubleTapAction = spaceDoubleTapAction
 		self.letterLayout = letterLayout

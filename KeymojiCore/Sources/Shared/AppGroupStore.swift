@@ -104,6 +104,15 @@ public extension AppGroupStore {
 		set { setBool(newValue, forKey: .hapticFeedbackEnabled) }
 	}
 
+	/// Master toggle for sentence auto-capitalization. Defaults to `true` (DEF-ON) — capitalizing the
+	/// first letter of a sentence is the expected default; the toggle is primarily an off-switch. The
+	/// keyboard extension still honors each field's autocapitalization trait, so a `.none` field
+	/// (username/password) is never promoted even when this is on.
+	var autoCapitalizationEnabled: Bool {
+		get { bool(forKey: .autoCapitalizationEnabled, default: true) }
+		set { setBool(newValue, forKey: .autoCapitalizationEnabled) }
+	}
+
 	/// Keyboard click sound toggle. Defaults to `false` — Apple's stock setting in
 	/// Settings → Sounds & Haptics also ships off; matching that avoids surprising users.
 	var keyClickSoundEnabled: Bool {
