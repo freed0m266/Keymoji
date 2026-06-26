@@ -22,6 +22,13 @@ final class KeyboardViewController: UIInputViewController {
 	/// Observable render model bound once to the hosting controller (task 73, Phase B). State changes
 	/// mutate this in place instead of reassigning `hostingController.rootView`.
 	private var viewModel: KeyboardViewModel?
+	/// True only while `handle()` is inside `InputDispatcher.dispatch` for a text-mutating key. iOS calls
+	/// `textDidChange` *synchronously* during the dispatcher's `insertText`/`deleteBackward`, with a stale
+	/// mid-edit document context; `handle()` re-runs auto-cap with the *settled* context right after
+	/// dispatch (task 85). This flag lets `textDidChange` skip its redundant auto-cap pass for those keys,
+	/// so auto-cap does its cross-process proxy reads **once** per keystroke, not twice (perf regression
+	/// fix). External changes (focus, host edits) leave the flag false, so they still auto-cap normally.
+	private var isApplyingOwnEdit = false
 	/// Constraint that drives the keyboard's vertical footprint. Most pages keep it at the
 	/// regular iOS keyboard height (~260 pt); `.emojiSearch` mode bumps it taller so the
 	/// search bar and horizontal results bar above the QWERTY rows aren't clipped by the
@@ -328,7 +335,14 @@ final class KeyboardViewController: UIInputViewController {
 		// it must never see a numeric page it could try to promote to `letters(.upper)`.
 		refreshKeyboardPageForInputType()
 		refreshReturnKeyType()
-		refreshAutoCapitalization()
+		// Skip auto-cap while we're applying our own keystroke: this callback fires synchronously *during*
+		// the dispatcher's edit with a stale mid-edit context, and `handle()` re-runs auto-cap with the
+		// settled context immediately after dispatch. Running it here too just doubles the cross-process
+		// proxy reads (and can flip-flop the page at sentence boundaries). For external changes (focus,
+		// host edits) the flag is false, so auto-cap still runs here.
+		if !isApplyingOwnEdit {
+			refreshAutoCapitalization()
+		}
 		refreshEligibility()
 		refreshLanguage()
 		updatePendingEmailIfNeeded()
@@ -887,8 +901,20 @@ final class KeyboardViewController: UIInputViewController {
 			// is concerned with state + text proxy only.
 			let pageBefore = state.page
 			let recentsBefore = state.recentEmojis
+			// Text-mutating actions whose edit can move the sentence boundary: we re-run auto-cap with the
+			// settled context after dispatch (below), so `textDidChange`'s synchronous mid-edit pass is
+			// redundant for them — `isApplyingOwnEdit` makes it skip, halving the per-keystroke auto-cap
+			// proxy reads. (`.suggestionAccept` is handled separately and isn't on the typing hot path.)
+			let reRunsAutoCap: Bool
+			switch key.action {
+			case .switchPage, .space, .insertText, .insertRawText, .backspace, .deleteWord:
+				reRunsAutoCap = true
+			default:
+				reRunsAutoCap = false
+			}
 			// Disabling word suggestions stops learning too (not just the bar) — the Settings footer and
 			// privacy policy both promise the opt-out halts on-device learning.
+			isApplyingOwnEdit = reRunsAutoCap
 			InputDispatcher.dispatch(
 				key: key,
 				state: &state,
@@ -896,6 +922,7 @@ final class KeyboardViewController: UIInputViewController {
 				controller: self,
 				learning: state.suggestionsEnabled ? learningHook : nil
 			)
+			isApplyingOwnEdit = false
 			// The dispatcher updates `state.recentEmojis` directly when a typed `:shortcode:` auto-
 			// substitutes to an emoji (inserted via the proxy, not a synthesized `emoji.` key). That
 			// path bypasses `recordRecentEmojiIfNeeded` below, so detect it here by the recents change
@@ -928,13 +955,10 @@ final class KeyboardViewController: UIInputViewController {
 			//   • `.suggestionAccept` — does the same implicit symbols → letters hop (task 74, Fáze B).
 			// `.shift` is deliberately excluded: re-running would immediately override a manual lowercase
 			// override at sentence start (Instagram message field, etc.).
-			switch key.action {
-			case .switchPage, .space, .insertText, .insertRawText, .backspace, .deleteWord:
+			if reRunsAutoCap {
 				refreshAutoCapitalization()
-			case .suggestionAccept where pageBefore != state.page:
+			} else if case .suggestionAccept = key.action, pageBefore != state.page {
 				refreshAutoCapitalization()
-			default:
-				break
 			}
 			rebuild()
 		}
@@ -982,6 +1006,10 @@ final class KeyboardViewController: UIInputViewController {
 	}
 
 	private func refreshAutoCapitalization() {
+		// Numeric pages never auto-cap (task 59) — bail *before* the two cross-process proxy reads below,
+		// so a numeric field pays zero IPC per keystroke. (`applyAutoCapitalization` keeps the same guard
+		// for the pure/testable path; this restores the fast path the task-85 refactor moved past the reads.)
+		guard !state.page.isNumeric else { return }
 		// The page flip (and the numeric-page guard) lives in `AutoCapitalizer.applyAutoCapitalization`
 		// so it's testable without a real text proxy; here we just feed it the live proxy reads and the
 		// master toggle (`state.autoCapitalizationEnabled`, task 85) and rebuild when the page changed.
