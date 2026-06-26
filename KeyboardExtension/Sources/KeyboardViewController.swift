@@ -908,11 +908,12 @@ final class KeyboardViewController: UIInputViewController {
 			if state.recentEmojis != recentsBefore, state.recentEmojis != store.recentEmojis {
 				store.recentEmojis = state.recentEmojis
 			}
-			// Re-evaluate auto-cap after the actions that can leave a fresh sentence trigger in the
-			// document. `textDidChange` is *not* reliable for this: it fires synchronously *during*
-			// `insertText`, so it can read a `documentContextBeforeInput` that doesn't yet include the
-			// space/character just inserted (e.g. it sees `Hello.` not `Hello. `) and skip the promotion.
-			// So we re-run here, after dispatch returns, when the proxy context is settled (task 85, Part A):
+			// Re-evaluate auto-cap after every action that can change whether the cursor sits at a
+			// sentence boundary — insertions *and* deletions, in both directions. `textDidChange` is
+			// *not* reliable for this: it fires synchronously *during* `insertText`/`deleteBackward`, so
+			// it can read a `documentContextBeforeInput` that doesn't yet reflect the edit (e.g. it sees
+			// `Hello.` not `Hello. ` on insert, or `Hello. D` not `Hello. ` on delete) and skip the flip.
+			// So we re-run here, after dispatch returns, when the proxy context is settled (task 85):
 			//   • `.switchPage` — the document may already carry a pending auto-cap (e.g. `? ` typed on
 			//     symbols, then ABC) that `textDidChange` won't surface.
 			//   • `.space` / `.insertText` / `.insertRawText` — re-run **regardless of any page change**.
@@ -920,11 +921,15 @@ final class KeyboardViewController: UIInputViewController {
 			//     key on the letter page, or the `". "` double-tap substitution — leaves the page on
 			//     letters, so the old page-change guard never fired and the period never capitalized while
 			//     `?`/`!` (which hop symbols → letters) did. Idempotent, so safe on every text action.
+			//   • `.backspace` / `.deleteWord` — deletion is symmetric: removing the letter after `". "`
+			//     must re-promote (shift back on), removing the space must demote (`Ahoj. ` → `Ahoj.`),
+			//     and a re-typed space must re-promote again. The revert path keys off `autoCapitalized`,
+			//     so a manual shift is left untouched.
 			//   • `.suggestionAccept` — does the same implicit symbols → letters hop (task 74, Fáze B).
 			// `.shift` is deliberately excluded: re-running would immediately override a manual lowercase
 			// override at sentence start (Instagram message field, etc.).
 			switch key.action {
-			case .switchPage, .space, .insertText, .insertRawText:
+			case .switchPage, .space, .insertText, .insertRawText, .backspace, .deleteWord:
 				refreshAutoCapitalization()
 			case .suggestionAccept where pageBefore != state.page:
 				refreshAutoCapitalization()
