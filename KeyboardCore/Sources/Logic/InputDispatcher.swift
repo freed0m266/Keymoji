@@ -96,7 +96,10 @@ public enum InputDispatcher {
 			ShiftStateMachine.apply(.pageSwitched(to: newPage), to: &state)
 			state.lastInsertWasSpace = false
 			state.lastSpaceInsertedAt = nil
-			state.lastSpaceWasAuto = false
+			// NB: `lastSpaceWasAuto` deliberately survives a page switch (task 84). The `,` `?` `!` keys live
+			// only on the symbols page, so absorbing the accept-space after one of them *requires* the user to
+			// tap `123` first — resetting here would make the feature fire only for `.` (the lone punctuation
+			// on the letters page). The `hasSuffix(" ")` guard in `absorbAutoSpaceIfNeeded` keeps it safe.
 
 		case .cursorOffset(let offset):
 			// Trackpad-mode scrubbing. Skip the no-op offset to avoid bouncing the proxy needlessly.
