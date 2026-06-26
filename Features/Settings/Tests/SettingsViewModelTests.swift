@@ -23,18 +23,25 @@ private final class InMemoryPromoBacking: PromoTrialKeychainBacking, @unchecked 
 final class SettingsViewModelTests: XCTestCase {
 
 	private let suiteName = "keymoji.SettingsViewModelTests"
+	private let consentSuiteName = "keymoji.SettingsViewModelTests.consent"
 	private var appGroup: AppGroupStore!
+	private var consentDefaults: UserDefaults!
+	private var consent: AnalyticsConsentStore!
 	private var backing: InMemoryPromoBacking!
 
 	override func setUp() {
 		super.setUp()
 		appGroup = AppGroupStore(suiteName: suiteName)
 		appGroup.reset()
+		consentDefaults = UserDefaults(suiteName: consentSuiteName)
+		consentDefaults.removePersistentDomain(forName: consentSuiteName)
+		consent = AnalyticsConsentStore(defaults: consentDefaults)
 		backing = InMemoryPromoBacking()
 	}
 
 	override func tearDown() {
 		appGroup.reset()
+		consentDefaults.removePersistentDomain(forName: consentSuiteName)
 		super.tearDown()
 	}
 
@@ -53,6 +60,7 @@ final class SettingsViewModelTests: XCTestCase {
 		)
 		return SettingsViewModel(
 			store: appGroup,
+			consent: consent,
 			notifier: notifier,
 			purchaseService: purchase,
 			promoStore: promoStore,
@@ -95,6 +103,25 @@ final class SettingsViewModelTests: XCTestCase {
 		// Paid overrides — no token spent, row stays paid.
 		XCTAssertEqual(vm.plusRowState, .paid)
 		XCTAssertNil(vm.trialActiveUntil)
+	}
+
+	// MARK: - Analytics opt-out
+
+	func testAnalyticsEnabled_defaultsToOptedIn() {
+		XCTAssertTrue(makeVM().analyticsEnabled)
+	}
+
+	func testAnalyticsEnabled_readsExistingConsent() {
+		consent.isEnabled = false
+		XCTAssertFalse(makeVM().analyticsEnabled)
+	}
+
+	func testTogglingAnalytics_writesThroughToConsentStore() {
+		let vm = makeVM()
+		vm.analyticsEnabled = false
+		XCTAssertFalse(consent.isEnabled)
+		vm.analyticsEnabled = true
+		XCTAssertTrue(consent.isEnabled)
 	}
 
 	func testExpiredWelcome_isAfterTrial() {
