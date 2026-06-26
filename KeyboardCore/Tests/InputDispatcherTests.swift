@@ -260,6 +260,82 @@ final class InputDispatcherTests: XCTestCase {
 		XCTAssertEqual(state.page, .letters(.lower))
 	}
 
+	// MARK: - Auto-capitalization through the dispatcher (task 85)
+
+	/// Mirrors `KeyboardViewController.refreshAutoCapitalization`'s post-dispatch re-run: feeds the
+	/// settled proxy context + master toggle into the same pure helper the controller calls. Lets the
+	/// period-via-dot-key vs. punctuation-via-symbols pipeline be asserted end-to-end without UIKit.
+	@discardableResult
+	private func reevaluateAutoCap(_ state: inout KeyboardState, enabled: Bool = true) -> Bool {
+		AutoCapitalizer.applyAutoCapitalization(
+			to: &state,
+			documentContextBeforeInput: proxy.documentContextBeforeInput,
+			autocapitalizationType: .sentences,
+			enabled: enabled
+		)
+	}
+
+	func testPeriodViaDotKey_thenSpace_capitalizes() {
+		// The regression case: `.` typed via the dedicated dot key on the *letters* page, then space.
+		// The page never switches, so the old page-change-gated re-run was skipped and the period never
+		// capitalized; the post-dispatch re-run (Part A) is what promotes to upper.
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Hello", into: &state)
+		dispatch(letterKey("."), &state)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Hello. ")
+		XCTAssertEqual(state.page, .letters(.lower))   // space on the letter page never switched pages
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))
+	}
+
+	func testQuestionViaSymbols_thenSpace_capitalizes() {
+		// `?` lives on the symbols page; space hops symbols → letters. This path always worked — assert
+		// it keeps working through the same re-run.
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Really", into: &state)
+		state.page = .symbols(.primary)
+		dispatch(letterKey("?"), &state)
+		XCTAssertEqual(state.page, .symbols(.primary))
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Really? ")
+		XCTAssertEqual(state.page, .letters(.lower))   // space hopped symbols → letters
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))
+	}
+
+	func testExclamationViaSymbols_thenSpace_capitalizes() {
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Wow", into: &state)
+		state.page = .symbols(.primary)
+		dispatch(letterKey("!"), &state)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		XCTAssertEqual(proxy.documentContextBeforeInput, "Wow! ")
+		reevaluateAutoCap(&state)
+		XCTAssertEqual(state.page, .letters(.upper))
+	}
+
+	func testPeriodViaDotKey_thenSpace_disabled_staysLower() {
+		// Master toggle off: the same period-then-space pipeline must never promote.
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Hello", into: &state)
+		dispatch(letterKey("."), &state)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		reevaluateAutoCap(&state, enabled: false)
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
+	func testQuestionViaSymbols_thenSpace_disabled_staysLower() {
+		var state = KeyboardState(page: .letters(.lower))
+		typeString("Really", into: &state)
+		state.page = .symbols(.primary)
+		dispatch(letterKey("?"), &state)
+		dispatch(makeKey(.space), &state, now: { Date(timeIntervalSince1970: 1000) })
+		// Space already hopped to letters(.lower); the disabled re-run leaves it there.
+		reevaluateAutoCap(&state, enabled: false)
+		XCTAssertEqual(state.page, .letters(.lower))
+	}
+
 	func testDoubleSpace_onSymbolsPrimary_substitutesAndSwitches() {
 		var state = KeyboardState(page: .symbols(.primary))
 		let t0 = Date(timeIntervalSince1970: 1000)
