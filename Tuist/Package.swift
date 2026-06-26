@@ -19,6 +19,10 @@ let package = Package(
 		.package(
 			url: "https://github.com/kishikawakatsumi/KeychainAccess",
 			from: "4.2.2"
+		),
+		.package(
+			url: "https://github.com/TelemetryDeck/SwiftSDK",
+			from: "2.14.0"
 		)
 	]
 )

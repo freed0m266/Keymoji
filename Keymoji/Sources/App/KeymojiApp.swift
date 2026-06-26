@@ -8,6 +8,7 @@
 
 import SwiftUI
 import SwiftyBeaver
+import Analytics
 import KeymojiCore
 import Onboarding
 import Paywall
@@ -34,6 +35,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 	) -> Bool {
 		setupLogger()
+		startAnalytics()
 		startPurchases()
 		// Restore the promo-trial expiry mirror from the Keychain master after a reinstall (the App Group
 		// container is wiped on uninstall; the Keychain survives). Cheap, runs once, before any UI gates read.
@@ -42,6 +44,23 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		// fresh install never sees a What's New for the version it was born on (task 76). Seed-on-absence; no UI.
 		WhatsNewBaseline.seedIfNeeded()
 		return true
+	}
+
+	/// Emit the anonymous settings snapshot every time the host app becomes active (task 86, signal A).
+	/// Re-reading on each activation keeps the distribution fresh when a user changes a setting and comes
+	/// back. No-op when the user has opted out — `TelemetryDeckAnalyticsService.report` drops it. The
+	/// keyboard extension never runs this and never links the SDK (boundary 1, ADR 0004).
+	func applicationDidBecomeActive(_ application: UIApplication) {
+		dependencies.analytics.report(.settingsSnapshot(.current()))
+	}
+
+	/// Install the host-app analytics sink at launch (task 86, ADR 0004). The concrete
+	/// `TelemetryDeckAnalyticsService` lives in the host-only `Analytics` framework; everywhere else the
+	/// default `NoopAnalyticsService` keeps emission inert. Initializing the SDK sends nothing on its own
+	/// — signals only flow from `report`, and only while the user hasn't opted out.
+	@MainActor
+	private func startAnalytics() {
+		dependencies.analytics = TelemetryDeckAnalyticsService()
 	}
 
 	/// Bring up the StoreKit gateway once at launch: start the `Transaction.updates` listener (catches

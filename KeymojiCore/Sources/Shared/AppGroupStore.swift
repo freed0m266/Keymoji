@@ -257,6 +257,18 @@ public extension AppGroupStore {
 		set { setString(newValue, forKey: .wordCompletionRecentsLastUsed) }
 	}
 
+	/// How many distinct words the personal recents pool holds. Decodes `wordCompletionRecentsJSON`
+	/// only to **count its keys** and discards the words themselves — so analytics can bucket the size
+	/// of the learned-words pool without ever reading a single learned word (boundary 2, ADR 0004).
+	/// `0` when the pool is empty or unset.
+	var learnedWordsCount: Int {
+		guard let json = wordCompletionRecentsJSON,
+			  let data = json.data(using: .utf8),
+			  let dict = try? JSONDecoder().decode([String: Int].self, from: data)
+		else { return 0 }
+		return dict.count
+	}
+
 	/// Last What's New content version this device has seen. A dedicated monotonic counter, decoupled from
 	/// the marketing/build version and bumped by hand when new content ships (see `WhatsNew.currentVersion`).
 	/// Seeded once at host-app launch by `WhatsNewBaseline`. Reads `0` when unset — callers detecting absence

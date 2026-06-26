@@ -40,6 +40,8 @@ let project = Project(
 		app,
 		core,
 		coreTests,
+		analytics,
+		analyticsTests,
 		design,
 		resources,
 		testing,

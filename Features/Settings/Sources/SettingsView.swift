@@ -48,6 +48,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				suggestionsSection
 				plusSection
 				supportSection
+				privacySection
 				aboutSection
 				#if DEBUG
 				debugSection
@@ -78,6 +79,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		Section {
 			NavigationLink {
 				FavoriteEmojisEditorView(viewModel: favoriteEmojisEditorVM())
+					.onAppear { dependencies.analytics.report(.settingsSubScreenOpened(.favoritesEditor)) }
 			} label: {
 				Text("⭐️ \(Texts.Favorites.row)")
 			}
@@ -92,6 +94,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		Section {
 			NavigationLink {
 				EmojiCodesView(viewModel: emojiCodesVM())
+					.onAppear { dependencies.analytics.report(.settingsSubScreenOpened(.emojiCodes)) }
 			} label: {
 				Text("📖 \(Texts.EmojiCodes.row)")
 			}
@@ -203,6 +206,7 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				Section {
 					NavigationLink {
 						LearnedWordsEditorView(viewModel: learnedWordsEditorVM())
+							.onAppear { dependencies.analytics.report(.settingsSubScreenOpened(.learnedWords)) }
 					} label: {
 						HStack {
 							Text(Texts.Suggestions.learnedWordsLabel)
@@ -266,10 +270,21 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		}
 	}
 
+	private var privacySection: some View {
+		Section {
+			Toggle(Texts.Privacy.analyticsToggle, isOn: $viewModel.analyticsEnabled)
+		} header: {
+			Text(Texts.Privacy.header)
+		} footer: {
+			Text(Texts.Privacy.analyticsFooter)
+		}
+	}
+
 	private var aboutSection: some View {
 		Section {
 			NavigationLink {
 				AboutView(viewModel: aboutVM())
+					.onAppear { dependencies.analytics.report(.settingsSubScreenOpened(.about)) }
 			} label: {
 				Text(Texts.about)
 					.font(.body.weight(.semibold))

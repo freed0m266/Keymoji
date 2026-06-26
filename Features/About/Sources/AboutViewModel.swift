@@ -30,6 +30,7 @@ final class AboutViewModel: BaseViewModel, AboutViewModeling {
 	// MARK: - Public API
 
 	func openAppStoreReview() {
+		dependencies.analytics.report(.reviewTapped)   // funnel: review tap (task 86, B / task 83)
 		guard let url = URL(string: KeymojiURLs.appStoreReview) else { return }
 		UIApplication.shared.open(url)
 	}

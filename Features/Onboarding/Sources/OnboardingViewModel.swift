@@ -96,6 +96,9 @@ final class OnboardingViewModel: BaseViewModel, OnboardingViewModeling {
 
 	func activateWelcomeTrial() {
 		dependencies.preferences.activateWelcomeTrial()
+		// `dependencies` here is the injected `OnboardingDependencies`; reach the global analytics sink
+		// (an `AppDependency` accessor) through the module to avoid the name clash.
+		KeymojiCore.dependencies.analytics.report(.trialActivated)   // funnel: conversion (task 86, B)
 		// Re-read entitlement so the banner flips to its success state and the grid cap relaxes (6 → .max)
 		// in place — both `favoritesLimit` and `welcomeTrialActiveUntil` are observable.
 		refreshEntitlement()

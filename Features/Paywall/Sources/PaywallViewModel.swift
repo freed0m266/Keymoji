@@ -76,6 +76,11 @@ final class PaywallViewModel: BaseViewModel, PaywallViewModeling {
 	}
 
 	func onAppear() async {
+		// Funnel top (task 86, B). Reported here, not in init: SwiftUI may re-evaluate the sheet closure
+		// and build throwaway VMs, but only the presented one's `.task` calls `onAppear`, so this fires
+		// once per presentation. Before the product-load early-return so a preloaded price can't skip it.
+		// Only the entry-point label travels — never content.
+		dependencies.analytics.report(.paywallShown(context: context))
 		guard !service.isProductLoaded else { return }
 		isLoadingProducts = true
 		await service.loadProducts()
@@ -91,6 +96,7 @@ final class PaywallViewModel: BaseViewModel, PaywallViewModeling {
 		switch await service.purchase() {
 		case .success:
 			didUnlock = true
+			dependencies.analytics.report(.purchaseCompleted)   // funnel: conversion (task 86, B)
 		case .cancelled, .pending:
 			break   // user backed out or it's awaiting approval — say nothing, leave the offer up
 		case .failed:

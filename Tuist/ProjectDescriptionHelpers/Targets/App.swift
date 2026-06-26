@@ -32,6 +32,7 @@ public let app: Target = .target(
 	],
 	dependencies: [
 		.target(core),
+		.target(analytics),
 		.target(design),
 		.target(emojiCatalogPicker),
 		.target(example),

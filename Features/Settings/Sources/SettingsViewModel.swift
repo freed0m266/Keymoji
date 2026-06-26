@@ -36,6 +36,8 @@ public protocol SettingsViewModeling: Observable, AnyObject {
 	var letterLayout: LetterLayout { get set }
 	var letterAlternateSet: LetterAlternateSet { get set }
 	var suggestionsEnabled: Bool { get set }
+	/// Opt-out switch for anonymous usage analytics (task 86). Default ON; OFF stops all emission.
+	var analyticsEnabled: Bool { get set }
 	var learnedWordCount: Int { get }
 	/// *Effective* Plus — paid or an active promo trial. Convenience for non-row gates.
 	var isPlus: Bool { get }
@@ -127,6 +129,18 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		}
 	}
 
+	/// Opt-out toggle for anonymous analytics. Persisted host-side (not the App Group — the keyboard
+	/// never reads it). Flipping it takes effect on the next emission: the service re-reads consent per
+	/// `report`, so OFF stops all signals at once (task 86, ADR 0004).
+	var analyticsEnabled: Bool {
+		didSet {
+			consent.isEnabled = analyticsEnabled
+			// Start/stop the underlying SDK immediately — guarding emission alone wouldn't silence
+			// TelemetryDeck's own session signals (task 86, Codex P1 / ADR 0004).
+			dependencies.analytics.consentDidChange()
+		}
+	}
+
 	private(set) var learnedWordCount: Int = 0
 
 	/// Observable mirrors of the promo state so the row recomputes live after an in-screen activation
@@ -158,6 +172,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 	}
 
 	private let store: AppGroupStore
+	private let consent: AnalyticsConsentStore
 	private let notifier: SettingsChangeNotifier
 	private let recentsStore: PersonalRecentsStore
 	private let purchaseService: any PurchaseServicing
@@ -170,12 +185,14 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 
 	init(
 		store: AppGroupStore = .shared,
+		consent: AnalyticsConsentStore = .shared,
 		notifier: SettingsChangeNotifier = .shared,
 		purchaseService: any PurchaseServicing,
 		promoStore: any PromoTrialStoring,
 		welcomeActivator: any WelcomeTrialActivating
 	) {
 		self.store = store
+		self.consent = consent
 		self.notifier = notifier
 		self.purchaseService = purchaseService
 		self.promoStore = promoStore
@@ -190,6 +207,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		self.letterLayout = store.letterLayout
 		self.letterAlternateSet = store.letterAlternateSet
 		self.suggestionsEnabled = store.suggestionsEnabled
+		self.analyticsEnabled = consent.isEnabled
 		super.init()
 		self.learnedWordCount = recentsStore.count(atLeast: WordCompletionProvider.minSuggestCount)
 		refreshPromoState()
@@ -209,6 +227,7 @@ final class SettingsViewModel: BaseViewModel, SettingsViewModeling {
 		// The activator owns consume → App Group mirror → notify; we just re-read the resulting state so
 		// the row flips S2 → S3 immediately (the notifier round-trip would also refresh, but async).
 		welcomeActivator.activate()
+		dependencies.analytics.report(.trialActivated)   // funnel: conversion (task 86, B)
 		refreshPromoState()
 	}
 

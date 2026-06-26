@@ -30,6 +30,9 @@ struct RootView<OnboardingVM: OnboardingViewModeling, SettingsVM: SettingsViewMo
 			SettingsView(viewModel: settingsViewModel)
 		} else {
 			OnboardingView(viewModel: onboardingViewModel) {
+				// First-run onboarding finished (task 86, funnel B). Re-runs launched from Settings go
+				// through their own sheets and don't hit this path, so this counts genuine activations.
+				dependencies.analytics.report(.onboardingCompleted)
 				hasFinishedOnboarding = true
 			}
 			.mainBackground()
