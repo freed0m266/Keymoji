@@ -5,8 +5,9 @@ import os
 /// during development.
 ///
 /// **Ships nothing.** Every signpost call is gated behind `#if DEBUG`; in a release build `measure`
-/// collapses to a direct `body()` call with zero added instrumentation, so the privacy claim ("we
-/// collect nothing") holds and no telemetry reaches the App Store binary.
+/// collapses to a direct `body()` call with zero added instrumentation, so the keyboard's privacy
+/// claim (nothing you type leaves the device) holds and no profiling telemetry reaches the App Store
+/// binary. The host-app analytics (TelemetryDeck, ADR 0004) is anonymous and never linked here.
 public enum Perf {
 	#if DEBUG
 	/// Single shared signposter for all keyboard hot-path intervals. Subsystem/category show up as the

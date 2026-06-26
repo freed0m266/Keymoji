@@ -4,7 +4,7 @@ The iPhone keyboard for people who live in emoji — personalized emoji one tap 
 
 - **Emoji-first.** Pin favorites in your own order, reach them from an emoji row above the keys, and search any emoji by name or `:shortcode:`.
 - **Feels native.** Designed to match the iOS keyboard, with the conveniences you'd expect from SwiftKey — minus the bloat.
-- **Private by default.** No network code at all, no accounts, no analytics, no third-party SDKs. What you type never leaves the device.
+- **Private by default.** The keyboard makes no network calls at all — what you type never leaves the device. The app sends only anonymous, opt-out usage stats (which settings get used, never content). No ads, no tracking, no accounts.
 - **English layout**, US QWERTY (optional QWERTZ), with long-press diacritics for Czech, Slovak, German, Polish, French, Spanish (`á č ě š ř ž …`).
 - **iPhone only** (portrait + landscape), iOS 26+.
 
@@ -125,6 +125,7 @@ Keymoji/
 ├── KeymojiUI/                        # Design system for the host app
 ├── KeymojiResources/                 # Localization (L10n alias, en.lproj)
 ├── KeymojiTesting/                   # AssertSnapshot helper
+├── Analytics/                        # Host-app-only TelemetryDeck wrapper (never linked into the extension)
 ├── Features/                       # Host-app feature frameworks
 │   ├── Onboarding/                 # 4-step setup: activation, favorites picker, feature tour
 │   ├── Settings/                   # Toggles for number row, haptics, sound, layout, accents, appearance
@@ -167,10 +168,11 @@ Keyboard logic is split:
 
 Keymoji's `marketing/privacy-policy.html` is the source of truth — hosted at the URL in [`KeymojiCore/Sources/Shared/KeymojiURLs.swift`](KeymojiCore/Sources/Shared/KeymojiURLs.swift). Summary:
 
-- **Nothing collected.** No typing data, words, phrases, device identifiers, or analytics.
-- **No network access.** The extension contains no networking code and makes no URL requests.
+- **No content ever leaves the device.** No typing data, words, phrases, learned words, favourites, searches, or device identifiers.
+- **Keyboard makes no network calls.** The extension contains no networking code and makes no URL requests — telemetry is host-app-only (boundary 1, [ADR 0004](docs/adr/0004-anonymous-host-app-analytics.md)).
+- **Anonymous, opt-out usage stats.** The host app reports which settings get used and app/feature lifecycle events via TelemetryDeck — anonymised on-device, never content, no IDFA, no cross-app tracking. Off in Settings → Privacy stops it entirely.
 - **Learned words stay local.** Words used to speed up typing live in a private App Group container only Keymoji can read — never uploaded, not even to Apple.
-- **No third-party SDKs that exfiltrate data.** SwiftyBeaver console logging only.
+- **No ad/attribution SDKs.** TelemetryDeck (host-app analytics) and SwiftyBeaver (console logging) only.
 - **"Allow Full Access" is required only for haptics and key click sounds** — an iOS sandbox restriction, not a data-collection mechanism. Leave it off and the rest of the keyboard works the same.
 
 ## Tests
@@ -200,5 +202,6 @@ tuist generate
 ## Dependencies
 
 - [SwiftyBeaver](https://github.com/SwiftyBeaver/SwiftyBeaver) — console logging only (no remote destinations)
+- [TelemetryDeck](https://github.com/TelemetryDeck/SwiftSDK) — anonymous host-app usage analytics; linked **only** into the app target, never the keyboard extension (boundary 1, [ADR 0004](docs/adr/0004-anonymous-host-app-analytics.md))
 - [swift-snapshot-testing](https://github.com/pointfreeco/swift-snapshot-testing) — visual regression tests
 - [BaseKitX](https://github.com/freed0m266/BaseKitX), [ACKategories](https://github.com/AckeeCZ/ACKategories) — linked via template scaffold, not actively imported (candidates for removal in future cleanup)

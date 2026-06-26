@@ -82,9 +82,9 @@ NEVER REWRITES WHAT YOU TYPE
 
 No silent autocorrect. Keymoji suggests — it never swaps your words behind your back or "fixes" a name into something it isn't. What you type is what you get; tap a suggestion only when you actually want it.
 
-PRIVATE BECAUSE IT'S SIMPLE
+PRIVATE BY DESIGN
 
-The only network activity in Keymoji is Apple's own purchase check when you buy or restore Keymoji Plus — and even then, nothing you type is ever involved. No analytics, no tracking, no accounts, no third-party SDKs. What you type never leaves your iPhone. The words it learns to speed you up stay in a private container only Keymoji can read, never uploaded, not even to Apple. Don't take our word for it: the source code is public on GitHub.
+What you type never leaves your iPhone — the keyboard makes no network calls at all, and there's no silent autocorrect rewriting your words. The app shares anonymous usage stats (which settings get used — never what you type) to guide what's built next, and you can turn that off in Settings. No tracking, no ads, no accounts. The words it learns to speed you up stay in a private container only Keymoji can read, never uploaded, not even to Apple. Don't take our word for it: the source code is public on GitHub.
 
 ABOUT "ALLOW FULL ACCESS"
 
@@ -93,7 +93,7 @@ iOS makes every custom keyboard request "Allow Full Access" before it can play h
 • Haptic feedback (vibration) when you type
 • Key click sounds
 
-Nothing else — no contacts, no location, and nothing you type ever leaves your iPhone. The one exception to "offline" is Apple's standard purchase check when you buy or restore Keymoji Plus, which never involves what you type. Prefer Full Access off? Leave it off, and every typing feature still works — just silent.
+Nothing else — no contacts, no location, and nothing you type ever leaves your iPhone. The keyboard itself makes no network calls at all; the app sends only anonymous usage stats (opt-out, never your typing) plus Apple's standard purchase check for Keymoji Plus. Prefer Full Access off? Leave it off, and every typing feature still works — just silent.
 
 Built by one developer who wanted a fast, private keyboard with emoji done right — and uses it every day.
 

@@ -43,20 +43,31 @@ One non-consumable unlock. **Must be created in ASC before the build can be revi
 
 ## App Privacy ("nutrition label")
 
-Keymoji collects nothing — set every section to **Data Not Collected**.
+The app sends anonymous usage statistics via TelemetryDeck (task 86, ADR 0004) — so this is
+**no longer "Data Not Collected"**. Declare exactly one data type: anonymised, not linked, untracked.
 
-- [ ] "Data Collection" → **No, we do not collect data from this app.**
-- [ ] **StoreKit / IAP does not change this.** The purchase/restore network call is Apple's,
-      not ours — we run no server and receive no data. Purchases are not linked to the user by
-      us and are not used for tracking. Keep **Data Not Collected**; only declare a "Purchases"
-      data type if ASC's questionnaire forces it (then: not linked, not used for tracking).
-- [ ] This must match [`../privacy-policy.html`](../privacy-policy.html) **exactly**. The
-      absolute "no network requests at all" wording was softened (task 63) to disclose Apple's
-      purchase check — re-upload the current `privacy-policy.html` to
-      `https://martinfreedom.com/keymoji/privacy.html` so the hosted page matches.
+- [ ] "Data Collection" → **Yes, we collect data from this app.**
+- [ ] Data type: **Usage Data → Product Interaction** (which settings are used, app/feature
+      lifecycle events, coarse counts). Purpose: **Analytics** (and App Functionality).
+      - **Linked to the user? No** — TelemetryDeck uses an on-device double-hashed anonymous ID;
+        no account, no IDFA.
+      - **Used for tracking? No** — no cross-app / cross-developer tracking, no data brokers, so
+        no ATT prompt. Net label: **"Usage Data (Product Interaction) — Not Linked to You — Not
+        Used for Tracking"**.
+- [ ] **Never declare content.** No typed text, learned words, favourites, or searches leave the
+      device (boundary 2, ADR 0004). Every emitted field maps to a settings *state*, a lifecycle
+      event, or a coarse bucket — if it can't, it isn't collected.
+- [ ] **StoreKit / IAP.** The purchase/restore network call is Apple's, not ours — we run no
+      server and receive no purchase data. Only declare a "Purchases" data type if ASC's
+      questionnaire forces it (then: not linked, not used for tracking).
+- [ ] This must match [`../privacy-policy.html`](../privacy-policy.html) **exactly**. The policy
+      now discloses TelemetryDeck, what's collected, and the opt-out — re-upload the current
+      `privacy-policy.html` to `https://martinfreedom.com/keymoji/privacy.html` so the hosted page
+      matches before submitting.
 - [ ] **Listing copy follow-up:** the IAP-reconciled Description in [`listing-en.md`](listing-en.md)
       must be re-mirrored into `fastlane/metadata/en-GB/`, then run [`check-lengths.sh`](check-lengths.sh)
-      and `fastlane ios upload_metadata`. Promo text ("zero tracking") is unchanged — still true.
+      and `fastlane ios upload_metadata`. Promo text ("zero tracking") is unchanged — still true
+      (TelemetryDeck does no cross-app tracking, which is what Apple's "tracking" means).
 
 ## Screenshots
 
@@ -77,13 +88,16 @@ Recommended note to pre-empt the custom-keyboard Full Access question:
 
 > Keymoji requests "Allow Full Access" solely to use the haptic feedback and key
 > click sound APIs, which iOS gates behind Full Access for keyboard extensions.
-> The app contains no networking code, makes no network requests, and collects
-> no data. Full Access is optional — all typing features work without it.
+> The keyboard extension contains no networking code and makes no network requests;
+> nothing you type ever leaves the device. The app sends only anonymous, opt-out
+> usage statistics (which settings are used — never content) via TelemetryDeck.
+> Full Access is optional — all typing features work without it.
 
 ## Final gate
 
 - [ ] `check-lengths.sh` passes.
-- [ ] Privacy label, privacy policy, and listing copy all tell the same Full Access
-      story (haptics + key click sounds — **not** data, **not** the shared container,
-      which is gated by the App Group entitlement rather than Full Access).
+- [ ] Privacy label, privacy policy, and listing copy all tell the same story:
+      Full Access is for haptics + key click sounds only (**not** data, **not** the
+      shared container, which the App Group entitlement gates), and the only data
+      leaving the device is anonymous, opt-out usage statistics — never content.
 - [ ] Screenshots uploaded for both sizes.
