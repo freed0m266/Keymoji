@@ -50,6 +50,7 @@ public struct ListButton: View {
 					.font(.footnote.weight(.bold))
 					.foregroundStyle(.tertiary)
 			}
+			.tappable()
 		}
 	}
 }

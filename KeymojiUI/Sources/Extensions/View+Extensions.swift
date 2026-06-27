@@ -8,6 +8,14 @@
 
 import SwiftUI
 
+extension View {
+	func tappable<S>(_ shape: S = .rect) -> some View where S: Shape {
+		self
+			.contentShape(shape)
+			.background(Color.black.opacity(0.001))
+	}
+}
+
 public extension View {
 	func mainBackground() -> some View {
 		self
