@@ -491,6 +491,57 @@ final class LayoutBuilderTests: XCTestCase {
 		XCTAssertNil(alternateRow.referenceWeight)
 	}
 
+	// MARK: - Middle letter row edge tap area (a / l reach the row edge)
+
+	func testLettersRow2_edgeLettersClaimInsetAsTapArea() {
+		// `a` and `l` swallow the otherwise-dead `referenceWeight` inset as extra hit area — `a` on the
+		// leading side, `l` on the trailing side — so both reach the row edge like Apple's stock keyboard.
+		// The cap stays the same size/position (the gap mechanic pushes the cap off the gap), so this is a
+		// pure tap-target change, invisible in snapshots.
+		let row = letterRow(at: "letters.row2", page: .letters(.lower))
+		let aKey = row.keys.first!
+		let lKey = row.keys.last!
+		XCTAssertEqual(aKey.id, "letter.a")
+		XCTAssertEqual(lKey.id, "letter.l")
+
+		XCTAssertEqual(aKey.leadingGapWeight, 0.5, accuracy: 0.0001, "`a` must own the left inset as tap area")
+		XCTAssertEqual(aKey.trailingGapWeight, 0.0, accuracy: 0.0001)
+		XCTAssertEqual(lKey.trailingGapWeight, 0.5, accuracy: 0.0001, "`l` must own the right inset as tap area")
+		XCTAssertEqual(lKey.leadingGapWeight, 0.0, accuracy: 0.0001)
+	}
+
+	func testLettersRow2_middleLettersHaveNoEdgeGaps() {
+		// Only the two outer letters get gaps — the inner s…k stay plain so the cluster width is unchanged.
+		let row = letterRow(at: "letters.row2", page: .letters(.lower))
+		for key in row.keys.dropFirst().dropLast() {
+			XCTAssertEqual(key.leadingGapWeight, 0.0, accuracy: 0.0001, "\(key.id) must have no leading gap")
+			XCTAssertEqual(key.trailingGapWeight, 0.0, accuracy: 0.0001, "\(key.id) must have no trailing gap")
+		}
+	}
+
+	func testLettersRow2_sumsTo10_soCapsStayWOver10() {
+		// The 9 letters (each 1.0) plus the two 0.5 edge gaps sum to exactly 10 — matching the
+		// `referenceWeight`, so `insetWidth` collapses to 0 and `unitWidth` stays W/10. That's what keeps
+		// every cap the same width/position as before the gaps were added (snapshots green).
+		let row = letterRow(at: "letters.row2", page: .letters(.lower))
+		let totalWeight = row.keys.reduce(0.0) {
+			$0 + $1.leadingGapWeight + $1.visualWeight.value + $1.trailingGapWeight
+		}
+		XCTAssertEqual(totalWeight, 10.0, accuracy: 0.0001)
+
+		let letterWeights = row.keys.map { $0.visualWeight.value }
+		XCTAssertEqual(letterWeights, Array(repeating: 1.0, count: 9))
+	}
+
+	func testEmojiSearchRow2_edgeLettersAlsoClaimInset() {
+		// Search mode reuses `makeLetterRows`, so `a`/`l` get the same wider tap target there too.
+		let row = letterRow(at: "letters.row2", page: .emojiSearch)
+		let aKey = row.keys.first!
+		let lKey = row.keys.last!
+		XCTAssertEqual(aKey.leadingGapWeight, 0.5, accuracy: 0.0001)
+		XCTAssertEqual(lKey.trailingGapWeight, 0.5, accuracy: 0.0001)
+	}
+
 	// MARK: - Letter row 3 / symbol row C edge parity (task 55)
 
 	func testLettersRow3_edgeKeysUseSharedWeight_soLettersAlignWithRow2() {

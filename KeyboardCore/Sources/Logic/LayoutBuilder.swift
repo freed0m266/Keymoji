@@ -233,6 +233,14 @@ public enum LayoutBuilder {
 
 	private static let letterRow2: [Character] = ["a", "s", "d", "f", "g", "h", "j", "k", "l"]
 
+	/// Half-a-key of slack on each side of the 9-key middle letter row (`asdf…l`). Assigned as a
+	/// leading gap on `a` and a trailing gap on `l` so those two edge letters own the otherwise-dead
+	/// `referenceWeight` inset as extra tap area — reaching the row edge like Apple's stock keyboard.
+	/// 0.5 each makes the row sum back to the 10-unit reference width, so every cap renders at the exact
+	/// same size and position (snapshots stay green via the same gap mechanic shift/delete already use —
+	/// the cap is pushed off the gap, only the hit target grows). See `makeLetterRows`.
+	private static let letterRow2EdgeGapWeight: Double = 0.5
+
 	private static func letterRow3Letters(_ layout: LetterLayout) -> [Character] {
 		switch layout {
 		case .qwerty: return ["z", "x", "c", "v", "b", "n", "m"]
@@ -245,11 +253,19 @@ public enum LayoutBuilder {
 			id: "letters.row1",
 			keys: letterRow1(letterLayout).map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) }
 		)
-		// Row 2 has 9 letters (asdf…l). To keep each key the same width as row 1's 10 keys,
-		// we reserve half-a-key of inset on each side via `referenceWeight: 10`.
+		// Row 2 has 9 letters (asdf…l). The row reserves half-a-key on each side via `referenceWeight: 10`
+		// to keep each key the same width as row 1's 10 keys — but instead of leaving that as dead inset,
+		// the two edge letters claim it as extra tap area: `a` swallows the left half-key, `l` the right,
+		// so both reach the row edge like Apple's stock keyboard. The gap mechanic keeps each cap the exact
+		// same size and position (snapshots unchanged); only the hit target grows. `referenceWeight: 10`
+		// stays as a safety net — the two 0.5 gaps already sum the row to 10, so it only re-centers if the
+		// gap weight ever changes.
+		var row2Keys = letterRow2.map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) }
+		row2Keys[0] = row2Keys[0].addingGaps(leading: letterRow2EdgeGapWeight)
+		row2Keys[row2Keys.count - 1] = row2Keys[row2Keys.count - 1].addingGaps(trailing: letterRow2EdgeGapWeight)
 		let row2 = KeyboardRow(
 			id: "letters.row2",
-			keys: letterRow2.map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) },
+			keys: row2Keys,
 			referenceWeight: 10
 		)
 		let row3Letters = letterRow3Letters(letterLayout).map { makeLetterKey($0, shift: shift, alternateSet: alternateSet) }
