@@ -118,10 +118,6 @@
 "settings.suggestions.toggleFooter" = "Suggests words as you type. Keymoji learns from your typing to improve suggestions — all learning stays on this iPhone.";
 "settings.suggestions.learnedWordsLabel" = "Learned words";
 
-"settings.privacy.header" = "Privacy";
-"settings.privacy.analyticsToggle" = "Share anonymous usage stats";
-"settings.privacy.analyticsFooter" = "Helps decide what to build next — which settings actually get used, sent anonymously from the app only. Never what you type, no learned words, no tracking, no personal data. The keyboard sends nothing. Turn this off anytime.";
-
 "settings.plus.header" = "Keymoji Plus";
 "settings.plus.unlock" = "Unlock Keymoji Plus";
 "settings.plus.unlocked" = "Keymoji Plus — Unlocked";
@@ -183,7 +179,9 @@
 "about.title" = "About";
 "about.versionLabel" = "Version %@";
 "about.privacyHeader" = "Privacy";
-"about.privacyStatement" = "Nothing you type is ever sent off your iPhone — the keyboard makes no network calls at all. The app collects anonymous usage statistics (which settings get used, never content) to guide what gets built next; it's opt-out anytime in Settings → Privacy. To improve word suggestions, Keymoji remembers words you frequently type, stored only on this device; clear them anytime in Settings → Suggestions. Allow Full Access is required only for haptic feedback.";
+"about.privacyStatement" = "Nothing you type ever leaves your iPhone — the keyboard makes no network calls at all. Learned words stay on this device, and Full Access is needed only for haptic feedback.";
+"about.analyticsToggle" = "Share anonymous usage stats";
+"about.analyticsFooter" = "Helps decide what to build next — which settings actually get used, sent anonymously from the app only. Never what you type, no learned words, no tracking, no personal data. The keyboard sends nothing. Turn this off anytime.";
 "about.supportHeader" = "Support & feedback";
 "about.reviewOnAppStore" = "Review on App Store";
 "about.legalHeader" = "Legal";

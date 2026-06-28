@@ -13,6 +13,8 @@ import KeymojiCore
 @MainActor
 public protocol AboutViewModeling: Observable, AnyObject {
 	var versionString: String { get }
+	/// Opt-out switch for anonymous usage analytics (task 86). Default ON; OFF stops all emission.
+	var analyticsEnabled: Bool { get set }
 
 	func openAppStoreReview()
 	func openPrivacyPolicy()
@@ -26,6 +28,28 @@ public func aboutVM() -> some AboutViewModeling {
 
 @Observable
 final class AboutViewModel: BaseViewModel, AboutViewModeling {
+
+	/// Opt-out toggle for anonymous analytics. Persisted host-side (not the App Group — the keyboard
+	/// never reads it). Flipping it takes effect on the next emission: the service re-reads consent per
+	/// `report`, so OFF stops all signals at once (task 86, ADR 0004).
+	var analyticsEnabled: Bool {
+		didSet {
+			consent.isEnabled = analyticsEnabled
+			// Start/stop the underlying SDK immediately — guarding emission alone wouldn't silence
+			// TelemetryDeck's own session signals (task 86, Codex P1 / ADR 0004).
+			dependencies.analytics.consentDidChange()
+		}
+	}
+
+	private let consent: AnalyticsConsentStore
+
+	// MARK: - Init
+
+	init(consent: AnalyticsConsentStore = .shared) {
+		self.consent = consent
+		self.analyticsEnabled = consent.isEnabled
+		super.init()
+	}
 
 	// MARK: - Public API
 

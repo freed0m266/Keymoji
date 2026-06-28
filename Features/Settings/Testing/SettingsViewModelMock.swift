@@ -22,7 +22,6 @@ final class SettingsViewModelMock: SettingsViewModeling {
 	var letterLayout: LetterLayout
 	var letterAlternateSet: LetterAlternateSet
 	var suggestionsEnabled: Bool
-	var analyticsEnabled: Bool
 	private(set) var learnedWordCount: Int
 	var isPlus: Bool
 	var plusRowState: PlusRowState
@@ -38,7 +37,6 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		letterLayout: LetterLayout = .qwerty,
 		letterAlternateSet: LetterAlternateSet = .czech,
 		suggestionsEnabled: Bool = true,
-		analyticsEnabled: Bool = true,
 		learnedWordCount: Int = 128,
 		isPlus: Bool = false,
 		plusRowState: PlusRowState = .welcomeAvailable,
@@ -53,7 +51,6 @@ final class SettingsViewModelMock: SettingsViewModeling {
 		self.letterLayout = letterLayout
 		self.letterAlternateSet = letterAlternateSet
 		self.suggestionsEnabled = suggestionsEnabled
-		self.analyticsEnabled = analyticsEnabled
 		self.learnedWordCount = learnedWordCount
 		self.isPlus = isPlus
 		self.plusRowState = plusRowState

@@ -27,8 +27,9 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 	public var body: some View {
 		Form {
 			headerSection
-			privacySection
 			supportSection
+			privacySection
+			analyticsSection
 			legalSection
 		}
 		.aboutBackground()
@@ -65,6 +66,14 @@ public struct AboutView<ViewModel: AboutViewModeling>: View {
 				.foregroundStyle(.secondary)
 		} header: {
 			Text(Texts.privacyHeader)
+		}
+	}
+
+	private var analyticsSection: some View {
+		Section {
+			Toggle(Texts.analyticsToggle, isOn: $viewModel.analyticsEnabled)
+		} footer: {
+			Text(Texts.analyticsFooter)
 		}
 	}
 

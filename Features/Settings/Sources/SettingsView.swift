@@ -48,7 +48,6 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 				suggestionsSection
 				plusSection
 				supportSection
-				privacySection
 				aboutSection
 				#if DEBUG
 				debugSection
@@ -267,16 +266,6 @@ public struct SettingsView<ViewModel: SettingsViewModeling>: View {
 		Section {
 			Button(Texts.setupInstructions) { sheet = .onboarding }
 			Button(Texts.featureTour) { sheet = .featureTour }
-		}
-	}
-
-	private var privacySection: some View {
-		Section {
-			Toggle(Texts.Privacy.analyticsToggle, isOn: $viewModel.analyticsEnabled)
-		} header: {
-			Text(Texts.Privacy.header)
-		} footer: {
-			Text(Texts.Privacy.analyticsFooter)
 		}
 	}
 

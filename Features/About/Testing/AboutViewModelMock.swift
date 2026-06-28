@@ -13,6 +13,7 @@ import Foundation
 @MainActor
 final class AboutViewModelMock: AboutViewModeling {
 	var versionString: String = "1.0 (1)"
+	var analyticsEnabled: Bool = true
 
 	func openAppStoreReview() {}
 	func openPrivacyPolicy() {}
