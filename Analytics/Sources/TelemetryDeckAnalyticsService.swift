@@ -33,31 +33,31 @@ public final class TelemetryDeckAnalyticsService: AnalyticsServicing {
 	}
 
 	private let consent: AnalyticsConsentStore
-	private let appID: String
+	private let appID = "EBFFDBA1-C077-4ED7-A863-DCC42A635498"
 	private let provider: Provider
 	private var isRunning = false
 
+	// MARK: Init
+
 	/// Production initializer — routes through the live TelemetryDeck SDK. Call once at host-app launch;
 	/// it reflects the current opt-out state immediately (boots the SDK only if opted in).
-	public convenience init(
-		appID: String = TelemetryDeckConfiguration.appID,
-		consent: AnalyticsConsentStore = .shared
-	) {
-		self.init(appID: appID, consent: consent, provider: .telemetryDeck)
+	public convenience init(consent: AnalyticsConsentStore = .shared) {
+		self.init(consent: consent, provider: .telemetryDeck)
 	}
 
 	/// Seam initializer — injects the SDK hooks. Internal: used by tests via `@testable import Analytics`.
 	/// Reflects launch-time consent right away (boots the provider iff opted in with a valid App ID).
-	init(appID: String = TelemetryDeckConfiguration.appID, consent: AnalyticsConsentStore = .shared, provider: Provider) {
-		self.appID = appID
+	init(consent: AnalyticsConsentStore = .shared, provider: Provider) {
 		self.consent = consent
 		self.provider = provider
 		applyConsent()
 	}
 
+	// MARK: Public API
+
 	public func report(_ event: AnalyticsEvent) {
-		guard isEnabled else { return }   // OFF or unconfigured → zero signals
-		applyConsent()                    // lazily boot the SDK after an opt-in
+		guard consent.isEnabled else { return }
+		applyConsent()	// lazily boot the SDK after an opt-in
 		provider.send(event.signalName, event.parameters)
 	}
 
@@ -65,16 +65,13 @@ public final class TelemetryDeckAnalyticsService: AnalyticsServicing {
 		applyConsent()
 	}
 
-	/// Effective on/off: opted in **and** a real App ID is configured (the placeholder stays inert).
-	private var isEnabled: Bool {
-		consent.isEnabled && TelemetryDeckConfiguration.isValid(appID)
-	}
+	// MARK: Private API
 
 	/// Bring the SDK's running state in line with consent. Opt-in boots it (its session/retention signal
 	/// fires); opt-out shuts it fully down so no background session signals, timers, or cache drains can
 	/// emit while disabled.
 	private func applyConsent() {
-		switch (isEnabled, isRunning) {
+		switch (consent.isEnabled, isRunning) {
 		case (true, false):
 			provider.start(appID)
 			isRunning = true

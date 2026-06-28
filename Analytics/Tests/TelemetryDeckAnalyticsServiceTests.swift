@@ -9,7 +9,6 @@ import KeymojiCore
 final class TelemetryDeckAnalyticsServiceTests: XCTestCase {
 
 	private static let consentSuite = "keymoji.TelemetryDeckAnalyticsServiceTests.consent"
-	private let validAppID = "00000000-0000-0000-0000-000000000000"
 
 	private var defaults: UserDefaults!
 	private var consent: AnalyticsConsentStore!
@@ -41,7 +40,7 @@ final class TelemetryDeckAnalyticsServiceTests: XCTestCase {
 	}
 
 	private func makeService(_ rec: Recorder, appID: String? = nil) -> TelemetryDeckAnalyticsService {
-		TelemetryDeckAnalyticsService(appID: appID ?? validAppID, consent: consent, provider: rec.provider)
+		TelemetryDeckAnalyticsService(consent: consent, provider: rec.provider)
 	}
 
 	// MARK: - Opt-out → SDK never runs, nothing sent
@@ -99,16 +98,5 @@ final class TelemetryDeckAnalyticsServiceTests: XCTestCase {
 		XCTAssertEqual(rec.starts, 1, "Opt-in must boot the SDK")
 		service.report(.reviewTapped)
 		XCTAssertEqual(rec.sent.map(\.name), ["Funnel.reviewTapped"])
-	}
-
-	// MARK: - Unconfigured App ID stays inert (Codex P1)
-
-	func testPlaceholderAppID_staysInert_evenWhenOptedIn() {
-		let rec = Recorder()
-		let service = makeService(rec, appID: TelemetryDeckConfiguration.unconfiguredAppID)
-
-		XCTAssertEqual(rec.starts, 0, "Placeholder App ID must not boot the SDK")
-		service.report(.reviewTapped)
-		XCTAssertTrue(rec.sent.isEmpty, "Placeholder App ID must send nothing — never to a bogus project")
 	}
 }
